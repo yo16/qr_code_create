@@ -1,0 +1,10 @@
+.main {
+  padding: var(--spacing-xl) 0;
+}
+
+.heading {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-foreground);
+  margin-bottom: var(--spacing-xl);
+}

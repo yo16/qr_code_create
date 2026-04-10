@@ -1,0 +1,25 @@
+# QR Code Create
+
+## Overview
+QR Code Create is a free QR code generator with UTM parameter guidance.
+
+## Features
+- QR code generation (instant from URL input)
+- UTM parameter setup guidance (step-by-step)
+- Decorative frames (Elegant, Pop, Business styles)
+- Logo embedding
+- Color customization (foreground/background)
+- Caption text
+- PNG/SVG/PDF export
+
+## Target Users
+Japanese small business owners, event organizers, marketers
+
+## Key Differentiator
+- Free, no registration required
+- UTM parameter guidance to prevent forgetting tracking parameters
+- Decorative frames to customize QR code appearance
+- Marketing education content included
+
+## URL
+https://qr-code-create.vercel.app

@@ -1,0 +1,31 @@
+.breadcrumb {
+  padding: var(--spacing-sm) 0;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  list-style: none;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+}
+
+.item a {
+  color: var(--color-muted);
+  text-decoration: none;
+}
+
+.item a:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.item span[aria-current="page"] {
+  color: var(--color-foreground);
+}
+
+.separator {
+  color: var(--color-border);
+  margin: 0 var(--spacing-xs);
+}

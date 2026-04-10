@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash .claude/scripts/setup.sh)",
+      "Bash(ls D:/Public/github/yo16/qr_code_create)",
+      "Bash(ls D:/Public/github/yo16/qr_code_create/*)",
+      "Bash(mkdir D:/Public/github/yo16/qr_code_create/*)",
+      "Bash(mkdir -p D:/Public/github/yo16/qr_code_create/*)",
+      "Bash(rm D:/Public/github/yo16/qr_code_create/*)",
+      "Bash(cp D:/Public/github/yo16/qr_code_create/*)",
+      "Bash(cat D:/Public/github/yo16/qr_code_create/*)",
+      "Bash(node D:/Public/github/yo16/qr_code_create/*)",
+      "Bash(git -C D:/Public/github/yo16/qr_code_create *)",
+      "Bash(git -C \"D:/Public/github/yo16/qr_code_create\" *)"
+    ]
+  }
+}

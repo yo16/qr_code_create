@@ -1,0 +1,77 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.pickers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.contrastInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.contrastInfo--ok {
+  border-color: var(--color-success);
+}
+
+.contrastInfo--caution {
+  border-color: var(--color-warning);
+}
+
+.contrastInfo--warning {
+  border-color: var(--color-error);
+}
+
+.contrastRatio {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: inherit;
+}
+
+.contrastMessage {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}
+
+.contrastInfo--ok .contrastMessage {
+  color: var(--color-success);
+}
+
+.contrastInfo--caution .contrastMessage {
+  color: var(--color-warning);
+}
+
+.contrastInfo--warning .contrastMessage {
+  color: var(--color-error);
+}
+
+.resetButton {
+  align-self: flex-start;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.resetButton:hover {
+  opacity: 0.75;
+}
+
+.resetButton:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}

@@ -73,4 +73,26 @@ describe("ProgressBar", () => {
       expect(screen.getByText("0%")).toBeInTheDocument();
     });
   });
+
+  describe("messageプロパティ", () => {
+    it("message未指定時にメッセージ要素が表示されないこと", () => {
+      render(<ProgressBar current={2} total={5} />);
+      expect(screen.queryByRole("status")).toBeNull();
+    });
+
+    it("messageが指定された場合にメッセージテキストが表示されること", () => {
+      render(<ProgressBar current={2} total={5} message="あと1ステップで完璧なQRコードに！" />);
+      expect(screen.getByText("あと1ステップで完璧なQRコードに！")).toBeInTheDocument();
+    });
+
+    it("メッセージ要素にrole=\"status\"が付与されていること", () => {
+      render(<ProgressBar current={2} total={5} message="テストメッセージ" />);
+      expect(screen.getByRole("status")).toBeInTheDocument();
+    });
+
+    it("メッセージ要素にaria-live=\"polite\"が付与されていること", () => {
+      render(<ProgressBar current={2} total={5} message="テストメッセージ" />);
+      expect(screen.getByRole("status")).toHaveAttribute("aria-live", "polite");
+    });
+  });
 });

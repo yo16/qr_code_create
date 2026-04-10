@@ -4,9 +4,10 @@ interface ProgressBarProps {
   current: number;
   total: number;
   label?: string;
+  message?: string; // CROメッセージ（例: "あと1ステップで完璧なQRコードに！"）
 }
 
-export function ProgressBar({ current, total, label }: ProgressBarProps) {
+export function ProgressBar({ current, total, label, message }: ProgressBarProps) {
   const completionPercent =
     total > 0 ? Math.min(100, Math.max(0, (current / total) * 100)) : 0;
 
@@ -32,6 +33,15 @@ export function ProgressBar({ current, total, label }: ProgressBarProps) {
           style={{ width: `${completionPercent}%` }}
         />
       </div>
+      {message && (
+        <p
+          className={styles.message}
+          role="status"
+          aria-live="polite"
+        >
+          {message}
+        </p>
+      )}
     </div>
   );
 }

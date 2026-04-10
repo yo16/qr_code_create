@@ -45,6 +45,11 @@
   white-space: nowrap;
 }
 
+.effectivenessMessage {
+  font-size: var(--font-size-sm);
+  color: inherit;
+}
+
 .effectivenessError {
   color: var(--color-error);
 }

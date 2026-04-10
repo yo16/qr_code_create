@@ -36,3 +36,10 @@
   transition: width var(--transition-normal);
   min-width: 0;
 }
+
+.message {
+  margin: 0;
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+}

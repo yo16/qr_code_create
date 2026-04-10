@@ -102,4 +102,36 @@ describe("EffectivenessIndicator", () => {
       );
     });
   });
+
+  describe("CROメッセージの表示", () => {
+    it("utmCount=0のとき「マーケティング効果の測定ができません」が表示されること", () => {
+      render(<EffectivenessIndicator utmCount={0} />);
+      expect(screen.getByText("マーケティング効果の測定ができません")).toBeInTheDocument();
+    });
+
+    it("utmCount=1のとき「基本的なトラッキングが可能です」が表示されること", () => {
+      render(<EffectivenessIndicator utmCount={1} />);
+      expect(screen.getByText("基本的なトラッキングが可能です")).toBeInTheDocument();
+    });
+
+    it("utmCount=2のとき「効果測定の精度が上がります」が表示されること", () => {
+      render(<EffectivenessIndicator utmCount={2} />);
+      expect(screen.getByText("効果測定の精度が上がります")).toBeInTheDocument();
+    });
+
+    it("utmCount=3のとき「Google Analyticsで詳細な分析が可能です」が表示されること", () => {
+      render(<EffectivenessIndicator utmCount={3} />);
+      expect(screen.getByText("Google Analyticsで詳細な分析が可能です")).toBeInTheDocument();
+    });
+
+    it("utmCount=4のとき「完璧なトラッキング設定です！」が表示されること", () => {
+      render(<EffectivenessIndicator utmCount={4} />);
+      expect(screen.getByText("完璧なトラッキング設定です！")).toBeInTheDocument();
+    });
+
+    it("utmCount=5のとき「完璧なトラッキング設定です！」が表示されること", () => {
+      render(<EffectivenessIndicator utmCount={5} />);
+      expect(screen.getByText("完璧なトラッキング設定です！")).toBeInTheDocument();
+    });
+  });
 });

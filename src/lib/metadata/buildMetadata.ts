@@ -69,8 +69,21 @@ export const PAGE_METADATA = {
     noIndex: true,
   },
   guide: {
-    title: "使い方ガイド",
-    description: "QR Code Createの使い方とUTMパラメータの基礎知識を学べる総合ガイド。",
+    title: "使い方ガイド（準備中）",
+    description: "QR Code Createの使い方ガイド。現在準備中です。個別の記事は順次公開予定です。",
     path: "/guide",
+    noIndex: true,
+  },
+  useCases: {
+    title: "用途別QRコード（準備中）",
+    description: "名刺・チラシ・ポスターなど用途別のQRコード活用ガイド。現在準備中です。",
+    path: "/use-cases",
+    noIndex: true,
+  },
+  blog: {
+    title: "ブログ（準備中）",
+    description: "QRコードマーケティングに関するブログ。現在準備中です。",
+    path: "/blog",
+    noIndex: true,
   },
 } as const;

@@ -176,23 +176,25 @@ describe("buildMetadata", () => {
 
 describe("PAGE_METADATA", () => {
   describe("ページ定義数の検証", () => {
-    it("6ページ分が定義されていること", () => {
+    it("8ページ分が定義されていること", () => {
       const keys = Object.keys(PAGE_METADATA);
-      expect(keys).toHaveLength(6);
+      expect(keys).toHaveLength(8);
     });
 
-    it("home/create/faq/privacy/terms/guideが定義されていること", () => {
+    it("home/create/faq/privacy/terms/guide/useCases/blogが定義されていること", () => {
       expect(PAGE_METADATA).toHaveProperty("home");
       expect(PAGE_METADATA).toHaveProperty("create");
       expect(PAGE_METADATA).toHaveProperty("faq");
       expect(PAGE_METADATA).toHaveProperty("privacy");
       expect(PAGE_METADATA).toHaveProperty("terms");
       expect(PAGE_METADATA).toHaveProperty("guide");
+      expect(PAGE_METADATA).toHaveProperty("useCases");
+      expect(PAGE_METADATA).toHaveProperty("blog");
     });
   });
 
   describe("各ページのtitle/description/path検証", () => {
-    const pages = ["home", "create", "faq", "privacy", "terms", "guide"] as const;
+    const pages = ["home", "create", "faq", "privacy", "terms", "guide", "useCases", "blog"] as const;
 
     it.each(pages)("%sページにtitleが定義されていること", (page) => {
       expect(PAGE_METADATA[page].title).toBeDefined();
@@ -231,8 +233,16 @@ describe("PAGE_METADATA", () => {
       expect((PAGE_METADATA.faq as { noIndex?: boolean }).noIndex).toBeUndefined();
     });
 
-    it("guideページにnoIndexが設定されていないこと", () => {
-      expect((PAGE_METADATA.guide as { noIndex?: boolean }).noIndex).toBeUndefined();
+    it("guideページにnoIndex=trueがあること（準備中のため）", () => {
+      expect((PAGE_METADATA.guide as { noIndex?: boolean }).noIndex).toBe(true);
+    });
+
+    it("useCasesページにnoIndex=trueがあること（準備中のため）", () => {
+      expect((PAGE_METADATA.useCases as { noIndex?: boolean }).noIndex).toBe(true);
+    });
+
+    it("blogページにnoIndex=trueがあること（準備中のため）", () => {
+      expect((PAGE_METADATA.blog as { noIndex?: boolean }).noIndex).toBe(true);
     });
   });
 });

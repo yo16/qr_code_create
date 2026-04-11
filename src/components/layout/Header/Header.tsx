@@ -6,7 +6,7 @@ import styles from "./Header.module.css";
 const NAV_ITEMS = [
   { href: "/", label: "ホーム" },
   { href: "/guide", label: "使い方" },
-  { href: "/use-cases/flyer", label: "用途別" },
+  { href: "/use-cases", label: "用途別" },
   { href: "/blog", label: "ブログ" },
   { href: "/faq", label: "FAQ" },
 ];

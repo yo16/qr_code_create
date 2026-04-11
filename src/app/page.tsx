@@ -1,12 +1,21 @@
-import styles from "./page.module.css";
+import type { Metadata } from "next";
+import { HeroSection } from "@/components/top/HeroSection";
+import { FeaturesSection } from "@/components/top/FeaturesSection";
+import { CtaSection } from "@/components/top/CtaSection";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildWebApplicationSchema } from "@/lib/schema/buildJsonLd";
+import { buildMetadata, PAGE_METADATA } from "@/lib/metadata/buildMetadata";
+
+export const metadata: Metadata = buildMetadata(PAGE_METADATA.home);
 
 export default function Home() {
+  const schema = buildWebApplicationSchema();
   return (
-    <main className={styles.main}>
-      <h1 className={styles.title}>QR Code Create</h1>
-      <p className={styles.description}>
-        UTMパラメータ付きQRコードを無料で生成
-      </p>
-    </main>
+    <>
+      <JsonLd data={schema} />
+      <HeroSection />
+      <FeaturesSection />
+      <CtaSection />
+    </>
   );
 }

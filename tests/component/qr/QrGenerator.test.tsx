@@ -60,6 +60,12 @@ jest.mock("@/components/ui/ProgressBar/ProgressBar", () => ({
   ),
 }));
 
+jest.mock("@/components/qr/DownloadPanel/DownloadPanel", () => ({
+  DownloadPanel: ({ disabled }: any) => (
+    <div data-testid="download-panel" data-disabled={disabled ? "true" : "false"} />
+  ),
+}));
+
 describe("QrGenerator", () => {
   describe("正常系: レンダリング", () => {
     it("ステップ1のセクションが表示されること", () => {
@@ -185,11 +191,26 @@ describe("QrGenerator", () => {
       ).toBeInTheDocument();
     });
 
-    it("ステップ4に「ダウンロード機能は準備中です」が表示されること", () => {
+    it("ステップ4にDownloadPanelが表示されること", () => {
       render(<QrGenerator />);
-      expect(
-        screen.getByText("ダウンロード機能は準備中です")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("download-panel")).toBeInTheDocument();
+    });
+
+    it("URL無効のときDownloadPanelがdisabledであること", () => {
+      render(<QrGenerator />);
+      expect(screen.getByTestId("download-panel")).toHaveAttribute(
+        "data-disabled",
+        "true"
+      );
+    });
+
+    it("URL有効のときDownloadPanelがdisabledでないこと", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("validate-btn"));
+      expect(screen.getByTestId("download-panel")).toHaveAttribute(
+        "data-disabled",
+        "false"
+      );
     });
   });
 });

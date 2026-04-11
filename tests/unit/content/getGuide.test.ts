@@ -2,18 +2,19 @@ import { getGuide, getGuideSlugList } from "@/lib/content/getGuide";
 
 describe("getGuide", () => {
   describe("正常系", () => {
-    it("getGuide('sample')でGuideContentが返ること", () => {
-      const result = getGuide("sample");
+    it("getGuide('utm-parameters')でGuideContentが返ること", () => {
+      const result = getGuide("utm-parameters");
       expect(result).not.toBeNull();
     });
 
-    it("返り値のtitleが'サンプルガイド'であること", () => {
-      const result = getGuide("sample");
-      expect(result?.title).toBe("サンプルガイド");
+    it("返り値のtitleが設定されたものであること", () => {
+      const result = getGuide("utm-parameters");
+      expect(result?.title).toBeTruthy();
+      expect(typeof result?.title).toBe("string");
     });
 
     it("返り値にtitle, description, date, content, slugが含まれること", () => {
-      const result = getGuide("sample");
+      const result = getGuide("utm-parameters");
       expect(result).not.toBeNull();
       expect(result).toHaveProperty("title");
       expect(result).toHaveProperty("description");
@@ -23,8 +24,8 @@ describe("getGuide", () => {
     });
 
     it("返り値のslugが引数と一致すること", () => {
-      const result = getGuide("sample");
-      expect(result?.slug).toBe("sample");
+      const result = getGuide("utm-parameters");
+      expect(result?.slug).toBe("utm-parameters");
     });
   });
 
@@ -46,9 +47,9 @@ describe("getGuideSlugList", () => {
       });
     });
 
-    it("返り値に'sample'が含まれること", () => {
+    it("返り値に'utm-parameters'が含まれること", () => {
       const result = getGuideSlugList();
-      expect(result).toContain("sample");
+      expect(result).toContain("utm-parameters");
     });
   });
 });

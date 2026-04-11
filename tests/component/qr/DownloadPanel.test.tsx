@@ -99,7 +99,7 @@ describe("DownloadPanel", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("PNGボタンとSVGボタンが両方とも button 要素として存在すること", () => {
+    it("PNG/SVG/PDFボタンが button 要素として存在すること", () => {
       render(
         <DownloadPanel
           canvasRef={makeCanvasRef()}
@@ -108,8 +108,10 @@ describe("DownloadPanel", () => {
           decorationCount={0}
         />
       );
-      const buttons = screen.getAllByRole("button");
-      expect(buttons).toHaveLength(2);
+      // PNG/SVG/PDF の3つのダウンロードボタンが存在することを確認
+      expect(screen.getByText("PNG形式でダウンロード")).toBeInTheDocument();
+      expect(screen.getByText("SVG形式でダウンロード")).toBeInTheDocument();
+      expect(screen.getByText("PDF形式でダウンロード")).toBeInTheDocument();
     });
   });
 

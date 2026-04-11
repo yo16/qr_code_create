@@ -17,6 +17,8 @@ interface QrPreviewProps {
   logoSrc?: string | null;
   /** URL有効性（false のときプレースホルダー表示） */
   isUrlValid?: boolean;
+  /** 外部から canvasRef を注入する場合に指定（省略時は内部生成） */
+  canvasRef?: React.RefObject<HTMLCanvasElement | null>;
 }
 
 const DEBOUNCE_MS = 500;
@@ -28,8 +30,10 @@ export function QrPreview({
   size = 256,
   logoSrc,
   isUrlValid = false,
+  canvasRef: externalCanvasRef,
 }: QrPreviewProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const internalCanvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = externalCanvasRef ?? internalCanvasRef;
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);

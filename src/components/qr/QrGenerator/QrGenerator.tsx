@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { UrlInput } from "@/components/qr/UrlInput/UrlInput";
 import { UtmBuilder } from "@/components/qr/UtmBuilder/UtmBuilder";
 import { UrlPreview } from "@/components/qr/UrlPreview/UrlPreview";
 import { QrPreview } from "@/components/qr/QrPreview/QrPreview";
+import { DownloadPanel } from "@/components/qr/DownloadPanel/DownloadPanel";
 import { ProgressBar } from "@/components/ui/ProgressBar/ProgressBar";
 import { buildUtmUrl } from "@/lib/url/buildUtmUrl";
 import { INITIAL_QR_STATE, type QrState } from "@/types/qr";
@@ -55,6 +56,7 @@ function stepCardClassName(
 
 export function QrGenerator() {
   const [state, setState] = useState<QrState>(INITIAL_QR_STATE);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleUrlChange = (url: string) => {
     setState((prev) => ({ ...prev, url, currentStep: 1 }));
@@ -70,6 +72,20 @@ export function QrGenerator() {
   const handleUtmChange = (utm: QrState["utm"]) => {
     setState((prev) => ({ ...prev, utm }));
   };
+
+  const hasUtm =
+    state.utm.source.trim() !== "" ||
+    state.utm.medium.trim() !== "" ||
+    state.utm.campaign.trim() !== "" ||
+    state.utm.term.trim() !== "" ||
+    state.utm.content.trim() !== "";
+
+  const decorationCount = [
+    state.decoration.logoSrc !== null,
+    state.decoration.fgColor !== "#000000" || state.decoration.bgColor !== "#ffffff",
+    state.decoration.frameType !== null,
+    state.decoration.caption !== "",
+  ].filter(Boolean).length;
 
   const completionPercent = getCompletionPercent(state);
   const progressMessage = getProgressMessage(completionPercent);
@@ -131,7 +147,7 @@ export function QrGenerator() {
           <p className={styles.placeholder}>装飾設定は準備中です</p>
         </section>
 
-        {/* ステップ4: ダウンロード（Epic 5 で実装予定） */}
+        {/* ステップ4: ダウンロード */}
         <section
           className={stepCardClassName(step4State, styles)}
           aria-label="ステップ4: ダウンロード"
@@ -142,7 +158,12 @@ export function QrGenerator() {
             </span>
             <h2 className={styles.stepTitle}>ダウンロード</h2>
           </div>
-          <p className={styles.placeholder}>ダウンロード機能は準備中です</p>
+          <DownloadPanel
+            canvasRef={canvasRef}
+            disabled={!state.isUrlValid}
+            hasUtm={hasUtm}
+            decorationCount={decorationCount}
+          />
         </section>
       </div>
 
@@ -169,6 +190,7 @@ export function QrGenerator() {
             bgColor={state.decoration.bgColor}
             logoSrc={state.decoration.logoSrc}
             isUrlValid={state.isUrlValid}
+            canvasRef={canvasRef}
           />
         </div>
       </div>

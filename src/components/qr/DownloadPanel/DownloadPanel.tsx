@@ -1,6 +1,7 @@
 "use client";
 
 import { DownloadButton } from "./DownloadButton";
+import { PdfDownloadButton } from "./PdfDownloadButton";
 import styles from "./DownloadPanel.module.css";
 
 interface DownloadPanelProps {
@@ -38,7 +39,12 @@ export function DownloadPanel({
             hasUtm={hasUtm}
             decorationCount={decorationCount}
           />
-          {/* PDFボタンは bd-8lf.2 で実装予定 */}
+          <PdfDownloadButton
+            canvasRef={canvasRef}
+            disabled={disabled}
+            hasUtm={hasUtm}
+            decorationCount={decorationCount}
+          />
         </div>
       )}
     </div>

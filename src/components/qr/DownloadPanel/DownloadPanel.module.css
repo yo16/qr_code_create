@@ -1,0 +1,17 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.buttonGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.disabledMessage {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  padding: var(--spacing-sm) 0;
+}

@@ -1,12 +1,8 @@
 import { QrGeneratorLoader } from "./QrGeneratorLoader";
-import type { Metadata } from "next";
 import styles from "./page.module.css";
+import { buildMetadata, PAGE_METADATA } from "@/lib/metadata/buildMetadata";
 
-export const metadata: Metadata = {
-  title: "QRコード生成",
-  description:
-    "UTMパラメータ付きQRコードを無料で生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。",
-};
+export const metadata = buildMetadata(PAGE_METADATA.create);
 
 export default function CreatePage() {
   return (

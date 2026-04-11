@@ -2,12 +2,13 @@
 
 import { Button } from "@/components/ui/Button/Button";
 import {
-  canvasToPng,
+  canvasToPngScaled,
   canvasToSvg,
   downloadFile,
   type ExportFormat,
 } from "@/lib/qr/canvasExporter";
 import { trackQrDownloaded } from "@/lib/analytics/events";
+import type { Resolution } from "./ResolutionSelector";
 
 interface DownloadButtonProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -15,6 +16,7 @@ interface DownloadButtonProps {
   disabled?: boolean;
   hasUtm: boolean;
   decorationCount: number;
+  resolution?: Resolution;
 }
 
 export function DownloadButton({
@@ -23,6 +25,7 @@ export function DownloadButton({
   disabled = false,
   hasUtm,
   decorationCount,
+  resolution = 1,
 }: DownloadButtonProps) {
   const label =
     format === "png" ? "PNG形式でダウンロード" : "SVG形式でダウンロード";
@@ -32,7 +35,7 @@ export function DownloadButton({
     if (!canvas) return;
 
     if (format === "png") {
-      const dataUrl = canvasToPng(canvas);
+      const dataUrl = canvasToPngScaled(canvas, resolution);
       downloadFile(dataUrl, "qrcode.png", "image/png");
     } else {
       const svgString = canvasToSvg(canvas);

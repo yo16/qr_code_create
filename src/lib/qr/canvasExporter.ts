@@ -5,6 +5,21 @@ export function canvasToPng(canvas: HTMLCanvasElement): string {
   return canvas.toDataURL("image/png");
 }
 
+// Canvas要素をスケーリングしてPNGのdata URLに変換
+export function canvasToPngScaled(canvas: HTMLCanvasElement, scale: number = 1): string {
+  if (scale === 1) return canvas.toDataURL("image/png");
+
+  // スケーリング: 新しいCanvasを作成してリサイズ描画
+  const scaled = document.createElement("canvas");
+  scaled.width = canvas.width * scale;
+  scaled.height = canvas.height * scale;
+  const ctx = scaled.getContext("2d");
+  if (!ctx) return canvas.toDataURL("image/png");
+  ctx.imageSmoothingEnabled = false; // ピクセルアートのようにシャープに拡大
+  ctx.drawImage(canvas, 0, 0, scaled.width, scaled.height);
+  return scaled.toDataURL("image/png");
+}
+
 // Canvas要素をSVG文字列に変換（PNGをSVG内に埋め込むアプローチ）
 export function canvasToSvg(canvas: HTMLCanvasElement): string {
   const dataUrl = canvas.toDataURL("image/png");

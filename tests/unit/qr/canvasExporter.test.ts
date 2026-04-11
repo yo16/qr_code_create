@@ -1,4 +1,4 @@
-import { canvasToPng, canvasToSvg, downloadFile } from "@/lib/qr/canvasExporter";
+import { canvasToPng, canvasToPngScaled, canvasToSvg, downloadFile } from "@/lib/qr/canvasExporter";
 
 // Canvas モック
 const mockToDataURL = jest.fn().mockReturnValue("data:image/png;base64,abc123");
@@ -42,6 +42,94 @@ describe("canvasToPng", () => {
   it("data: で始まる文字列が返ること", () => {
     const result = canvasToPng(mockCanvas);
     expect(result).toMatch(/^data:/);
+  });
+});
+
+describe("canvasToPngScaled", () => {
+  it("scale=1 で canvas.toDataURL が呼ばれること", () => {
+    canvasToPngScaled(mockCanvas, 1);
+    expect(mockToDataURL).toHaveBeenCalledWith("image/png");
+  });
+
+  it("scale=1 で返り値が data URL であること", () => {
+    const result = canvasToPngScaled(mockCanvas, 1);
+    expect(result).toBe("data:image/png;base64,abc123");
+  });
+
+  it("scale=2 で document.createElement が呼ばれること（新しい canvas 作成）", () => {
+    const mockScaledCanvas = {
+      width: 0,
+      height: 0,
+      toDataURL: jest.fn().mockReturnValue("data:image/png;base64,scaled"),
+      getContext: jest.fn().mockReturnValue({
+        imageSmoothingEnabled: true,
+        drawImage: jest.fn(),
+      }),
+    };
+    const createElementSpy = jest
+      .spyOn(document, "createElement")
+      .mockImplementation((tagName: string) => {
+        if (tagName === "canvas") {
+          return mockScaledCanvas as unknown as HTMLElement;
+        }
+        return document.createElement(tagName);
+      });
+
+    canvasToPngScaled(mockCanvas, 2);
+
+    expect(createElementSpy).toHaveBeenCalledWith("canvas");
+    createElementSpy.mockRestore();
+  });
+
+  it("scale=2 で返り値が data URL であること", () => {
+    const mockScaledCanvas = {
+      width: 0,
+      height: 0,
+      toDataURL: jest.fn().mockReturnValue("data:image/png;base64,scaled"),
+      getContext: jest.fn().mockReturnValue({
+        imageSmoothingEnabled: true,
+        drawImage: jest.fn(),
+      }),
+    };
+    const createElementSpy = jest
+      .spyOn(document, "createElement")
+      .mockImplementation((tagName: string) => {
+        if (tagName === "canvas") {
+          return mockScaledCanvas as unknown as HTMLElement;
+        }
+        return document.createElement(tagName);
+      });
+
+    const result = canvasToPngScaled(mockCanvas, 2);
+
+    expect(result).toMatch(/^data:/);
+    createElementSpy.mockRestore();
+  });
+
+  it("scale=2 でスケーリングされた canvas の width が元の2倍になること", () => {
+    const mockScaledCanvas = {
+      width: 0,
+      height: 0,
+      toDataURL: jest.fn().mockReturnValue("data:image/png;base64,scaled"),
+      getContext: jest.fn().mockReturnValue({
+        imageSmoothingEnabled: true,
+        drawImage: jest.fn(),
+      }),
+    };
+    const createElementSpy = jest
+      .spyOn(document, "createElement")
+      .mockImplementation((tagName: string) => {
+        if (tagName === "canvas") {
+          return mockScaledCanvas as unknown as HTMLElement;
+        }
+        return document.createElement(tagName);
+      });
+
+    canvasToPngScaled(mockCanvas, 2);
+
+    expect(mockScaledCanvas.width).toBe(mockCanvas.width * 2);
+    expect(mockScaledCanvas.height).toBe(mockCanvas.height * 2);
+    createElementSpy.mockRestore();
   });
 });
 

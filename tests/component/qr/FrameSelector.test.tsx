@@ -30,7 +30,7 @@ describe("FrameSelector", () => {
         />
       );
       const buttons = screen.getAllByRole("button");
-      expect(buttons).toHaveLength(14);
+      expect(buttons).toHaveLength(15);
     });
 
     it("初期選択（type=\"none\"）で aria-pressed=\"true\" が1つだけあること", () => {

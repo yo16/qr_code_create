@@ -12,7 +12,8 @@ export type FrameType =
   | "img-simple-gray"
   | "img-simple-red"
   | "img-elaborated-japanese"
-  | "img-elaborated-gothic";
+  | "img-elaborated-gothic"
+  | "img-elaborated-baroque";
 
 export interface FrameConfig {
   type: FrameType;
@@ -42,6 +43,7 @@ export const FRAME_OPTIONS: FrameOption[] = [
   { type: "img-simple-red", label: "レッド", category: "画像：シンプル", imageSrc: "/images/frames/simple/red-frame.png" },
   { type: "img-elaborated-japanese", label: "和風", category: "画像：装飾", imageSrc: "/images/frames/elaborated/japanese.png" },
   { type: "img-elaborated-gothic", label: "ゴシック", category: "画像：装飾", imageSrc: "/images/frames/elaborated/gothic.png" },
+  { type: "img-elaborated-baroque", label: "バロック", category: "画像：装飾", imageSrc: "/images/frames/elaborated/luxurious-baroque-style-gold.png" },
 ];
 
 /** 画像フレームかどうかを判定する */

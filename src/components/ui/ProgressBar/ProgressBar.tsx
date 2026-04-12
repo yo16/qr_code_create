@@ -18,20 +18,20 @@ export function ProgressBar({ current, total, label, message }: ProgressBarProps
     <div className={styles.wrapper}>
       <div className={styles.header}>
         <span className={styles.stepLabel}>{displayLabel}</span>
-        <span className={styles.percent}>{Math.round(completionPercent)}%</span>
-      </div>
-      <div
-        className={styles.track}
-        role="progressbar"
-        aria-valuenow={Math.round(completionPercent)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={displayLabel}
-      >
         <div
-          className={styles.bar}
-          style={{ width: `${completionPercent}%` }}
-        />
+          className={styles.track}
+          role="progressbar"
+          aria-valuenow={Math.round(completionPercent)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={displayLabel}
+        >
+          <div
+            className={styles.bar}
+            style={{ width: `${completionPercent}%` }}
+          />
+        </div>
+        <span className={styles.percent}>{Math.round(completionPercent)}%</span>
       </div>
       {message && (
         <p

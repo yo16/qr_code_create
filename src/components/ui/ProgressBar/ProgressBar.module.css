@@ -6,23 +6,19 @@
 
 .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: var(--spacing-md);
 }
 
 .stepLabel {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-foreground);
-}
-
-.percent {
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
+  flex-shrink: 0;
 }
 
 .track {
-  width: 100%;
+  flex: 1;
   height: 8px;
   background-color: var(--color-border);
   border-radius: var(--radius-full);
@@ -37,9 +33,14 @@
   min-width: 0;
 }
 
+.percent {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
 .message {
   margin: 0;
-  margin-top: var(--spacing-xs);
   font-size: var(--font-size-sm);
   color: var(--color-primary);
 }

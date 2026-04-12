@@ -134,13 +134,13 @@ describe("QrGenerator", () => {
       );
     });
 
-    it("validate-btnクリック後にProgressBarのcurrentが50になること（URL+UTMデフォルト）", () => {
-      // URL有効(+25%) + utm.medium="qr"デフォルト(+25%) = 50%
+    it("validate-btnクリック後にProgressBarのcurrentが67になること（URL+UTMデフォルト）", () => {
+      // URL有効(+33%) + utm.medium="qr"デフォルト(+33%) = 67%
       render(<QrGenerator />);
       fireEvent.click(screen.getByTestId("validate-btn"));
       expect(screen.getByTestId("progress-bar")).toHaveAttribute(
         "data-current",
-        "50"
+        "67"
       );
     });
 
@@ -153,33 +153,33 @@ describe("QrGenerator", () => {
       expect(current).toBeGreaterThan(0);
     });
 
-    it("URL有効かつUTM設定後にProgressBarのcurrentが50になること", () => {
+    it("URL有効かつUTM設定後にProgressBarのcurrentが67になること", () => {
       render(<QrGenerator />);
       fireEvent.click(screen.getByTestId("validate-btn"));
       fireEvent.click(screen.getByTestId("set-utm"));
       expect(screen.getByTestId("progress-bar")).toHaveAttribute(
         "data-current",
-        "50"
+        "67"
       );
     });
   });
 
   describe("プログレスメッセージ", () => {
     it("初期状態（utm.medium=qrデフォルト値あり）で「UTMパラメータを設定するとマーケティング効果UP！」が表示されること", () => {
-      // INITIAL_QR_STATEのutm.medium="qr"によりhasUtm=true、completionPercent=25
+      // INITIAL_QR_STATEのutm.medium="qr"によりhasUtm=true、completionPercent=33
       render(<QrGenerator />);
       expect(
         screen.getByTestId("progress-bar")
       ).toHaveTextContent("UTMパラメータを設定するとマーケティング効果UP！");
     });
 
-    it("URL有効後に「装飾でQRコードをもっと魅力的に」が表示されること", () => {
-      // URL有効(+25%) + UTMデフォルト(+25%) = 50%
+    it("URL有効後に「QRコードが完成しました！」が表示されること", () => {
+      // URL有効(+33%) + UTMデフォルト(+33%) = 67% → 完成メッセージ
       render(<QrGenerator />);
       fireEvent.click(screen.getByTestId("validate-btn"));
       expect(
         screen.getByTestId("progress-bar")
-      ).toHaveTextContent("装飾でQRコードをもっと魅力的に");
+      ).toHaveTextContent("QRコードが完成しました！");
     });
   });
 

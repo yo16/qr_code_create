@@ -444,38 +444,24 @@
 
 ### 3.2 ProgressBar の完了度算出
 
+完了度は3段階（33% / 67% / 100%）で算出する。ダウンロードはQRコード完成後のアクションであり、完成度には含めない。
+
 ```typescript
-function calculateCompletionPercent(state: QrState): number {
-  let percent = 0;
+function getCompletionPercent(state: QrState): number {
+  let steps = 0;
 
-  // ステップ1: URL入力 (25%)
-  if (state.url && isValidUrl(state.url)) {
-    percent += 25;
-  }
+  // ステップ1: URL入力 (+33%)
+  if (state.isUrlValid) steps += 1;
 
-  // ステップ2: UTM設定 (25%)
-  const utmCount = countFilledUtmParams(state.utm);
-  if (utmCount >= 3) {
-    percent += 25;
-  } else if (utmCount >= 1) {
-    percent += Math.round(25 * (utmCount / 3));
-  }
+  // ステップ2: UTM設定 (+33%)
+  const hasUtm = /* source/medium/campaign/term/contentのいずれかが入力済み */;
+  if (hasUtm) steps += 1;
 
-  // ステップ3: 装飾設定 (25%)
-  const hasDecoration = state.decoration.frame !== null
-    || state.decoration.logo !== null
-    || state.decoration.caption.text !== ''
-    || state.decoration.foregroundColor !== '#000000';
-  if (hasDecoration) {
-    percent += 25;
-  }
+  // ステップ3: 装飾設定 (+34%)
+  const hasDecoration = /* 色変更/フレーム/キャプション/ロゴのいずれかが設定済み */;
+  if (hasDecoration) steps += 1;
 
-  // ステップ4: ダウンロード準備完了 (25%)
-  if (percent >= 50) { // URL + UTMが設定されていればダウンロード可能
-    percent += 25;
-  }
-
-  return Math.min(percent, 100);
+  return Math.round((steps / 3) * 100);
 }
 ```
 
@@ -484,10 +470,9 @@ function calculateCompletionPercent(state: QrState): number {
 | 完了度 | メッセージ |
 |---|---|
 | 0% | URLを入力してQRコードを作成しましょう |
-| 25% | URLが入力されました。UTMパラメータを設定しましょう |
-| 50% | あと少しで完璧なQRコードに! |
-| 75% | デザインをカスタマイズしてオリジナルQRコードに |
-| 100% | 完成! ダウンロードしましょう |
+| 33% | UTMパラメータを設定するとマーケティング効果UP！ |
+| 67% | 装飾でQRコードをもっと魅力的に |
+| 100% | QRコードが完成しました！ |
 
 Zeigarnik Effect（未完了タスクが記憶に残る効果）を活用し、常に「あと少し」感を演出する。
 

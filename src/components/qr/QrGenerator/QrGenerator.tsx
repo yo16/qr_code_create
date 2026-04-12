@@ -15,25 +15,29 @@ import { INITIAL_QR_STATE, type QrState } from "@/types/qr";
 import styles from "./QrGenerator.module.css";
 
 function getCompletionPercent(state: QrState): number {
-  let percent = 0;
-  if (state.isUrlValid) percent += 25;
+  let steps = 0;
+  if (state.isUrlValid) steps += 1;
   const hasUtm =
     state.utm.source.trim() !== "" ||
     state.utm.medium.trim() !== "" ||
     state.utm.campaign.trim() !== "" ||
     state.utm.term.trim() !== "" ||
     state.utm.content.trim() !== "";
-  if (hasUtm) percent += 25;
-  // 装飾設定（Epic 4 で +25%）
-  // ダウンロード完了（Epic 5 で +25%）
-  return percent;
+  if (hasUtm) steps += 1;
+  const hasDecoration =
+    state.decoration.fgColor !== "#000000" ||
+    state.decoration.bgColor !== "#ffffff" ||
+    (state.decoration.frameType !== null && state.decoration.frameType !== "none") ||
+    state.decoration.caption !== "" ||
+    state.decoration.logoSrc !== null;
+  if (hasDecoration) steps += 1;
+  return Math.round((steps / 3) * 100);
 }
 
 function getProgressMessage(percent: number): string {
   if (percent === 0) return "URLを入力してQRコードを作成しましょう";
-  if (percent === 25) return "UTMパラメータを設定するとマーケティング効果UP！";
-  if (percent === 50) return "装飾でQRコードをもっと魅力的に";
-  if (percent === 75) return "あと少しで完成です！";
+  if (percent <= 33) return "UTMパラメータを設定するとマーケティング効果UP！";
+  if (percent <= 66) return "装飾でQRコードをもっと魅力的に";
   return "QRコードが完成しました！";
 }
 

@@ -2,7 +2,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-xl);
-  align-items: start;
 }
 
 .leftColumn {
@@ -12,8 +11,6 @@
 }
 
 .rightColumn {
-  position: sticky;
-  top: 80px;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
@@ -88,8 +85,16 @@
   text-align: center;
 }
 
-/* プレビューエリア */
+/* プレビューエリア — デスクトップではこの要素にstickyを適用 */
 .previewArea {
+  position: sticky;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.desktopOnly {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
@@ -97,12 +102,35 @@
 
 /* モバイル・タブレット対応 */
 @media (max-width: 768px) {
+  /*
+   * モバイルではgridからflexに切り替える。
+   * gridだと各行の高さがコンテンツに縮まり、
+   * 子要素内のstickyに余地がなくなるため。
+   * flexの場合、containingブロック（.container）全体が
+   * stickyの制約範囲となり、leftColumnの高さ分だけ
+   * rightColumnのstickyが機能する。
+   */
   .container {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
   }
 
   .rightColumn {
-    position: static;
     order: -1;
+    position: sticky;
+    top: 64px;
+    z-index: 10;
+    background-color: var(--color-background);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .previewArea {
+    position: static;
+    align-items: center;
+  }
+
+  .desktopOnly {
+    display: none;
   }
 }

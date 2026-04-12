@@ -33,3 +33,17 @@
   font-size: var(--font-size-xs);
   color: var(--color-muted);
 }
+
+.credit {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}
+
+.credit a {
+  color: var(--color-muted);
+  text-decoration: underline;
+}
+
+.credit a:hover {
+  color: var(--color-foreground);
+}

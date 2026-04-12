@@ -15,6 +15,12 @@ export function Footer() {
           <p className={styles.copyright}>
             &copy; {new Date().getFullYear()} QR Code Create
           </p>
+          <p className={styles.credit}>
+            Built by{" "}
+            <a href="https://smallpiece.jp/" target="_blank" rel="noopener noreferrer">
+              Small Piece
+            </a>
+          </p>
         </div>
       </Container>
     </footer>

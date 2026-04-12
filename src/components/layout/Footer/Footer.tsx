@@ -17,7 +17,7 @@ export function Footer() {
           </p>
           <p className={styles.credit}>
             Built by{" "}
-            <a href="https://smallpiece.jp/" target="_blank" rel="noopener noreferrer">
+            <a href="https://smallpiece.jp/?utm_source=qr-create&utm_medium=referral&utm_campaign=footer_credit" target="_blank" rel="noopener noreferrer">
               Small Piece
             </a>
           </p>

@@ -2,7 +2,21 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { isContrastSufficient } from "@/lib/color/contrastChecker";
+import {
+  drawFrame,
+  isImageFrame,
+  getFrameImageSrc,
+  type FrameConfig,
+  DEFAULT_FRAME_CONFIG,
+} from "@/lib/qr/frameRenderer";
 import styles from "./QrPreview.module.css";
+
+/** フレーム画像仕様の定数 */
+const FRAME_SPEC = {
+  IMAGE_SIZE: 944,
+  QR_OFFSET: 132,
+  QR_SIZE: 680,
+} as const;
 
 interface QrPreviewProps {
   /** QRコードに埋め込むURL（UTMパラメータ付き完成URL） */
@@ -15,6 +29,8 @@ interface QrPreviewProps {
   size?: number;
   /** ロゴ画像の data URL（Epic 4 で実装予定） */
   logoSrc?: string | null;
+  /** フレーム設定 */
+  frameConfig?: FrameConfig;
   /** URL有効性（false のときプレースホルダー表示） */
   isUrlValid?: boolean;
   /** 外部から canvasRef を注入する場合に指定（省略時は内部生成） */
@@ -23,12 +39,23 @@ interface QrPreviewProps {
 
 const DEBOUNCE_MS = 500;
 
+/** 画像を読み込んでHTMLImageElementを返す */
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
 export function QrPreview({
   url,
   fgColor = "#000000",
   bgColor = "#ffffff",
   size = 256,
   logoSrc,
+  frameConfig = DEFAULT_FRAME_CONFIG,
   isUrlValid = false,
   canvasRef: externalCanvasRef,
 }: QrPreviewProps) {
@@ -41,6 +68,9 @@ export function QrPreview({
   const shouldRender = !!(url && isUrlValid);
   const contrastOk = isContrastSufficient(fgColor, bgColor);
 
+  const hasFrame = frameConfig.type !== "none";
+  const hasImageFrame = isImageFrame(frameConfig.type);
+
   const generateQr = useCallback(async () => {
     if (!shouldRender || !canvasRef.current) return;
 
@@ -48,18 +78,63 @@ export function QrPreview({
     setHasError(false);
 
     try {
-      // SSR では動作しないため useEffect 内で動的インポートする
       const QRCode = (await import("qrcode")).default;
+      const canvas = canvasRef.current;
 
-      await QRCode.toCanvas(canvasRef.current, url, {
-        width: size,
-        margin: 2,
-        color: {
-          dark: fgColor,
-          light: bgColor,
-        },
-        errorCorrectionLevel: "M",
-      });
+      if (hasImageFrame) {
+        // 画像フレーム: フレーム画像の上にQRコードを合成
+        const frameSrc = getFrameImageSrc(frameConfig.type);
+        if (!frameSrc) throw new Error("Frame image not found");
+
+        const frameImg = await loadImage(frameSrc);
+
+        // Canvasサイズをフレーム画像に合わせてスケーリング
+        // フレーム画像は944x944、表示はsize x sizeにスケール
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Cannot get canvas context");
+
+        // フレーム画像を描画
+        ctx.drawImage(frameImg, 0, 0, size, size);
+
+        // QRコードを一時Canvasに生成
+        const tempCanvas = document.createElement("canvas");
+        const qrDisplaySize = Math.round(
+          (FRAME_SPEC.QR_SIZE / FRAME_SPEC.IMAGE_SIZE) * size
+        );
+        await QRCode.toCanvas(tempCanvas, url, {
+          width: qrDisplaySize,
+          margin: 4,
+          color: { dark: fgColor, light: bgColor },
+          errorCorrectionLevel: "M",
+        });
+
+        // QRコードをフレーム内の所定位置に描画
+        const qrOffset = Math.round(
+          (FRAME_SPEC.QR_OFFSET / FRAME_SPEC.IMAGE_SIZE) * size
+        );
+        ctx.drawImage(tempCanvas, qrOffset, qrOffset, qrDisplaySize, qrDisplaySize);
+      } else {
+        // Canvas描画フレームまたはフレームなし
+        canvas.width = size;
+        canvas.height = size;
+
+        await QRCode.toCanvas(canvas, url, {
+          width: size,
+          margin: 4,
+          color: { dark: fgColor, light: bgColor },
+          errorCorrectionLevel: "M",
+        });
+
+        // Canvas描画フレームを重ねる
+        if (hasFrame) {
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            drawFrame(ctx, frameConfig, size, size);
+          }
+        }
+      }
 
       // TODO(Epic 4 / b69.1): logoSrc が指定されている場合、Canvas にロゴを重ねて描画する
       void logoSrc;
@@ -68,9 +143,9 @@ export function QrPreview({
     } finally {
       setIsLoading(false);
     }
-  }, [url, fgColor, bgColor, size, shouldRender, logoSrc]);
+  }, [url, fgColor, bgColor, size, shouldRender, logoSrc, frameConfig, hasFrame, hasImageFrame]);
 
-  // URL・色・サイズが変わったら 500ms デバウンスして再生成
+  // URL・色・サイズ・フレームが変わったら 500ms デバウンスして再生成
   useEffect(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);

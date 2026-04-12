@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { ColorPicker } from "@/components/ui/ColorPicker/ColorPicker";
-import { FRAME_OPTIONS, type FrameConfig, type FrameType } from "@/lib/qr/frameRenderer";
+import { FRAME_OPTIONS, isImageFrame, type FrameConfig, type FrameOption, type FrameType } from "@/lib/qr/frameRenderer";
 import { trackFrameSelected } from "@/lib/analytics/events";
 import styles from "./FrameSelector.module.css";
 
@@ -11,14 +12,20 @@ interface FrameSelectorProps {
 }
 
 // カテゴリの表示順
-const CATEGORY_ORDER = ["基本", "装飾", "ターゲット別"] as const;
+const CATEGORY_ORDER = [
+  "基本",
+  "装飾",
+  "ターゲット別",
+  "画像：シンプル",
+  "画像：装飾",
+] as const;
 
 type Category = (typeof CATEGORY_ORDER)[number];
 
 function groupByCategory(
-  options: typeof FRAME_OPTIONS
-): Record<Category, typeof FRAME_OPTIONS> {
-  const result = {} as Record<Category, typeof FRAME_OPTIONS>;
+  options: FrameOption[]
+): Record<Category, FrameOption[]> {
+  const result = {} as Record<Category, FrameOption[]>;
   for (const cat of CATEGORY_ORDER) {
     result[cat] = options.filter((o) => o.category === cat);
   }
@@ -38,6 +45,8 @@ export function FrameSelector({ frame, onChange }: FrameSelectorProps) {
   const handleColorChange = (color: string) => {
     onChange({ ...frame, color });
   };
+
+  const showColorPicker = frame.type !== "none" && !isImageFrame(frame.type);
 
   return (
     <div className={styles.container}>
@@ -60,7 +69,17 @@ export function FrameSelector({ frame, onChange }: FrameSelectorProps) {
                     aria-label={`フレーム: ${option.label}`}
                   >
                     <span className={styles.framePreview} aria-hidden="true">
-                      <FramePreviewIcon type={option.type} />
+                      {option.imageSrc ? (
+                        <Image
+                          src={option.imageSrc}
+                          alt=""
+                          width={48}
+                          height={48}
+                          className={styles.frameThumbnail}
+                        />
+                      ) : (
+                        <FramePreviewIcon type={option.type} />
+                      )}
                     </span>
                     <span className={styles.frameLabel}>{option.label}</span>
                   </button>
@@ -71,7 +90,7 @@ export function FrameSelector({ frame, onChange }: FrameSelectorProps) {
         );
       })}
 
-      {frame.type !== "none" && (
+      {showColorPicker && (
         <div className={styles.colorSection}>
           <ColorPicker
             label="フレームの色"

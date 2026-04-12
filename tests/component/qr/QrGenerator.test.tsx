@@ -179,15 +179,15 @@ describe("QrGenerator", () => {
       fireEvent.click(screen.getByTestId("validate-btn"));
       expect(
         screen.getByTestId("progress-bar")
-      ).toHaveTextContent("装飾でQRコードをもっと魅力的に（準備中）");
+      ).toHaveTextContent("装飾でQRコードをもっと魅力的に");
     });
   });
 
   describe("プレースホルダー", () => {
-    it("ステップ3に「装飾設定は準備中です」が表示されること", () => {
+    it("ステップ3に装飾設定コンポーネントが表示されること", () => {
       render(<QrGenerator />);
       expect(
-        screen.getByText("装飾設定は準備中です")
+        screen.getByRole("region", { name: "ステップ3: 装飾設定" })
       ).toBeInTheDocument();
     });
 

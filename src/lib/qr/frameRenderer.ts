@@ -6,18 +6,28 @@ export type FrameType =
   | "elegant"
   | "pop"
   | "business"
-  | "festive";
+  | "festive"
+  | "img-simple-black"
+  | "img-simple-blue"
+  | "img-simple-gray"
+  | "img-simple-red"
+  | "img-elaborated-japanese"
+  | "img-elaborated-gothic";
 
 export interface FrameConfig {
   type: FrameType;
   color: string; // フレームの色（デフォルト: #000000）
 }
 
-export const FRAME_OPTIONS: {
+export interface FrameOption {
   type: FrameType;
   label: string;
   category: string;
-}[] = [
+  /** 画像フレームの場合、画像パス */
+  imageSrc?: string;
+}
+
+export const FRAME_OPTIONS: FrameOption[] = [
   { type: "none", label: "なし", category: "基本" },
   { type: "simple", label: "シンプル", category: "基本" },
   { type: "rounded", label: "角丸", category: "基本" },
@@ -26,7 +36,23 @@ export const FRAME_OPTIONS: {
   { type: "pop", label: "ポップ", category: "ターゲット別" },
   { type: "business", label: "ビジネス", category: "ターゲット別" },
   { type: "festive", label: "フェスティブ", category: "ターゲット別" },
+  { type: "img-simple-black", label: "ブラック", category: "画像：シンプル", imageSrc: "/images/frames/simple/black-frame.png" },
+  { type: "img-simple-blue", label: "ブルー", category: "画像：シンプル", imageSrc: "/images/frames/simple/blue-frame.png" },
+  { type: "img-simple-gray", label: "グレー", category: "画像：シンプル", imageSrc: "/images/frames/simple/gray-frame.png" },
+  { type: "img-simple-red", label: "レッド", category: "画像：シンプル", imageSrc: "/images/frames/simple/red-frame.png" },
+  { type: "img-elaborated-japanese", label: "和風", category: "画像：装飾", imageSrc: "/images/frames/elaborated/japanese.png" },
+  { type: "img-elaborated-gothic", label: "ゴシック", category: "画像：装飾", imageSrc: "/images/frames/elaborated/gothic.png" },
 ];
+
+/** 画像フレームかどうかを判定する */
+export function isImageFrame(type: FrameType): boolean {
+  return type.startsWith("img-");
+}
+
+/** FrameTypeから画像パスを取得する */
+export function getFrameImageSrc(type: FrameType): string | undefined {
+  return FRAME_OPTIONS.find((o) => o.type === type)?.imageSrc;
+}
 
 function drawSimple(
   ctx: CanvasRenderingContext2D,

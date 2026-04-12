@@ -130,3 +130,27 @@
   color: var(--color-foreground);
   line-height: var(--line-height-normal);
 }
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-sm);
+  }
+
+  .previewArea {
+    width: 128px !important;
+    height: 128px !important;
+  }
+
+  .previewArea canvas {
+    width: 128px !important;
+    height: 128px !important;
+  }
+
+  .label {
+    font-size: var(--font-size-xs);
+  }
+
+  .warning {
+    display: none;
+  }
+}

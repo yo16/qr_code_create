@@ -7,7 +7,7 @@ jest.mock("@/lib/analytics/events");
 
 describe("FrameSelector", () => {
   describe("正常系: 表示確認", () => {
-    it("3つのカテゴリラベル（基本/装飾/ターゲット別）が表示されること", () => {
+    it("5つのカテゴリラベル（基本/装飾/ターゲット別/画像：シンプル/画像：装飾）が表示されること", () => {
       render(
         <FrameSelector
           frame={DEFAULT_FRAME_CONFIG}
@@ -18,9 +18,11 @@ describe("FrameSelector", () => {
       expect(screen.getByRole("group", { name: "基本フレーム" })).toBeInTheDocument();
       expect(screen.getByRole("group", { name: "装飾フレーム" })).toBeInTheDocument();
       expect(screen.getByRole("group", { name: "ターゲット別フレーム" })).toBeInTheDocument();
+      expect(screen.getByRole("group", { name: "画像：シンプルフレーム" })).toBeInTheDocument();
+      expect(screen.getByRole("group", { name: "画像：装飾フレーム" })).toBeInTheDocument();
     });
 
-    it("8つのフレームボタンが表示されること", () => {
+    it("14個のフレームボタンが表示されること", () => {
       render(
         <FrameSelector
           frame={DEFAULT_FRAME_CONFIG}
@@ -28,7 +30,7 @@ describe("FrameSelector", () => {
         />
       );
       const buttons = screen.getAllByRole("button");
-      expect(buttons).toHaveLength(8);
+      expect(buttons).toHaveLength(14);
     });
 
     it("初期選択（type=\"none\"）で aria-pressed=\"true\" が1つだけあること", () => {
@@ -140,6 +142,32 @@ describe("FrameSelector", () => {
     });
   });
 
+  describe("操作: 画像フレーム選択", () => {
+    it("画像フレーム選択時に ColorPicker が表示されないこと", () => {
+      render(
+        <FrameSelector
+          frame={{ type: "img-simple-black", color: "#000000" }}
+          onChange={jest.fn()}
+        />
+      );
+      expect(screen.queryByText("フレームの色")).not.toBeInTheDocument();
+    });
+
+    it("「ブラック」ボタンクリックで onChange が type=\"img-simple-black\" で呼ばれること", () => {
+      const onChange = jest.fn();
+      render(
+        <FrameSelector
+          frame={DEFAULT_FRAME_CONFIG}
+          onChange={onChange}
+        />
+      );
+      fireEvent.click(screen.getByRole("button", { name: "フレーム: ブラック" }));
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "img-simple-black" })
+      );
+    });
+  });
+
   describe("アクセシビリティ", () => {
     it("各カテゴリの role=\"group\" に適切な aria-label が設定されていること", () => {
       render(
@@ -151,6 +179,8 @@ describe("FrameSelector", () => {
       expect(screen.getByRole("group", { name: "基本フレーム" })).toBeInTheDocument();
       expect(screen.getByRole("group", { name: "装飾フレーム" })).toBeInTheDocument();
       expect(screen.getByRole("group", { name: "ターゲット別フレーム" })).toBeInTheDocument();
+      expect(screen.getByRole("group", { name: "画像：シンプルフレーム" })).toBeInTheDocument();
+      expect(screen.getByRole("group", { name: "画像：装飾フレーム" })).toBeInTheDocument();
     });
   });
 });

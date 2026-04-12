@@ -6,8 +6,11 @@ import { UtmBuilder } from "@/components/qr/UtmBuilder/UtmBuilder";
 import { UrlPreview } from "@/components/qr/UrlPreview/UrlPreview";
 import { QrPreview } from "@/components/qr/QrPreview/QrPreview";
 import { DownloadPanel } from "@/components/qr/DownloadPanel/DownloadPanel";
+import { ColorCustomizer } from "@/components/qr/DecorationPanel/ColorCustomizer";
+import { FrameSelector } from "@/components/qr/DecorationPanel/FrameSelector";
 import { ProgressBar } from "@/components/ui/ProgressBar/ProgressBar";
 import { buildUtmUrl } from "@/lib/url/buildUtmUrl";
+import { DEFAULT_FRAME_CONFIG, type FrameConfig } from "@/lib/qr/frameRenderer";
 import { INITIAL_QR_STATE, type QrState } from "@/types/qr";
 import styles from "./QrGenerator.module.css";
 
@@ -29,7 +32,7 @@ function getCompletionPercent(state: QrState): number {
 function getProgressMessage(percent: number): string {
   if (percent === 0) return "URLを入力してQRコードを作成しましょう";
   if (percent === 25) return "UTMパラメータを設定するとマーケティング効果UP！";
-  if (percent === 50) return "装飾でQRコードをもっと魅力的に（準備中）";
+  if (percent === 50) return "装飾でQRコードをもっと魅力的に";
   if (percent === 75) return "あと少しで完成です！";
   return "QRコードが完成しました！";
 }
@@ -56,6 +59,7 @@ function stepCardClassName(
 
 export function QrGenerator() {
   const [state, setState] = useState<QrState>(INITIAL_QR_STATE);
+  const [frameConfig, setFrameConfig] = useState<FrameConfig>(DEFAULT_FRAME_CONFIG);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleUrlChange = (url: string) => {
@@ -71,6 +75,28 @@ export function QrGenerator() {
 
   const handleUtmChange = (utm: QrState["utm"]) => {
     setState((prev) => ({ ...prev, utm }));
+  };
+
+  const handleFgColorChange = (fgColor: string) => {
+    setState((prev) => ({
+      ...prev,
+      decoration: { ...prev.decoration, fgColor },
+    }));
+  };
+
+  const handleBgColorChange = (bgColor: string) => {
+    setState((prev) => ({
+      ...prev,
+      decoration: { ...prev.decoration, bgColor },
+    }));
+  };
+
+  const handleFrameChange = (frame: FrameConfig) => {
+    setFrameConfig(frame);
+    setState((prev) => ({
+      ...prev,
+      decoration: { ...prev.decoration, frameType: frame.type },
+    }));
   };
 
   const hasUtm =
@@ -133,7 +159,7 @@ export function QrGenerator() {
           <UtmBuilder values={state.utm} onChange={handleUtmChange} />
         </section>
 
-        {/* ステップ3: 装飾設定（Epic 4 で実装予定） */}
+        {/* ステップ3: 装飾設定 */}
         <section
           className={stepCardClassName(step3State, styles)}
           aria-label="ステップ3: 装飾設定"
@@ -144,7 +170,16 @@ export function QrGenerator() {
             </span>
             <h2 className={styles.stepTitle}>装飾設定</h2>
           </div>
-          <p className={styles.placeholder}>装飾設定は準備中です</p>
+          <ColorCustomizer
+            fgColor={state.decoration.fgColor}
+            bgColor={state.decoration.bgColor}
+            onFgColorChange={handleFgColorChange}
+            onBgColorChange={handleBgColorChange}
+          />
+          <FrameSelector
+            frame={frameConfig}
+            onChange={handleFrameChange}
+          />
         </section>
 
         {/* ステップ4: ダウンロード */}
@@ -170,25 +205,28 @@ export function QrGenerator() {
       {/* 右カラム: プレビューエリア */}
       <div className={styles.rightColumn}>
         <div className={styles.previewArea}>
-          <ProgressBar
-            current={completionPercent}
-            total={100}
-            label="完成度"
-            message={progressMessage}
-          />
-          <UrlPreview
-            url={state.url}
-            utmSource={state.utm.source}
-            utmMedium={state.utm.medium}
-            utmCampaign={state.utm.campaign}
-            utmTerm={state.utm.term}
-            utmContent={state.utm.content}
-          />
+          <div className={styles.desktopOnly}>
+            <ProgressBar
+              current={completionPercent}
+              total={100}
+              label="完成度"
+              message={progressMessage}
+            />
+            <UrlPreview
+              url={state.url}
+              utmSource={state.utm.source}
+              utmMedium={state.utm.medium}
+              utmCampaign={state.utm.campaign}
+              utmTerm={state.utm.term}
+              utmContent={state.utm.content}
+            />
+          </div>
           <QrPreview
             url={builtUrl}
             fgColor={state.decoration.fgColor}
             bgColor={state.decoration.bgColor}
             logoSrc={state.decoration.logoSrc}
+            frameConfig={frameConfig}
             isUrlValid={state.isUrlValid}
             canvasRef={canvasRef}
           />

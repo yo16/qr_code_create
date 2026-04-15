@@ -291,6 +291,58 @@ describe("drawLogoOnCanvas", () => {
     });
   });
 
+  describe("naturalWidth/Height が 0 の画像（calcFitSize フォールバック）", () => {
+    it("naturalWidth=0 のとき drawImage が logoSizePx x logoSizePx で呼ばれること", async () => {
+      const MockImage = createImageMock(0, 100);
+      (global as unknown as Record<string, unknown>).Image = MockImage;
+
+      const canvasSize = 300;
+      const sizePercent = 20;
+      const ctx = createCtxMock();
+      const canvas = createCanvasMock(canvasSize, ctx);
+      const logo = { ...baseLogoConfig, sizePercent };
+
+      const promise = drawLogoOnCanvas(canvas, logo);
+      lastImageInstance!._triggerLoad();
+      await promise;
+
+      const logoSize = canvasSize * (sizePercent / 100); // 60
+
+      expect(ctx.drawImage).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(Number),
+        expect.any(Number),
+        logoSize,
+        logoSize
+      );
+    });
+
+    it("naturalHeight=0 のとき drawImage が logoSizePx x logoSizePx で呼ばれること", async () => {
+      const MockImage = createImageMock(100, 0);
+      (global as unknown as Record<string, unknown>).Image = MockImage;
+
+      const canvasSize = 300;
+      const sizePercent = 20;
+      const ctx = createCtxMock();
+      const canvas = createCanvasMock(canvasSize, ctx);
+      const logo = { ...baseLogoConfig, sizePercent };
+
+      const promise = drawLogoOnCanvas(canvas, logo);
+      lastImageInstance!._triggerLoad();
+      await promise;
+
+      const logoSize = canvasSize * (sizePercent / 100); // 60
+
+      expect(ctx.drawImage).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(Number),
+        expect.any(Number),
+        logoSize,
+        logoSize
+      );
+    });
+  });
+
   describe("不正 dataUrl — 関数が例外をスローしないこと", () => {
     it("dataUrl が空文字でも例外をスローしないこと", async () => {
       const MockImage = createImageMock(100, 100);

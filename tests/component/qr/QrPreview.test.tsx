@@ -310,6 +310,57 @@ describe("QrPreview", () => {
       );
     });
 
+    it("画像フレームあり + logo 指定時に drawLogoOnCanvas が呼ばれること", async () => {
+      // 画像フレーム (hasImageFrame=true) ルートでもロゴ描画経路に到達することを検証
+      const originalImage = global.Image;
+
+      class AutoLoadImage {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        naturalWidth = 944;
+        naturalHeight = 944;
+        private _src = "";
+        get src() {
+          return this._src;
+        }
+        set src(value: string) {
+          this._src = value;
+          Promise.resolve().then(() => {
+            if (this.onload) this.onload();
+          });
+        }
+      }
+
+      (global as unknown as { Image: unknown }).Image =
+        AutoLoadImage as unknown as typeof Image;
+
+      try {
+        render(
+          <QrPreview
+            url="https://example.com"
+            isUrlValid={true}
+            logo={mockLogo}
+            frameConfig={{ type: "img-simple-black", color: "#000000" }}
+          />
+        );
+
+        await act(async () => {
+          jest.advanceTimersByTime(500);
+        });
+
+        await waitFor(() => {
+          expect(mockDrawLogoOnCanvas).toHaveBeenCalledTimes(1);
+        });
+
+        expect(mockDrawLogoOnCanvas).toHaveBeenCalledWith(
+          expect.any(HTMLCanvasElement),
+          mockLogo
+        );
+      } finally {
+        (global as unknown as { Image: unknown }).Image = originalImage;
+      }
+    });
+
     it("drawLogoOnCanvas が失敗しても hasError 状態にならないこと", async () => {
       // drawLogoOnCanvas 内部では読み込み失敗時に resolve するが、
       // QrPreview の try-catch に到達するエラーをスローしても

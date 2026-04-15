@@ -6,10 +6,18 @@ export interface UtmParams {
   content: string;
 }
 
+export interface LogoConfig {
+  dataUrl: string;
+  fileName: string;
+  fileType: string;
+  fileSizeKb: number;
+  sizePercent: number; // 10-30
+}
+
 export interface DecorationConfig {
   fgColor: string;
   bgColor: string;
-  logoSrc: string | null;
+  logo: LogoConfig | null;
   frameType: string | null;
   caption: string;
   preset: string | null;
@@ -30,7 +38,7 @@ export const INITIAL_QR_STATE: QrState = {
   decoration: {
     fgColor: "#000000",
     bgColor: "#ffffff",
-    logoSrc: null,
+    logo: null,
     frameType: null,
     caption: "",
     preset: null,

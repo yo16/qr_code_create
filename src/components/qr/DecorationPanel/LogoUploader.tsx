@@ -3,15 +3,10 @@
 import { useCallback } from "react";
 import { FileUpload } from "@/components/ui/FileUpload/FileUpload";
 import { trackLogoUploaded } from "@/lib/analytics/events";
+import type { LogoConfig } from "@/types/qr";
 import styles from "./LogoUploader.module.css";
 
-export interface LogoConfig {
-  dataUrl: string;
-  fileName: string;
-  fileType: string;
-  fileSizeKb: number;
-  sizePercent: number; // 10-30
-}
+export type { LogoConfig };
 
 interface LogoUploaderProps {
   logo: LogoConfig | null;

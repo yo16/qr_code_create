@@ -29,7 +29,7 @@ function getCompletionPercent(state: QrState): number {
     state.decoration.bgColor !== "#ffffff" ||
     (state.decoration.frameType !== null && state.decoration.frameType !== "none") ||
     state.decoration.caption !== "" ||
-    state.decoration.logoSrc !== null;
+    state.decoration.logo !== null;
   if (hasDecoration) steps += 1;
   return Math.round((steps / 3) * 100);
 }
@@ -111,7 +111,7 @@ export function QrGenerator() {
     state.utm.content.trim() !== "";
 
   const decorationCount = [
-    state.decoration.logoSrc !== null,
+    state.decoration.logo !== null,
     state.decoration.fgColor !== "#000000" || state.decoration.bgColor !== "#ffffff",
     state.decoration.frameType !== null,
     state.decoration.caption !== "",
@@ -229,7 +229,7 @@ export function QrGenerator() {
             url={builtUrl}
             fgColor={state.decoration.fgColor}
             bgColor={state.decoration.bgColor}
-            logoSrc={state.decoration.logoSrc}
+            logo={state.decoration.logo}
             frameConfig={frameConfig}
             isUrlValid={state.isUrlValid}
             canvasRef={canvasRef}

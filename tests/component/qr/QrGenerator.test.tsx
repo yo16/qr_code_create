@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QrGenerator } from "@/components/qr/QrGenerator/QrGenerator";
+import type { LogoConfig } from "@/types/qr";
 
 // 子コンポーネントをモック
 jest.mock("@/components/qr/UrlInput/UrlInput", () => ({
@@ -48,7 +49,12 @@ jest.mock("@/components/qr/UrlPreview/UrlPreview", () => ({
 
 jest.mock("@/components/qr/QrPreview/QrPreview", () => ({
   QrPreview: (props: any) => (
-    <div data-testid="qr-preview">{props.url}</div>
+    <div
+      data-testid="qr-preview"
+      data-logo={props.logo ? JSON.stringify(props.logo) : "null"}
+    >
+      {props.url}
+    </div>
   ),
 }));
 
@@ -61,8 +67,39 @@ jest.mock("@/components/ui/ProgressBar/ProgressBar", () => ({
 }));
 
 jest.mock("@/components/qr/DownloadPanel/DownloadPanel", () => ({
-  DownloadPanel: ({ disabled }: any) => (
-    <div data-testid="download-panel" data-disabled={disabled ? "true" : "false"} />
+  DownloadPanel: ({ disabled, decorationCount }: { disabled: boolean; decorationCount: number }) => (
+    <div
+      data-testid="download-panel"
+      data-disabled={disabled ? "true" : "false"}
+      data-decoration-count={decorationCount}
+    />
+  ),
+}));
+
+jest.mock("@/components/qr/DecorationPanel/LogoUploader", () => ({
+  LogoUploader: ({ logo, onChange }: { logo: LogoConfig | null; onChange: (logo: LogoConfig | null) => void }) => (
+    <div data-testid="logo-uploader" data-logo={logo ? JSON.stringify(logo) : "null"}>
+      <button
+        data-testid="logo-upload-btn"
+        onClick={() =>
+          onChange({
+            dataUrl: "data:image/png;base64,newlogo",
+            fileName: "new.png",
+            fileType: "image/png",
+            fileSizeKb: 15,
+            sizePercent: 20,
+          } as LogoConfig)
+        }
+      >
+        upload logo
+      </button>
+      <button
+        data-testid="logo-remove-btn"
+        onClick={() => onChange(null)}
+      >
+        remove logo
+      </button>
+    </div>
   ),
 }));
 
@@ -211,6 +248,93 @@ describe("QrGenerator", () => {
         "data-disabled",
         "false"
       );
+    });
+  });
+
+  describe("LogoUploader 接続 — logo state 管理", () => {
+    it("初期状態: LogoUploaderに logo=null が渡ること", () => {
+      render(<QrGenerator />);
+      const logoUploader = screen.getByTestId("logo-uploader");
+      expect(logoUploader).toHaveAttribute("data-logo", "null");
+    });
+
+    it("LogoUploader で画像を選択すると state.decoration.logo が LogoConfig 型で更新されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("logo-upload-btn"));
+      const logoUploader = screen.getByTestId("logo-uploader");
+      const logoJson = logoUploader.getAttribute("data-logo");
+      expect(logoJson).not.toBe("null");
+      const logo = JSON.parse(logoJson!);
+      expect(logo).toMatchObject({
+        dataUrl: expect.stringMatching(/^data:/),
+        fileName: expect.any(String),
+        fileType: expect.any(String),
+        fileSizeKb: expect.any(Number),
+        sizePercent: expect.any(Number),
+      });
+    });
+
+    it("LogoUploader で「ロゴを削除」すると state.decoration.logo が null になること", () => {
+      render(<QrGenerator />);
+      // まずアップロード
+      fireEvent.click(screen.getByTestId("logo-upload-btn"));
+      // 次に削除
+      fireEvent.click(screen.getByTestId("logo-remove-btn"));
+      const logoUploader = screen.getByTestId("logo-uploader");
+      expect(logoUploader).toHaveAttribute("data-logo", "null");
+    });
+
+    it("選択後の logo が QrPreview の logo prop に渡ること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("logo-upload-btn"));
+      const qrPreview = screen.getByTestId("qr-preview");
+      const logoJson = qrPreview.getAttribute("data-logo");
+      expect(logoJson).not.toBe("null");
+      const logo = JSON.parse(logoJson!);
+      expect(logo.dataUrl).toBe("data:image/png;base64,newlogo");
+      expect(logo.sizePercent).toBe(20);
+    });
+
+    it("ロゴ選択後の logo.dataUrl が正しい値で QrPreview に渡ること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("logo-upload-btn"));
+      const qrPreview = screen.getByTestId("qr-preview");
+      const logo = JSON.parse(qrPreview.getAttribute("data-logo")!);
+      expect(logo.dataUrl).toBe("data:image/png;base64,newlogo");
+    });
+
+    it("ロゴ選択後の logo.sizePercent が正しい値で QrPreview に渡ること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("logo-upload-btn"));
+      const qrPreview = screen.getByTestId("qr-preview");
+      const logo = JSON.parse(qrPreview.getAttribute("data-logo")!);
+      expect(logo.sizePercent).toBe(20);
+    });
+
+    it("ロゴなし時に decorationCount が logo 分だけカウントされないこと（+0）", () => {
+      render(<QrGenerator />);
+      // 初期状態: logo=null
+      const downloadPanel = screen.getByTestId("download-panel");
+      // 初期状態は色もデフォルト、frameもnull、captionも空 → decorationCount=0
+      expect(downloadPanel).toHaveAttribute("data-decoration-count", "0");
+    });
+
+    it("ロゴ設定後に decorationCount が +1 されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("logo-upload-btn"));
+      const downloadPanel = screen.getByTestId("download-panel");
+      // logo=非null → decorationCount >= 1
+      const count = Number(downloadPanel.getAttribute("data-decoration-count"));
+      expect(count).toBeGreaterThanOrEqual(1);
+    });
+
+    it("ロゴ削除後に decorationCount が元に戻ること", () => {
+      render(<QrGenerator />);
+      // アップロード → 削除
+      fireEvent.click(screen.getByTestId("logo-upload-btn"));
+      fireEvent.click(screen.getByTestId("logo-remove-btn"));
+      const downloadPanel = screen.getByTestId("download-panel");
+      expect(downloadPanel).toHaveAttribute("data-decoration-count", "0");
     });
   });
 });

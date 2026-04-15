@@ -13,6 +13,15 @@ interface LogoUploaderProps {
   onChange: (logo: LogoConfig | null) => void;
 }
 
+const MIN_SIZE_PERCENT = 10;
+const MAX_SIZE_PERCENT = 25;
+
+function clampSizePercent(value: number): number {
+  if (value < MIN_SIZE_PERCENT) return MIN_SIZE_PERCENT;
+  if (value > MAX_SIZE_PERCENT) return MAX_SIZE_PERCENT;
+  return value;
+}
+
 export function LogoUploader({ logo, onChange }: LogoUploaderProps) {
   const handleFileSelect = useCallback(
     (file: File | null) => {
@@ -43,7 +52,7 @@ export function LogoUploader({ logo, onChange }: LogoUploaderProps) {
   const handleSizeChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!logo) return;
-      onChange({ ...logo, sizePercent: Number(e.target.value) });
+      onChange({ ...logo, sizePercent: clampSizePercent(Number(e.target.value)) });
     },
     [logo, onChange]
   );
@@ -53,6 +62,7 @@ export function LogoUploader({ logo, onChange }: LogoUploaderProps) {
   }, [onChange]);
 
   if (logo) {
+    const displaySizePercent = clampSizePercent(logo.sizePercent);
     return (
       <div className={styles.wrapper}>
         <div className={styles.previewArea}>
@@ -64,15 +74,15 @@ export function LogoUploader({ logo, onChange }: LogoUploaderProps) {
           />
           <div className={styles.controls}>
             <label htmlFor="logo-size-slider" className={styles.sizeLabel}>
-              ロゴサイズ: {logo.sizePercent}%
+              ロゴサイズ: {displaySizePercent}%
             </label>
             <input
               id="logo-size-slider"
               type="range"
-              min={10}
-              max={30}
+              min={MIN_SIZE_PERCENT}
+              max={MAX_SIZE_PERCENT}
               step={1}
-              value={logo.sizePercent}
+              value={displaySizePercent}
               onChange={handleSizeChange}
               className={styles.slider}
               aria-label="ロゴサイズを調整"

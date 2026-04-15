@@ -11,7 +11,7 @@ export interface LogoConfig {
   fileName: string;
   fileType: string;
   fileSizeKb: number;
-  sizePercent: number; // 10-30
+  sizePercent: number; // 10-25 (誤り訂正レベルHの安全範囲)
 }
 
 export interface DecorationConfig {

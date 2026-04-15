@@ -90,6 +90,24 @@ describe("QrPreview", () => {
         );
       });
     });
+
+    it("toCanvas に errorCorrectionLevel: \"H\" が渡されること（ロゴ重ね対応）", async () => {
+      render(<QrPreview url="https://example.com" isUrlValid={true} />);
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledWith(
+          expect.any(HTMLCanvasElement),
+          "https://example.com",
+          expect.objectContaining({
+            errorCorrectionLevel: "H",
+          })
+        );
+      });
+    });
   });
 
   describe("異常系", () => {
@@ -364,6 +382,13 @@ describe("QrPreview", () => {
         expect(mockDrawLogoOnCanvas).toHaveBeenCalledWith(
           expect.any(HTMLCanvasElement),
           mockLogo
+        );
+
+        // 画像フレーム経路でも errorCorrectionLevel: "H" で呼ばれていること
+        expect(mockToCanvas).toHaveBeenCalledWith(
+          expect.any(HTMLCanvasElement),
+          "https://example.com",
+          expect.objectContaining({ errorCorrectionLevel: "H" })
         );
       } finally {
         (global as unknown as { Image: unknown }).Image = originalImage;

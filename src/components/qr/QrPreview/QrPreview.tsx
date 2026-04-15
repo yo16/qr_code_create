@@ -109,7 +109,7 @@ export function QrPreview({
           width: qrDisplaySize,
           margin: 4,
           color: { dark: fgColor, light: bgColor },
-          errorCorrectionLevel: "M",
+          errorCorrectionLevel: "H",
         });
 
         // QRコードをフレーム内の所定位置に描画
@@ -126,7 +126,7 @@ export function QrPreview({
           width: size,
           margin: 4,
           color: { dark: fgColor, light: bgColor },
-          errorCorrectionLevel: "M",
+          errorCorrectionLevel: "H",
         });
 
         // Canvas描画フレームを重ねる

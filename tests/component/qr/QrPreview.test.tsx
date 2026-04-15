@@ -313,6 +313,7 @@ describe("QrPreview", () => {
     it("画像フレームあり + logo 指定時に drawLogoOnCanvas が呼ばれること", async () => {
       // 画像フレーム (hasImageFrame=true) ルートでもロゴ描画経路に到達することを検証
       const originalImage = global.Image;
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
 
       class AutoLoadImage {
         onload: (() => void) | null = null;
@@ -333,6 +334,14 @@ describe("QrPreview", () => {
 
       (global as unknown as { Image: unknown }).Image =
         AutoLoadImage as unknown as typeof Image;
+
+      // jsdomはCanvasのgetContextを実装していないためモックで代替
+      HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
+        drawImage: jest.fn(),
+        fillRect: jest.fn(),
+        clearRect: jest.fn(),
+        fillStyle: "",
+      })) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 
       try {
         render(
@@ -358,6 +367,7 @@ describe("QrPreview", () => {
         );
       } finally {
         (global as unknown as { Image: unknown }).Image = originalImage;
+        HTMLCanvasElement.prototype.getContext = originalGetContext;
       }
     });
 

@@ -369,7 +369,7 @@ export interface LogoConfig {
   fileName: string;     // 元ファイル名
   fileType: string;     // MIME type
   fileSizeKb: number;   // ファイルサイズ(KB)
-  sizePercent: number;  // QRコード内でのサイズ比率 (10-30)
+  sizePercent: number;  // QRコード内でのサイズ比率 (10-25、誤り訂正レベルHの安全範囲)
 }
 ```
 

@@ -61,7 +61,7 @@ export interface LogoConfig {
   fileType: 'image/png' | 'image/jpeg' | 'image/svg+xml';
   /** ファイルサイズ(KB) */
   fileSizeKb: number;
-  /** QRコード内でのサイズ比率 (10-30%) */
+  /** QRコード内でのサイズ比率 (10-25%、誤り訂正レベルHの安全範囲) */
   sizePercent: number;
 }
 

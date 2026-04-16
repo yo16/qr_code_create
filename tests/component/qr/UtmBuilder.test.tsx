@@ -117,6 +117,28 @@ describe("UtmBuilder", () => {
     });
   });
 
+  describe("ヘルプツールチップ", () => {
+    it("utm_sourceの「?」ボタンにホバーするとツールチップが表示されること", async () => {
+      const user = userEvent.setup();
+      render(<UtmBuilderWrapper />);
+      const helpButton = screen.getByRole("button", { name: "utm_source（掲載場所）のヘルプ" });
+      await user.hover(helpButton);
+      const tooltip = screen.getByRole("tooltip");
+      expect(tooltip).toBeInTheDocument();
+      expect(tooltip).toHaveTextContent("掲載");
+    });
+
+    it("ツールチップが上方表示用のCSSクラスを持つこと（position=top）", async () => {
+      const user = userEvent.setup();
+      render(<UtmBuilderWrapper />);
+      const helpButton = screen.getByRole("button", { name: "utm_source（掲載場所）のヘルプ" });
+      await user.hover(helpButton);
+      const tooltip = screen.getByRole("tooltip");
+      expect(tooltip.className).toContain("top");
+      expect(tooltip.className).not.toContain("right");
+    });
+  });
+
   describe("用途別設定例", () => {
     it("用途別設定例ボタンが表示されること", () => {
       render(<UtmBuilderWrapper />);

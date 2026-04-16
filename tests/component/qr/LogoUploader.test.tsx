@@ -26,12 +26,12 @@ describe("LogoUploader", () => {
       expect(img).toHaveAttribute("src", "data:image/png;base64,abc123");
     });
 
-    it("ロゴ設定済み時にサイズスライダーが表示されること（min=10, max=30）", () => {
+    it("ロゴ設定済み時にサイズスライダーが表示されること（min=10, max=25）", () => {
       render(<LogoUploader logo={mockLogoConfig} onChange={jest.fn()} />);
       const slider = screen.getByRole("slider", { name: "ロゴサイズを調整" });
       expect(slider).toBeInTheDocument();
       expect(slider).toHaveAttribute("min", "10");
-      expect(slider).toHaveAttribute("max", "30");
+      expect(slider).toHaveAttribute("max", "25");
     });
 
     it("ロゴ設定済み時に「ロゴを削除」ボタンが表示されること", () => {
@@ -81,6 +81,34 @@ describe("LogoUploader", () => {
       expect(
         screen.queryByRole("button", { name: "ロゴを削除" })
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("サイズclamp（読取失敗防止）", () => {
+    it("sizePercent=30 を受け取っても表示は25%にclampされること", () => {
+      const oversized: LogoConfig = { ...mockLogoConfig, sizePercent: 30 };
+      render(<LogoUploader logo={oversized} onChange={jest.fn()} />);
+      expect(screen.getByText("ロゴサイズ: 25%")).toBeInTheDocument();
+      const slider = screen.getByRole("slider", { name: "ロゴサイズを調整" });
+      expect(slider).toHaveAttribute("value", "25");
+    });
+
+    it("sizePercent=5 を受け取っても表示は10%にclampされること", () => {
+      const undersized: LogoConfig = { ...mockLogoConfig, sizePercent: 5 };
+      render(<LogoUploader logo={undersized} onChange={jest.fn()} />);
+      expect(screen.getByText("ロゴサイズ: 10%")).toBeInTheDocument();
+    });
+
+    it("スライダー操作で上限超えの値が来てもclampしてonChangeが呼ばれること", () => {
+      const handleChange = jest.fn();
+      render(<LogoUploader logo={mockLogoConfig} onChange={handleChange} />);
+      const slider = screen.getByRole("slider", { name: "ロゴサイズを調整" });
+      // スライダー自体は max=25 なので通常は超過しないが、防御として clamp 経路を検証
+      fireEvent.change(slider, { target: { value: "30" } });
+      expect(handleChange).toHaveBeenCalledWith({
+        ...mockLogoConfig,
+        sizePercent: 25,
+      });
     });
   });
 });

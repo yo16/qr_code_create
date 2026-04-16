@@ -18,7 +18,7 @@
   font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
   border-radius: var(--radius-sm);
-  white-space: nowrap;
+  width: max-content;
   max-width: 240px;
   white-space: normal;
   word-break: break-word;

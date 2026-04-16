@@ -8,10 +8,11 @@ import { QrPreview } from "@/components/qr/QrPreview/QrPreview";
 import { DownloadPanel } from "@/components/qr/DownloadPanel/DownloadPanel";
 import { ColorCustomizer } from "@/components/qr/DecorationPanel/ColorCustomizer";
 import { FrameSelector } from "@/components/qr/DecorationPanel/FrameSelector";
+import { LogoUploader } from "@/components/qr/DecorationPanel/LogoUploader";
 import { ProgressBar } from "@/components/ui/ProgressBar/ProgressBar";
 import { buildUtmUrl } from "@/lib/url/buildUtmUrl";
 import { DEFAULT_FRAME_CONFIG, type FrameConfig } from "@/lib/qr/frameRenderer";
-import { INITIAL_QR_STATE, type QrState } from "@/types/qr";
+import { INITIAL_QR_STATE, type LogoConfig, type QrState } from "@/types/qr";
 import styles from "./QrGenerator.module.css";
 
 function getCompletionPercent(state: QrState): number {
@@ -29,7 +30,7 @@ function getCompletionPercent(state: QrState): number {
     state.decoration.bgColor !== "#ffffff" ||
     (state.decoration.frameType !== null && state.decoration.frameType !== "none") ||
     state.decoration.caption !== "" ||
-    state.decoration.logoSrc !== null;
+    state.decoration.logo !== null;
   if (hasDecoration) steps += 1;
   return Math.round((steps / 3) * 100);
 }
@@ -103,6 +104,13 @@ export function QrGenerator() {
     }));
   };
 
+  const handleLogoChange = (logo: LogoConfig | null) => {
+    setState((prev) => ({
+      ...prev,
+      decoration: { ...prev.decoration, logo },
+    }));
+  };
+
   const hasUtm =
     state.utm.source.trim() !== "" ||
     state.utm.medium.trim() !== "" ||
@@ -111,7 +119,7 @@ export function QrGenerator() {
     state.utm.content.trim() !== "";
 
   const decorationCount = [
-    state.decoration.logoSrc !== null,
+    state.decoration.logo !== null,
     state.decoration.fgColor !== "#000000" || state.decoration.bgColor !== "#ffffff",
     state.decoration.frameType !== null,
     state.decoration.caption !== "",
@@ -180,6 +188,10 @@ export function QrGenerator() {
             onFgColorChange={handleFgColorChange}
             onBgColorChange={handleBgColorChange}
           />
+          <LogoUploader
+            logo={state.decoration.logo}
+            onChange={handleLogoChange}
+          />
           <FrameSelector
             frame={frameConfig}
             onChange={handleFrameChange}
@@ -229,7 +241,7 @@ export function QrGenerator() {
             url={builtUrl}
             fgColor={state.decoration.fgColor}
             bgColor={state.decoration.bgColor}
-            logoSrc={state.decoration.logoSrc}
+            logo={state.decoration.logo}
             frameConfig={frameConfig}
             isUrlValid={state.isUrlValid}
             canvasRef={canvasRef}

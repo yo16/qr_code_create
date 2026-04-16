@@ -357,7 +357,7 @@ interface LogoUploaderProps {
 **機能**:
 - FileUploadコンポーネントを使用（PNG/JPG/SVG対応）
 - アップロード後の画像プレビュー
-- ロゴサイズ調整スライダー（QRコードの10%〜30%）
+- ロゴサイズ調整スライダー（QRコードの10%〜25%、誤り訂正レベルHの安全範囲）
 - 「ロゴを削除」ボタン
 - アップロード完了時に `trackLogoUploaded` GA4イベント発火
 - 画像はクライアントサイドで `FileReader` として保持（サーバー送信なし）
@@ -369,7 +369,7 @@ export interface LogoConfig {
   fileName: string;     // 元ファイル名
   fileType: string;     // MIME type
   fileSizeKb: number;   // ファイルサイズ(KB)
-  sizePercent: number;  // QRコード内でのサイズ比率 (10-30)
+  sizePercent: number;  // QRコード内でのサイズ比率 (10-25、誤り訂正レベルHの安全範囲)
 }
 ```
 

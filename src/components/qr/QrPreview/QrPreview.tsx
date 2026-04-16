@@ -9,6 +9,8 @@ import {
   type FrameConfig,
   DEFAULT_FRAME_CONFIG,
 } from "@/lib/qr/frameRenderer";
+import { drawLogoOnCanvas } from "@/lib/qr/drawLogo";
+import type { LogoConfig } from "@/types/qr";
 import styles from "./QrPreview.module.css";
 
 /** フレーム画像仕様の定数 */
@@ -27,8 +29,8 @@ interface QrPreviewProps {
   bgColor?: string;
   /** サイズ（デフォルト: 256） */
   size?: number;
-  /** ロゴ画像の data URL（Epic 4 で実装予定） */
-  logoSrc?: string | null;
+  /** ロゴ設定 */
+  logo?: LogoConfig | null;
   /** フレーム設定 */
   frameConfig?: FrameConfig;
   /** URL有効性（false のときプレースホルダー表示） */
@@ -54,7 +56,7 @@ export function QrPreview({
   fgColor = "#000000",
   bgColor = "#ffffff",
   size = 256,
-  logoSrc,
+  logo,
   frameConfig = DEFAULT_FRAME_CONFIG,
   isUrlValid = false,
   canvasRef: externalCanvasRef,
@@ -107,7 +109,7 @@ export function QrPreview({
           width: qrDisplaySize,
           margin: 4,
           color: { dark: fgColor, light: bgColor },
-          errorCorrectionLevel: "M",
+          errorCorrectionLevel: "H",
         });
 
         // QRコードをフレーム内の所定位置に描画
@@ -124,7 +126,7 @@ export function QrPreview({
           width: size,
           margin: 4,
           color: { dark: fgColor, light: bgColor },
-          errorCorrectionLevel: "M",
+          errorCorrectionLevel: "H",
         });
 
         // Canvas描画フレームを重ねる
@@ -136,14 +138,16 @@ export function QrPreview({
         }
       }
 
-      // TODO(Epic 4 / b69.1): logoSrc が指定されている場合、Canvas にロゴを重ねて描画する
-      void logoSrc;
+      // ロゴが指定されている場合、Canvas にロゴを重ねて描画する
+      if (logo != null) {
+        await drawLogoOnCanvas(canvas, logo);
+      }
     } catch {
       setHasError(true);
     } finally {
       setIsLoading(false);
     }
-  }, [url, fgColor, bgColor, size, shouldRender, logoSrc, frameConfig, hasFrame, hasImageFrame]);
+  }, [url, fgColor, bgColor, size, shouldRender, logo, frameConfig, hasFrame, hasImageFrame]);
 
   // URL・色・サイズ・フレームが変わったら 500ms デバウンスして再生成
   useEffect(() => {

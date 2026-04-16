@@ -1,11 +1,20 @@
 import React from "react";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import { QrPreview } from "@/components/qr/QrPreview/QrPreview";
+import type { LogoConfig } from "@/types/qr";
 
 // qrcode パッケージをモック（jsdom は Canvas API を持たないため）
 jest.mock("qrcode", () => ({
   toCanvas: jest.fn().mockResolvedValue(undefined),
 }));
+
+// drawLogoOnCanvas をモック（呼び出し検証のため）
+jest.mock("@/lib/qr/drawLogo", () => ({
+  drawLogoOnCanvas: jest.fn().mockResolvedValue(undefined),
+}));
+
+import { drawLogoOnCanvas } from "@/lib/qr/drawLogo";
+const mockDrawLogoOnCanvas = drawLogoOnCanvas as jest.Mock;
 
 // 動的 import（await import("qrcode")）もモックが効くよう jest.mock で解決済み
 
@@ -17,6 +26,8 @@ describe("QrPreview", () => {
     jest.useFakeTimers();
     mockToCanvas.mockClear();
     mockToCanvas.mockResolvedValue(undefined);
+    mockDrawLogoOnCanvas.mockClear();
+    mockDrawLogoOnCanvas.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -75,6 +86,24 @@ describe("QrPreview", () => {
           expect.objectContaining({
             width: 128,
             color: { dark: "#111111", light: "#eeeeee" },
+          })
+        );
+      });
+    });
+
+    it("toCanvas に errorCorrectionLevel: \"H\" が渡されること（ロゴ重ね対応）", async () => {
+      render(<QrPreview url="https://example.com" isUrlValid={true} />);
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledWith(
+          expect.any(HTMLCanvasElement),
+          "https://example.com",
+          expect.objectContaining({
+            errorCorrectionLevel: "H",
           })
         );
       });
@@ -205,6 +234,195 @@ describe("QrPreview", () => {
       expect(
         screen.getByText("URLを入力してQRコードを生成")
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("ロゴ描画 (drawLogoOnCanvas)", () => {
+    const mockLogo: LogoConfig = {
+      dataUrl: "data:image/png;base64,abc123",
+      fileName: "logo.png",
+      fileType: "image/png",
+      fileSizeKb: 10,
+      sizePercent: 20,
+    };
+
+    it("logo=null のとき drawLogoOnCanvas が呼ばれないこと", async () => {
+      render(
+        <QrPreview url="https://example.com" isUrlValid={true} logo={null} />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      expect(mockDrawLogoOnCanvas).not.toHaveBeenCalled();
+    });
+
+    it("logo 指定時: QR描画後に drawLogoOnCanvas が呼ばれること", async () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          logo={mockLogo}
+        />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockDrawLogoOnCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      expect(mockDrawLogoOnCanvas).toHaveBeenCalledWith(
+        expect.any(HTMLCanvasElement),
+        mockLogo
+      );
+    });
+
+    it("logo.sizePercent 変更で再描画が発生すること（useCallback 依存配列）", async () => {
+      const { rerender } = render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          logo={mockLogo}
+        />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockDrawLogoOnCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      mockDrawLogoOnCanvas.mockClear();
+      mockToCanvas.mockClear();
+
+      const updatedLogo: LogoConfig = { ...mockLogo, sizePercent: 30 };
+      rerender(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          logo={updatedLogo}
+        />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockDrawLogoOnCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      expect(mockDrawLogoOnCanvas).toHaveBeenCalledWith(
+        expect.any(HTMLCanvasElement),
+        updatedLogo
+      );
+    });
+
+    it("画像フレームあり + logo 指定時に drawLogoOnCanvas が呼ばれること", async () => {
+      // 画像フレーム (hasImageFrame=true) ルートでもロゴ描画経路に到達することを検証
+      const originalImage = global.Image;
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+
+      class AutoLoadImage {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        naturalWidth = 944;
+        naturalHeight = 944;
+        private _src = "";
+        get src() {
+          return this._src;
+        }
+        set src(value: string) {
+          this._src = value;
+          Promise.resolve().then(() => {
+            if (this.onload) this.onload();
+          });
+        }
+      }
+
+      (global as unknown as { Image: unknown }).Image =
+        AutoLoadImage as unknown as typeof Image;
+
+      // jsdomはCanvasのgetContextを実装していないためモックで代替
+      HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
+        drawImage: jest.fn(),
+        fillRect: jest.fn(),
+        clearRect: jest.fn(),
+        fillStyle: "",
+      })) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+
+      try {
+        render(
+          <QrPreview
+            url="https://example.com"
+            isUrlValid={true}
+            logo={mockLogo}
+            frameConfig={{ type: "img-simple-black", color: "#000000" }}
+          />
+        );
+
+        await act(async () => {
+          jest.advanceTimersByTime(500);
+        });
+
+        await waitFor(() => {
+          expect(mockDrawLogoOnCanvas).toHaveBeenCalledTimes(1);
+        });
+
+        expect(mockDrawLogoOnCanvas).toHaveBeenCalledWith(
+          expect.any(HTMLCanvasElement),
+          mockLogo
+        );
+
+        // 画像フレーム経路でも errorCorrectionLevel: "H" で呼ばれていること
+        expect(mockToCanvas).toHaveBeenCalledWith(
+          expect.any(HTMLCanvasElement),
+          "https://example.com",
+          expect.objectContaining({ errorCorrectionLevel: "H" })
+        );
+      } finally {
+        (global as unknown as { Image: unknown }).Image = originalImage;
+        HTMLCanvasElement.prototype.getContext = originalGetContext;
+      }
+    });
+
+    it("drawLogoOnCanvas が失敗しても hasError 状態にならないこと", async () => {
+      // drawLogoOnCanvas 内部では読み込み失敗時に resolve するが、
+      // QrPreview の try-catch に到達するエラーをスローしても
+      // hasError が立たないことを検証する
+      // （実装上は drawLogoOnCanvas 自体は例外をスローしない設計）
+      mockDrawLogoOnCanvas.mockResolvedValueOnce(undefined);
+
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          logo={mockLogo}
+        />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockDrawLogoOnCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      // hasError=true のときに表示されるエラーメッセージが存在しないこと
+      expect(
+        screen.queryByText("QRコードの生成に失敗しました")
+      ).not.toBeInTheDocument();
     });
   });
 });

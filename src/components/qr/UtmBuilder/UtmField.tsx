@@ -45,7 +45,7 @@ export function UtmField({
             helpText={name === "campaign" ? "日付や内容を含めると管理しやすくなります" : undefined}
           />
         )}
-        <Tooltip content={helpText} position="right" onOpen={onTooltipOpen}>
+        <Tooltip content={helpText} position="top" onOpen={onTooltipOpen}>
           <button
             type="button"
             className={styles.helpButton}

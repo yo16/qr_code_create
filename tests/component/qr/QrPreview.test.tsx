@@ -237,92 +237,15 @@ describe("QrPreview", () => {
     });
   });
 
-  describe("previewArea 高さのキャプション対応", () => {
+  describe("previewArea — キャプション有無でも高さがsizeのまま正方形であること", () => {
     it("caption未指定のときpreviewAreaの高さがsize（256px）であること", () => {
       render(<QrPreview url="https://example.com" isUrlValid={true} />);
       const previewArea = screen.getByRole("img");
       expect(previewArea.style.height).toBe("256px");
+      expect(previewArea.style.width).toBe("256px");
     });
 
-    it("caption.text空文字のときpreviewAreaの高さがsize（256px）であること", () => {
-      render(
-        <QrPreview
-          url="https://example.com"
-          isUrlValid={true}
-          caption={{ text: "", fontSize: 14 }}
-        />
-      );
-      const previewArea = screen.getByRole("img");
-      expect(previewArea.style.height).toBe("256px");
-    });
-
-    it("caption指定時にpreviewAreaの高さがsize + captionHeightであること", () => {
-      const fontSize = 14;
-      const padding = 8;
-      const expectedHeight = 256 + fontSize + padding * 2;
-      render(
-        <QrPreview
-          url="https://example.com"
-          isUrlValid={true}
-          caption={{ text: "テスト", fontSize }}
-        />
-      );
-      const previewArea = screen.getByRole("img");
-      expect(previewArea.style.height).toBe(`${expectedHeight}px`);
-    });
-
-    it("caption.textが空白のみのときpreviewAreaの高さがsize（256px）であること", () => {
-      render(
-        <QrPreview
-          url="https://example.com"
-          isUrlValid={true}
-          caption={{ text: "   ", fontSize: 14 }}
-        />
-      );
-      const previewArea = screen.getByRole("img");
-      expect(previewArea.style.height).toBe("256px");
-    });
-
-    it("rerenderでcaption追加時にpreviewAreaの高さが連動して変わること", () => {
-      const { rerender } = render(
-        <QrPreview
-          url="https://example.com"
-          isUrlValid={true}
-          caption={{ text: "", fontSize: 14 }}
-        />
-      );
-      const previewArea = screen.getByRole("img");
-      expect(previewArea.style.height).toBe("256px");
-
-      rerender(
-        <QrPreview
-          url="https://example.com"
-          isUrlValid={true}
-          caption={{ text: "テスト", fontSize: 20 }}
-        />
-      );
-      const expectedHeight = 256 + 20 + 8 * 2;
-      expect(previewArea.style.height).toBe(`${expectedHeight}px`);
-    });
-
-    it("size=128のときキャプション付きでも高さが正しく計算されること", () => {
-      const fontSize = 14;
-      const padding = 8;
-      const expectedHeight = 128 + fontSize + padding * 2;
-      render(
-        <QrPreview
-          url="https://example.com"
-          isUrlValid={true}
-          size={128}
-          caption={{ text: "テスト", fontSize }}
-        />
-      );
-      const previewArea = screen.getByRole("img");
-      expect(previewArea.style.height).toBe(`${expectedHeight}px`);
-      expect(previewArea.style.width).toBe("128px");
-    });
-
-    it("previewAreaの幅がsizeのまま変わらないこと", () => {
+    it("caption指定時でもpreviewAreaの高さがsize（256px）のままであること", () => {
       render(
         <QrPreview
           url="https://example.com"
@@ -331,6 +254,7 @@ describe("QrPreview", () => {
         />
       );
       const previewArea = screen.getByRole("img");
+      expect(previewArea.style.height).toBe("256px");
       expect(previewArea.style.width).toBe("256px");
     });
   });
@@ -524,92 +448,26 @@ describe("QrPreview", () => {
     });
   });
 
-  describe("キャプション描画", () => {
-    let mockFillText: jest.Mock;
-    let mockFillRect: jest.Mock;
-    let mockDrawImage: jest.Mock;
-    let mockClearRect: jest.Mock;
-    let originalGetContext: typeof HTMLCanvasElement.prototype.getContext;
-
-    beforeEach(() => {
-      mockFillText = jest.fn();
-      mockFillRect = jest.fn();
-      mockDrawImage = jest.fn();
-      mockClearRect = jest.fn();
-      originalGetContext = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue({
-        fillText: mockFillText,
-        fillRect: mockFillRect,
-        drawImage: mockDrawImage,
-        clearRect: mockClearRect,
-        fillStyle: "",
-        font: "",
-        textAlign: "",
-        textBaseline: "",
-      }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+  describe("キャプションHTMLプレビュー", () => {
+    it("caption未指定のときキャプション要素が存在しないこと", () => {
+      const { container } = render(<QrPreview url="https://example.com" isUrlValid={true} />);
+      const captionEl = container.querySelector("[class*='captionPreview']");
+      expect(captionEl).toBeNull();
     });
 
-    afterEach(() => {
-      HTMLCanvasElement.prototype.getContext = originalGetContext;
-    });
-
-    it("caption未指定のときfillTextが呼ばれないこと", async () => {
-      render(
-        <QrPreview url="https://example.com" isUrlValid={true} />
-      );
-
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
-
-      await waitFor(() => {
-        expect(mockToCanvas).toHaveBeenCalledTimes(1);
-      });
-
-      expect(mockFillText).not.toHaveBeenCalled();
-    });
-
-    it("caption.text が空文字のときfillTextが呼ばれないこと", async () => {
-      render(
+    it("caption.text空文字のときキャプション要素が存在しないこと", () => {
+      const { container } = render(
         <QrPreview
           url="https://example.com"
           isUrlValid={true}
           caption={{ text: "", fontSize: 14 }}
         />
       );
-
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
-
-      await waitFor(() => {
-        expect(mockToCanvas).toHaveBeenCalledTimes(1);
-      });
-
-      expect(mockFillText).not.toHaveBeenCalled();
+      const captionEl = container.querySelector("[class*='captionPreview']");
+      expect(captionEl).toBeNull();
     });
 
-    it("caption.text が空白文字のみのときfillTextが呼ばれないこと", async () => {
-      render(
-        <QrPreview
-          url="https://example.com"
-          isUrlValid={true}
-          caption={{ text: "   ", fontSize: 14 }}
-        />
-      );
-
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
-
-      await waitFor(() => {
-        expect(mockToCanvas).toHaveBeenCalledTimes(1);
-      });
-
-      expect(mockFillText).not.toHaveBeenCalled();
-    });
-
-    it("caption指定時にfillTextがキャプションテキストで呼ばれること", async () => {
+    it("caption指定時にキャプションテキストがHTMLで表示されること", () => {
       render(
         <QrPreview
           url="https://example.com"
@@ -617,95 +475,45 @@ describe("QrPreview", () => {
           caption={{ text: "スキャンしてね", fontSize: 14 }}
         />
       );
-
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
-
-      await waitFor(() => {
-        expect(mockToCanvas).toHaveBeenCalledTimes(1);
-      });
-
-      await waitFor(() => {
-        expect(mockFillText).toHaveBeenCalledWith(
-          "スキャンしてね",
-          expect.any(Number),
-          expect.any(Number)
-        );
-      });
+      expect(screen.getByText("スキャンしてね")).toBeInTheDocument();
     });
 
-    it("caption指定時にCanvas高さがキャプション分拡張されること", async () => {
-      const testSize = 256;
-      const testFontSize = 14;
-      const captionPadding = 8;
-      const expectedHeight = testSize + testFontSize + captionPadding * 2;
-
+    it("caption指定時にキャプションのフォントサイズがstyleで設定されること", () => {
       render(
         <QrPreview
           url="https://example.com"
           isUrlValid={true}
-          size={testSize}
-          caption={{ text: "テスト", fontSize: testFontSize }}
+          caption={{ text: "テスト", fontSize: 20 }}
         />
       );
-
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
-
-      await waitFor(() => {
-        expect(mockToCanvas).toHaveBeenCalledTimes(1);
-      });
-
-      const canvas = document.querySelector("canvas");
-      expect(canvas).not.toBeNull();
-      expect(canvas!.height).toBe(expectedHeight);
+      const captionEl = screen.getByText("テスト");
+      expect(captionEl.style.fontSize).toBe("20px");
     });
 
-    it("caption変更時に再描画が発生すること", async () => {
-      const { rerender } = render(
+    it("isUrlValid=falseのときキャプションが表示されないこと", () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={false}
+          caption={{ text: "テスト", fontSize: 14 }}
+        />
+      );
+      expect(screen.queryByText("テスト")).not.toBeInTheDocument();
+    });
+
+    it("caption.textが空白のみのときキャプションが表示されないこと", () => {
+      render(
         <QrPreview
           url="https://example.com"
           isUrlValid={true}
-          caption={{ text: "", fontSize: 14 }}
+          caption={{ text: "   ", fontSize: 14 }}
         />
       );
-
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
-
-      await waitFor(() => {
-        expect(mockToCanvas).toHaveBeenCalledTimes(1);
-      });
-
-      mockToCanvas.mockClear();
-      mockFillText.mockClear();
-
-      rerender(
-        <QrPreview
-          url="https://example.com"
-          isUrlValid={true}
-          caption={{ text: "新しいキャプション", fontSize: 16 }}
-        />
-      );
-
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
-
-      await waitFor(() => {
-        expect(mockToCanvas).toHaveBeenCalledTimes(1);
-      });
-
-      await waitFor(() => {
-        expect(mockFillText).toHaveBeenCalledWith(
-          "新しいキャプション",
-          expect.any(Number),
-          expect.any(Number)
-        );
-      });
+      // trimで空白のみはhasCaptionがfalseになるため表示されない
+      const allP = document.querySelectorAll("p");
+      const captionP = Array.from(allP).filter((p) => p.textContent?.trim() === "");
+      // captionPreviewクラスを持つpは存在しないはず
+      expect(captionP.length === 0 || !captionP.some((p) => p.className.includes("captionPreview"))).toBe(true);
     });
   });
 });

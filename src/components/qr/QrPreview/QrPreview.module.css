@@ -26,7 +26,7 @@
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  overflow: visible;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
@@ -106,6 +106,16 @@
   line-height: var(--line-height-normal);
 }
 
+/* キャプションプレビュー */
+.captionPreview {
+  text-align: center;
+  color: var(--color-foreground);
+  margin: 0;
+  padding: var(--spacing-xs) 0;
+  width: 100%;
+  word-break: break-all;
+}
+
 /* コントラスト警告 */
 .warning {
   display: flex;
@@ -138,13 +148,12 @@
 
   .previewArea {
     width: 128px !important;
-    height: auto !important;
-    min-height: 128px;
+    height: 128px !important;
   }
 
   .previewArea canvas {
     width: 128px !important;
-    height: auto !important;
+    height: 128px !important;
   }
 
   .label {

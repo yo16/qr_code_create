@@ -247,6 +247,7 @@ export function QrGenerator() {
             disabled={!state.isUrlValid}
             hasUtm={hasUtm}
             decorationCount={decorationCount}
+            caption={state.decoration.caption}
           />
         </section>
       </div>

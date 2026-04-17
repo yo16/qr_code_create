@@ -69,10 +69,9 @@ export const PAGE_METADATA = {
     noIndex: true,
   },
   guide: {
-    title: "使い方ガイド（準備中）",
-    description: "QR Code Createの使い方ガイド。現在準備中です。個別の記事は順次公開予定です。",
+    title: "使い方ガイド",
+    description: "QR Code Createの使い方やQRコードの活用方法を初心者にもわかりやすく解説するガイド集です。",
     path: "/guide",
-    noIndex: true,
   },
   useCases: {
     title: "用途別QRコード（準備中）",

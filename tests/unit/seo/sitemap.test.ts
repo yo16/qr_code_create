@@ -1,15 +1,17 @@
 import sitemap from "@/app/sitemap";
 import { getGuideSlugList } from "@/lib/content/getGuide";
 import { getUseCaseSlugList } from "@/lib/content/getUseCase";
+import { getBlogSlugList } from "@/lib/content/getBlog";
 
-const STATIC_PAGE_COUNT = 7; // /, /create, /guide, /use-cases, /faq, /privacy, /terms
+const STATIC_PAGE_COUNT = 8; // /, /create, /guide, /use-cases, /blog, /faq, /privacy, /terms
 
 describe("sitemap", () => {
   describe("エントリ数の検証", () => {
-    it("合計エントリ数が静的ページ + ガイド + use-cases であること", () => {
+    it("合計エントリ数が静的ページ + ガイド + use-cases + blog であること", () => {
       const guideCount = getGuideSlugList().length;
       const useCaseCount = getUseCaseSlugList().length;
-      const expectedTotal = STATIC_PAGE_COUNT + guideCount + useCaseCount;
+      const blogCount = getBlogSlugList().length;
+      const expectedTotal = STATIC_PAGE_COUNT + guideCount + useCaseCount + blogCount;
       const result = sitemap();
       expect(result).toHaveLength(expectedTotal);
     });
@@ -38,6 +40,7 @@ describe("sitemap", () => {
       { path: "/create", changeFrequency: "monthly", priority: 0.9 },
       { path: "/guide", changeFrequency: "weekly", priority: 0.8 },
       { path: "/use-cases", changeFrequency: "weekly", priority: 0.8 },
+      { path: "/blog", changeFrequency: "weekly", priority: 0.8 },
       { path: "/faq", changeFrequency: "monthly", priority: 0.6 },
       { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
       { path: "/terms", changeFrequency: "yearly", priority: 0.3 },

@@ -79,9 +79,8 @@ export const PAGE_METADATA = {
     path: "/use-cases",
   },
   blog: {
-    title: "ブログ（準備中）",
-    description: "QRコードマーケティングに関するブログ。現在準備中です。",
+    title: "ブログ",
+    description: "QRコードマーケティングやUTMパラメータの活用方法について、実践的な情報をお届けします。",
     path: "/blog",
-    noIndex: true,
   },
 } as const;

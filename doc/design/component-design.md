@@ -482,16 +482,22 @@ QRコードのリアルタイムプレビュー。
 ```typescript
 interface QrPreviewProps {
   url: string;            // UTMパラメータ付き完成URL
-  decoration: DecorationConfig;
-  isUrlValid: boolean;
+  fgColor?: string;
+  bgColor?: string;
+  size?: number;
+  logo?: LogoConfig | null;
+  frameConfig?: FrameConfig;
+  caption?: CaptionConfig;
+  isUrlValid?: boolean;
+  canvasRef?: React.RefObject<HTMLCanvasElement | null>;
 }
 ```
 
 **機能**:
-- `qrcode` ライブラリでCanvas/SVGにQRコードを描画
-- 装飾（ロゴ、フレーム、キャプション、色）をCanvasに重ねて描画
-- 生成URLのテキスト表示（コピーボタン付き）
-- QR読み取り可否の検証結果表示（警告アイコン）
+- `qrcode` ライブラリでCanvasにQRコードを描画
+- 装飾（ロゴ、フレーム、色）をCanvasに重ねて描画
+- **キャプションはCanvas外のHTMLテキスト要素で表示**（Canvas内には描画しない）
+- キャプション付き画像のダウンロードは `captionCompositor.ts` で一時Canvas合成して出力
 - コントラスト不足警告（`lib/color/contrastChecker.ts`）
 - URL未入力時はプレースホルダー表示
 

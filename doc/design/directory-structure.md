@@ -215,9 +215,11 @@ src/
 │
 ├── lib/                            # ユーティリティ・ビジネスロジック
 │   ├── content/
-│   │   ├── getContent.ts           # MDXファイル読み込み（gray-matter）
-│   │   ├── getContentList.ts       # コンテンツ一覧取得
-│   │   └── getSlugs.ts             # slug一覧取得（generateStaticParams用）
+│   │   ├── getGuide.ts             # ガイド記事読み込み（gray-matter）
+│   │   ├── getAllGuides.ts          # ガイド一覧取得（order順ソート）
+│   │   ├── getUseCase.ts           # 用途別記事読み込み（gray-matter）
+│   │   ├── getAllUseCases.ts        # 用途別一覧取得（order順ソート）
+│   │   └── index.ts                # エクスポート集約
 │   ├── metadata/
 │   │   └── generateMeta.ts         # ページメタデータ生成ヘルパー
 │   ├── schema/
@@ -231,9 +233,11 @@ src/
 │   ├── analytics/
 │   │   └── events.ts               # GA4カスタムイベント定義
 │   ├── qr/
-│   │   ├── generateQr.ts           # QRコード生成ロジック
-│   │   ├── validateQr.ts           # QR読み取り可否検証
-│   │   └── downloadQr.ts           # ダウンロード処理（PNG/SVG/PDF）
+│   │   ├── canvasExporter.ts       # Canvas→PNG/SVGエクスポート
+│   │   ├── pdfExporter.ts          # Canvas→PDFエクスポート
+│   │   ├── frameRenderer.ts        # フレーム描画ロジック
+│   │   ├── drawLogo.ts             # ロゴCanvas重ね描画
+│   │   └── captionCompositor.ts    # ダウンロード用キャプションCanvas合成
 │   ├── url/
 │   │   ├── buildUtmUrl.ts          # UTMパラメータ付きURL構築
 │   │   └── validateUrl.ts          # URL形式バリデーション

@@ -255,6 +255,7 @@ export function QrGenerator() {
             bgColor={state.decoration.bgColor}
             logo={state.decoration.logo}
             frameConfig={frameConfig}
+            caption={state.decoration.caption}
             isUrlValid={state.isUrlValid}
             canvasRef={canvasRef}
           />

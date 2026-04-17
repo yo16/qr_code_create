@@ -425,4 +425,189 @@ describe("QrPreview", () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  describe("キャプション描画", () => {
+    let mockFillText: jest.Mock;
+    let mockFillRect: jest.Mock;
+    let mockDrawImage: jest.Mock;
+    let mockClearRect: jest.Mock;
+    let originalGetContext: typeof HTMLCanvasElement.prototype.getContext;
+
+    beforeEach(() => {
+      mockFillText = jest.fn();
+      mockFillRect = jest.fn();
+      mockDrawImage = jest.fn();
+      mockClearRect = jest.fn();
+      originalGetContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue({
+        fillText: mockFillText,
+        fillRect: mockFillRect,
+        drawImage: mockDrawImage,
+        clearRect: mockClearRect,
+        fillStyle: "",
+        font: "",
+        textAlign: "",
+        textBaseline: "",
+      }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    });
+
+    afterEach(() => {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    });
+
+    it("caption未指定のときfillTextが呼ばれないこと", async () => {
+      render(
+        <QrPreview url="https://example.com" isUrlValid={true} />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      expect(mockFillText).not.toHaveBeenCalled();
+    });
+
+    it("caption.text が空文字のときfillTextが呼ばれないこと", async () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "", fontSize: 14 }}
+        />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      expect(mockFillText).not.toHaveBeenCalled();
+    });
+
+    it("caption.text が空白文字のみのときfillTextが呼ばれないこと", async () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "   ", fontSize: 14 }}
+        />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      expect(mockFillText).not.toHaveBeenCalled();
+    });
+
+    it("caption指定時にfillTextがキャプションテキストで呼ばれること", async () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "スキャンしてね", fontSize: 14 }}
+        />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      await waitFor(() => {
+        expect(mockFillText).toHaveBeenCalledWith(
+          "スキャンしてね",
+          expect.any(Number),
+          expect.any(Number)
+        );
+      });
+    });
+
+    it("caption指定時にCanvas高さがキャプション分拡張されること", async () => {
+      const testSize = 256;
+      const testFontSize = 14;
+      const captionPadding = 8;
+      const expectedHeight = testSize + testFontSize + captionPadding * 2;
+
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          size={testSize}
+          caption={{ text: "テスト", fontSize: testFontSize }}
+        />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      const canvas = document.querySelector("canvas");
+      expect(canvas).not.toBeNull();
+      expect(canvas!.height).toBe(expectedHeight);
+    });
+
+    it("caption変更時に再描画が発生すること", async () => {
+      const { rerender } = render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "", fontSize: 14 }}
+        />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      mockToCanvas.mockClear();
+      mockFillText.mockClear();
+
+      rerender(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "新しいキャプション", fontSize: 16 }}
+        />
+      );
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledTimes(1);
+      });
+
+      await waitFor(() => {
+        expect(mockFillText).toHaveBeenCalledWith(
+          "新しいキャプション",
+          expect.any(Number),
+          expect.any(Number)
+        );
+      });
+    });
+  });
 });

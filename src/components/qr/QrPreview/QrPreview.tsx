@@ -10,7 +10,7 @@ import {
   DEFAULT_FRAME_CONFIG,
 } from "@/lib/qr/frameRenderer";
 import { drawLogoOnCanvas } from "@/lib/qr/drawLogo";
-import type { LogoConfig } from "@/types/qr";
+import type { CaptionConfig, LogoConfig } from "@/types/qr";
 import styles from "./QrPreview.module.css";
 
 /** フレーム画像仕様の定数 */
@@ -33,6 +33,8 @@ interface QrPreviewProps {
   logo?: LogoConfig | null;
   /** フレーム設定 */
   frameConfig?: FrameConfig;
+  /** キャプション設定 */
+  caption?: CaptionConfig;
   /** URL有効性（false のときプレースホルダー表示） */
   isUrlValid?: boolean;
   /** 外部から canvasRef を注入する場合に指定（省略時は内部生成） */
@@ -58,6 +60,7 @@ export function QrPreview({
   size = 256,
   logo,
   frameConfig = DEFAULT_FRAME_CONFIG,
+  caption,
   isUrlValid = false,
   canvasRef: externalCanvasRef,
 }: QrPreviewProps) {
@@ -142,12 +145,51 @@ export function QrPreview({
       if (logo != null) {
         await drawLogoOnCanvas(canvas, logo);
       }
+
+      // キャプションが指定されている場合、Canvas下部にテキストを描画する
+      if (caption && caption.text.trim() !== "") {
+        const captionPadding = 8;
+        const captionHeight = caption.fontSize + captionPadding * 2;
+        const currentWidth = canvas.width;
+        const currentHeight = canvas.height;
+
+        // 現在のCanvasの内容を一時保存
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = currentWidth;
+        tempCanvas.height = currentHeight;
+        const tempCtx = tempCanvas.getContext("2d");
+        if (tempCtx) {
+          tempCtx.drawImage(canvas, 0, 0);
+        }
+
+        // Canvasをキャプション分だけ高さ拡張
+        canvas.width = currentWidth;
+        canvas.height = currentHeight + captionHeight;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          // 背景を塗りつぶし
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          // 元のQRコード画像を復元
+          ctx.drawImage(tempCanvas, 0, 0);
+          // キャプションテキストを描画
+          ctx.fillStyle = fgColor;
+          ctx.font = `${caption.fontSize}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(
+            caption.text,
+            currentWidth / 2,
+            currentHeight + captionHeight / 2
+          );
+        }
+      }
     } catch {
       setHasError(true);
     } finally {
       setIsLoading(false);
     }
-  }, [url, fgColor, bgColor, size, shouldRender, logo, frameConfig, hasFrame, hasImageFrame]);
+  }, [url, fgColor, bgColor, size, shouldRender, logo, frameConfig, hasFrame, hasImageFrame, caption]);
 
   // URL・色・サイズ・フレームが変わったら 500ms デバウンスして再生成
   useEffect(() => {

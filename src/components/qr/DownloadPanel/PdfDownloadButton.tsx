@@ -4,12 +4,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button/Button";
 import { exportToPdf } from "@/lib/qr/pdfExporter";
 import { trackQrDownloaded } from "@/lib/analytics/events";
+import { createCanvasWithCaption } from "@/lib/qr/captionCompositor";
+import type { CaptionConfig } from "@/types/qr";
 
 interface PdfDownloadButtonProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   disabled?: boolean;
   hasUtm: boolean;
   decorationCount: number;
+  caption?: CaptionConfig;
 }
 
 export function PdfDownloadButton({
@@ -17,6 +20,7 @@ export function PdfDownloadButton({
   disabled = false,
   hasUtm,
   decorationCount,
+  caption,
 }: PdfDownloadButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,7 +30,8 @@ export function PdfDownloadButton({
 
     setIsLoading(true);
     try {
-      await exportToPdf(canvas, "qrcode.pdf");
+      const exportCanvas = createCanvasWithCaption(canvas, caption);
+      await exportToPdf(exportCanvas, "qrcode.pdf");
       trackQrDownloaded({ format: "pdf", hasUtm, decorationCount });
     } finally {
       setIsLoading(false);

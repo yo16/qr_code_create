@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DownloadButton } from "./DownloadButton";
 import { PdfDownloadButton } from "./PdfDownloadButton";
 import { ResolutionSelector, type Resolution } from "./ResolutionSelector";
+import type { CaptionConfig } from "@/types/qr";
 import styles from "./DownloadPanel.module.css";
 
 interface DownloadPanelProps {
@@ -11,6 +12,7 @@ interface DownloadPanelProps {
   disabled?: boolean;
   hasUtm: boolean;
   decorationCount: number;
+  caption?: CaptionConfig;
 }
 
 export function DownloadPanel({
@@ -18,6 +20,7 @@ export function DownloadPanel({
   disabled = false,
   hasUtm,
   decorationCount,
+  caption,
 }: DownloadPanelProps) {
   const [resolution, setResolution] = useState<Resolution>(1);
 
@@ -38,6 +41,7 @@ export function DownloadPanel({
               hasUtm={hasUtm}
               decorationCount={decorationCount}
               resolution={resolution}
+              caption={caption}
             />
             <DownloadButton
               canvasRef={canvasRef}
@@ -45,12 +49,14 @@ export function DownloadPanel({
               disabled={disabled}
               hasUtm={hasUtm}
               decorationCount={decorationCount}
+              caption={caption}
             />
             <PdfDownloadButton
               canvasRef={canvasRef}
               disabled={disabled}
               hasUtm={hasUtm}
               decorationCount={decorationCount}
+              caption={caption}
             />
           </div>
         </>

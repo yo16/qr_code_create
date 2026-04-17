@@ -9,10 +9,13 @@ import { DownloadPanel } from "@/components/qr/DownloadPanel/DownloadPanel";
 import { ColorCustomizer } from "@/components/qr/DecorationPanel/ColorCustomizer";
 import { FrameSelector } from "@/components/qr/DecorationPanel/FrameSelector";
 import { LogoUploader } from "@/components/qr/DecorationPanel/LogoUploader";
+import { CaptionEditor } from "@/components/qr/DecorationPanel/CaptionEditor";
+import { PresetSelector } from "@/components/qr/DecorationPanel/PresetSelector";
+import type { DecorationPreset } from "@/lib/constants/decorationPresets";
 import { ProgressBar } from "@/components/ui/ProgressBar/ProgressBar";
 import { buildUtmUrl } from "@/lib/url/buildUtmUrl";
 import { DEFAULT_FRAME_CONFIG, type FrameConfig } from "@/lib/qr/frameRenderer";
-import { INITIAL_QR_STATE, type LogoConfig, type QrState } from "@/types/qr";
+import { INITIAL_QR_STATE, type CaptionConfig, type LogoConfig, type QrState } from "@/types/qr";
 import styles from "./QrGenerator.module.css";
 
 function getCompletionPercent(state: QrState): number {
@@ -29,7 +32,7 @@ function getCompletionPercent(state: QrState): number {
     state.decoration.fgColor !== "#000000" ||
     state.decoration.bgColor !== "#ffffff" ||
     (state.decoration.frameType !== null && state.decoration.frameType !== "none") ||
-    state.decoration.caption !== "" ||
+    state.decoration.caption.text !== "" ||
     state.decoration.logo !== null;
   if (hasDecoration) steps += 1;
   return Math.round((steps / 3) * 100);
@@ -111,6 +114,28 @@ export function QrGenerator() {
     }));
   };
 
+  const handleCaptionChange = (caption: CaptionConfig) => {
+    setState((prev) => ({
+      ...prev,
+      decoration: { ...prev.decoration, caption },
+    }));
+  };
+
+  const handleApplyPreset = (preset: DecorationPreset) => {
+    setFrameConfig({ type: preset.frameType, color: preset.frameColor });
+    setState((prev) => ({
+      ...prev,
+      decoration: {
+        ...prev.decoration,
+        fgColor: preset.fgColor,
+        bgColor: preset.bgColor,
+        frameType: preset.frameType,
+        caption: preset.caption,
+        preset: preset.id,
+      },
+    }));
+  };
+
   const hasUtm =
     state.utm.source.trim() !== "" ||
     state.utm.medium.trim() !== "" ||
@@ -122,7 +147,7 @@ export function QrGenerator() {
     state.decoration.logo !== null,
     state.decoration.fgColor !== "#000000" || state.decoration.bgColor !== "#ffffff",
     state.decoration.frameType !== null,
-    state.decoration.caption !== "",
+    state.decoration.caption.text !== "",
   ].filter(Boolean).length;
 
   const completionPercent = getCompletionPercent(state);
@@ -182,6 +207,10 @@ export function QrGenerator() {
             </span>
             <h2 className={styles.stepTitle}>装飾設定</h2>
           </div>
+          <PresetSelector
+            currentPresetId={state.decoration.preset}
+            onApplyPreset={handleApplyPreset}
+          />
           <ColorCustomizer
             fgColor={state.decoration.fgColor}
             bgColor={state.decoration.bgColor}
@@ -195,6 +224,10 @@ export function QrGenerator() {
           <FrameSelector
             frame={frameConfig}
             onChange={handleFrameChange}
+          />
+          <CaptionEditor
+            caption={state.decoration.caption}
+            onChange={handleCaptionChange}
           />
         </section>
 
@@ -214,6 +247,7 @@ export function QrGenerator() {
             disabled={!state.isUrlValid}
             hasUtm={hasUtm}
             decorationCount={decorationCount}
+            caption={state.decoration.caption}
           />
         </section>
       </div>
@@ -243,6 +277,7 @@ export function QrGenerator() {
             bgColor={state.decoration.bgColor}
             logo={state.decoration.logo}
             frameConfig={frameConfig}
+            caption={state.decoration.caption}
             isUrlValid={state.isUrlValid}
             canvasRef={canvasRef}
           />

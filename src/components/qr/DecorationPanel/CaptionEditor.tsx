@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import { trackCaptionSet } from "@/lib/analytics/events";
+import type { CaptionConfig } from "@/types/qr";
 import styles from "./CaptionEditor.module.css";
 
-export interface CaptionConfig {
-  text: string;
-  fontSize: number; // 10-24
-}
+export type { CaptionConfig };
 
 interface CaptionEditorProps {
   caption: CaptionConfig;

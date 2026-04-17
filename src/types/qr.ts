@@ -14,12 +14,17 @@ export interface LogoConfig {
   sizePercent: number; // 10-25 (誤り訂正レベルHの安全範囲)
 }
 
+export interface CaptionConfig {
+  text: string;
+  fontSize: number; // 10-24
+}
+
 export interface DecorationConfig {
   fgColor: string;
   bgColor: string;
   logo: LogoConfig | null;
   frameType: string | null;
-  caption: string;
+  caption: CaptionConfig;
   preset: string | null;
 }
 
@@ -40,7 +45,7 @@ export const INITIAL_QR_STATE: QrState = {
     bgColor: "#ffffff",
     logo: null,
     frameType: null,
-    caption: "",
+    caption: { text: "", fontSize: 14 },
     preset: null,
   },
   currentStep: 1,

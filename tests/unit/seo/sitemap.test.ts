@@ -3,7 +3,7 @@ import { getGuideSlugList } from "@/lib/content/getGuide";
 import { getUseCaseSlugList } from "@/lib/content/getUseCase";
 import { getBlogSlugList } from "@/lib/content/getBlog";
 
-const STATIC_PAGE_COUNT = 8; // /, /create, /guide, /use-cases, /blog, /faq, /privacy, /terms
+const STATIC_PAGE_COUNT = 9; // /, /create, /guide, /use-cases, /blog, /faq, /contact, /privacy, /terms
 
 describe("sitemap", () => {
   describe("エントリ数の検証", () => {
@@ -42,6 +42,7 @@ describe("sitemap", () => {
       { path: "/use-cases", changeFrequency: "weekly", priority: 0.8 },
       { path: "/blog", changeFrequency: "weekly", priority: 0.8 },
       { path: "/faq", changeFrequency: "monthly", priority: 0.6 },
+      { path: "/contact", changeFrequency: "yearly", priority: 0.4 },
       { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
       { path: "/terms", changeFrequency: "yearly", priority: 0.3 },
     ];

@@ -11,6 +11,7 @@ export function Footer() {
             <Link href="/privacy">プライバシーポリシー</Link>
             <Link href="/terms">利用規約</Link>
             <Link href="/faq">よくある質問</Link>
+            <Link href="/contact">お問い合わせ</Link>
           </div>
           <p className={styles.copyright}>
             &copy; {new Date().getFullYear()} QR Code Create

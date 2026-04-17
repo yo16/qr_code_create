@@ -237,6 +237,104 @@ describe("QrPreview", () => {
     });
   });
 
+  describe("previewArea 高さのキャプション対応", () => {
+    it("caption未指定のときpreviewAreaの高さがsize（256px）であること", () => {
+      render(<QrPreview url="https://example.com" isUrlValid={true} />);
+      const previewArea = screen.getByRole("img");
+      expect(previewArea.style.height).toBe("256px");
+    });
+
+    it("caption.text空文字のときpreviewAreaの高さがsize（256px）であること", () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "", fontSize: 14 }}
+        />
+      );
+      const previewArea = screen.getByRole("img");
+      expect(previewArea.style.height).toBe("256px");
+    });
+
+    it("caption指定時にpreviewAreaの高さがsize + captionHeightであること", () => {
+      const fontSize = 14;
+      const padding = 8;
+      const expectedHeight = 256 + fontSize + padding * 2;
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "テスト", fontSize }}
+        />
+      );
+      const previewArea = screen.getByRole("img");
+      expect(previewArea.style.height).toBe(`${expectedHeight}px`);
+    });
+
+    it("caption.textが空白のみのときpreviewAreaの高さがsize（256px）であること", () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "   ", fontSize: 14 }}
+        />
+      );
+      const previewArea = screen.getByRole("img");
+      expect(previewArea.style.height).toBe("256px");
+    });
+
+    it("rerenderでcaption追加時にpreviewAreaの高さが連動して変わること", () => {
+      const { rerender } = render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "", fontSize: 14 }}
+        />
+      );
+      const previewArea = screen.getByRole("img");
+      expect(previewArea.style.height).toBe("256px");
+
+      rerender(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "テスト", fontSize: 20 }}
+        />
+      );
+      const expectedHeight = 256 + 20 + 8 * 2;
+      expect(previewArea.style.height).toBe(`${expectedHeight}px`);
+    });
+
+    it("size=128のときキャプション付きでも高さが正しく計算されること", () => {
+      const fontSize = 14;
+      const padding = 8;
+      const expectedHeight = 128 + fontSize + padding * 2;
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          size={128}
+          caption={{ text: "テスト", fontSize }}
+        />
+      );
+      const previewArea = screen.getByRole("img");
+      expect(previewArea.style.height).toBe(`${expectedHeight}px`);
+      expect(previewArea.style.width).toBe("128px");
+    });
+
+    it("previewAreaの幅がsizeのまま変わらないこと", () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "テスト", fontSize: 14 }}
+        />
+      );
+      const previewArea = screen.getByRole("img");
+      expect(previewArea.style.width).toBe("256px");
+    });
+  });
+
   describe("ロゴ描画 (drawLogoOnCanvas)", () => {
     const mockLogo: LogoConfig = {
       dataUrl: "data:image/png;base64,abc123",

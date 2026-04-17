@@ -42,6 +42,7 @@ interface QrPreviewProps {
 }
 
 const DEBOUNCE_MS = 500;
+const CAPTION_PADDING = 8;
 
 /** 画像を読み込んでHTMLImageElementを返す */
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -72,6 +73,10 @@ export function QrPreview({
 
   const shouldRender = !!(url && isUrlValid);
   const contrastOk = isContrastSufficient(fgColor, bgColor);
+
+  const hasCaption = !!(caption && caption.text.trim() !== "");
+  const captionHeight = hasCaption ? caption.fontSize + CAPTION_PADDING * 2 : 0;
+  const previewHeight = size + captionHeight;
 
   const hasFrame = frameConfig.type !== "none";
   const hasImageFrame = isImageFrame(frameConfig.type);
@@ -148,8 +153,7 @@ export function QrPreview({
 
       // キャプションが指定されている場合、Canvas下部にテキストを描画する
       if (caption && caption.text.trim() !== "") {
-        const captionPadding = 8;
-        const captionHeight = caption.fontSize + captionPadding * 2;
+        const capH = caption.fontSize + CAPTION_PADDING * 2;
         const currentWidth = canvas.width;
         const currentHeight = canvas.height;
 
@@ -164,7 +168,7 @@ export function QrPreview({
 
         // Canvasをキャプション分だけ高さ拡張
         canvas.width = currentWidth;
-        canvas.height = currentHeight + captionHeight;
+        canvas.height = currentHeight + capH;
         const ctx = canvas.getContext("2d");
         if (ctx) {
           // 背景を塗りつぶし
@@ -180,7 +184,7 @@ export function QrPreview({
           ctx.fillText(
             caption.text,
             currentWidth / 2,
-            currentHeight + captionHeight / 2
+            currentHeight + capH / 2
           );
         }
       }
@@ -224,7 +228,7 @@ export function QrPreview({
 
       <div
         className={styles.previewArea}
-        style={{ width: size, height: size }}
+        style={{ width: size, height: previewHeight }}
         role="img"
         aria-label={shouldRender ? "生成されたQRコード" : "QRコードプレースホルダー"}
       >

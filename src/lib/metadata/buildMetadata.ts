@@ -74,10 +74,9 @@ export const PAGE_METADATA = {
     path: "/guide",
   },
   useCases: {
-    title: "用途別QRコード（準備中）",
-    description: "名刺・チラシ・ポスターなど用途別のQRコード活用ガイド。現在準備中です。",
+    title: "用途別QRコード",
+    description: "名刺・チラシ・ポスター・イベントなど、用途別にQRコードの作り方と推奨UTM設定を解説します。",
     path: "/use-cases",
-    noIndex: true,
   },
   blog: {
     title: "ブログ（準備中）",

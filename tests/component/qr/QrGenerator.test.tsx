@@ -76,6 +76,25 @@ jest.mock("@/components/qr/DownloadPanel/DownloadPanel", () => ({
   ),
 }));
 
+jest.mock("@/components/qr/DecorationPanel/CaptionEditor", () => ({
+  CaptionEditor: ({ caption, onChange }: any) => (
+    <div data-testid="caption-editor" data-caption-text={caption.text} data-caption-fontsize={caption.fontSize}>
+      <button
+        data-testid="set-caption"
+        onClick={() => onChange({ text: "テストキャプション", fontSize: 16 })}
+      >
+        set caption
+      </button>
+      <button
+        data-testid="clear-caption"
+        onClick={() => onChange({ text: "", fontSize: 14 })}
+      >
+        clear caption
+      </button>
+    </div>
+  ),
+}));
+
 jest.mock("@/components/qr/DecorationPanel/LogoUploader", () => ({
   LogoUploader: ({ logo, onChange }: { logo: LogoConfig | null; onChange: (logo: LogoConfig | null) => void }) => (
     <div data-testid="logo-uploader" data-logo={logo ? JSON.stringify(logo) : "null"}>
@@ -333,6 +352,63 @@ describe("QrGenerator", () => {
       // アップロード → 削除
       fireEvent.click(screen.getByTestId("logo-upload-btn"));
       fireEvent.click(screen.getByTestId("logo-remove-btn"));
+      const downloadPanel = screen.getByTestId("download-panel");
+      expect(downloadPanel).toHaveAttribute("data-decoration-count", "0");
+    });
+  });
+
+  describe("CaptionEditor 接続 — caption state 管理", () => {
+    it("CaptionEditorがステップ3に表示されること", () => {
+      render(<QrGenerator />);
+      expect(screen.getByTestId("caption-editor")).toBeInTheDocument();
+    });
+
+    it("初期状態: CaptionEditorに caption.text='' が渡ること", () => {
+      render(<QrGenerator />);
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-text", "");
+    });
+
+    it("初期状態: CaptionEditorに caption.fontSize=14 が渡ること", () => {
+      render(<QrGenerator />);
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-fontsize", "14");
+    });
+
+    it("キャプション設定後に caption.text が更新されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("set-caption"));
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-text", "テストキャプション");
+    });
+
+    it("キャプション設定後に caption.fontSize が更新されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("set-caption"));
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-fontsize", "16");
+    });
+
+    it("キャプションクリア後に caption.text が空に戻ること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("set-caption"));
+      fireEvent.click(screen.getByTestId("clear-caption"));
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-text", "");
+    });
+
+    it("キャプション設定後に decorationCount が +1 されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("set-caption"));
+      const downloadPanel = screen.getByTestId("download-panel");
+      const count = Number(downloadPanel.getAttribute("data-decoration-count"));
+      expect(count).toBeGreaterThanOrEqual(1);
+    });
+
+    it("キャプションクリア後に decorationCount が元に戻ること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("set-caption"));
+      fireEvent.click(screen.getByTestId("clear-caption"));
       const downloadPanel = screen.getByTestId("download-panel");
       expect(downloadPanel).toHaveAttribute("data-decoration-count", "0");
     });

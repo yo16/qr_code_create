@@ -1,0 +1,59 @@
+.article {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+.header {
+  margin-bottom: var(--spacing-xl);
+}
+.title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+}
+.date {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+.content {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+}
+.content :global(h2) {
+  font-size: var(--font-size-2xl);
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+}
+.content :global(h3) {
+  font-size: var(--font-size-xl);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+}
+.content :global(p) {
+  margin-bottom: var(--spacing-md);
+}
+.content :global(ul), .content :global(ol) {
+  margin-left: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+}
+.content :global(code) {
+  background: var(--color-surface);
+  padding: 2px var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  font-size: 0.9em;
+}
+.content :global(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--spacing-md);
+}
+.content :global(th),
+.content :global(td) {
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+}
+.content :global(th) {
+  background: var(--color-surface);
+  font-weight: var(--font-weight-bold);
+}

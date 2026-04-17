@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   description:
     "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-code-create.vercel.app"
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.qr-create.jp"
   ),
 };
 

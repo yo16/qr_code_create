@@ -1,4 +1,6 @@
 import type { MetadataRoute } from "next";
+import { getGuideSlugList } from "@/lib/content/getGuide";
+import { getUseCaseSlugList } from "@/lib/content/getUseCase";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.qr-create.jp";
 
@@ -7,13 +9,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}`, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 },
     { url: `${SITE_URL}/create`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE_URL}/guide`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/use-cases`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/faq`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE_URL}/terms`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   ];
 
-  // ガイドページ（Phase 1で追加予定のスラッグ）
-  const guideSlugs = ["utm-parameters", "effective-qr-usage", "design-tips", "analytics-measurement"];
+  const guideSlugs = getGuideSlugList();
   const guidePages: MetadataRoute.Sitemap = guideSlugs.map((slug) => ({
     url: `${SITE_URL}/guide/${slug}`,
     lastModified: new Date(),
@@ -21,5 +23,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...guidePages];
+  const useCaseSlugs = getUseCaseSlugList();
+  const useCasePages: MetadataRoute.Sitemap = useCaseSlugs.map((slug) => ({
+    url: `${SITE_URL}/use-cases/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticPages, ...guidePages, ...useCasePages];
 }

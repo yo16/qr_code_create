@@ -241,8 +241,8 @@ describe("PAGE_METADATA", () => {
       expect((PAGE_METADATA.useCases as { noIndex?: boolean }).noIndex).toBeUndefined();
     });
 
-    it("blogページにnoIndex=trueがあること（準備中のため）", () => {
-      expect((PAGE_METADATA.blog as { noIndex?: boolean }).noIndex).toBe(true);
+    it("blogページにnoIndexが設定されていないこと", () => {
+      expect((PAGE_METADATA.blog as { noIndex?: boolean }).noIndex).toBeUndefined();
     });
   });
 });

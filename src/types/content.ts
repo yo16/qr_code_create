@@ -29,3 +29,18 @@ export interface UseCaseMeta extends UseCaseFrontmatter {
 export interface UseCaseContent extends UseCaseMeta {
   content: string; // MDX raw content
 }
+
+export interface BlogFrontmatter {
+  title: string;
+  description: string;
+  date: string; // ISO date "YYYY-MM-DD"
+  category?: string; // qr-marketing, utm-tips, story 等
+}
+
+export interface BlogMeta extends BlogFrontmatter {
+  slug: string;
+}
+
+export interface BlogContent extends BlogMeta {
+  content: string; // MDX raw content
+}

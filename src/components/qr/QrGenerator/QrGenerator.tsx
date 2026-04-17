@@ -29,7 +29,7 @@ function getCompletionPercent(state: QrState): number {
     state.decoration.fgColor !== "#000000" ||
     state.decoration.bgColor !== "#ffffff" ||
     (state.decoration.frameType !== null && state.decoration.frameType !== "none") ||
-    state.decoration.caption !== "" ||
+    state.decoration.caption.text !== "" ||
     state.decoration.logo !== null;
   if (hasDecoration) steps += 1;
   return Math.round((steps / 3) * 100);
@@ -122,7 +122,7 @@ export function QrGenerator() {
     state.decoration.logo !== null,
     state.decoration.fgColor !== "#000000" || state.decoration.bgColor !== "#ffffff",
     state.decoration.frameType !== null,
-    state.decoration.caption !== "",
+    state.decoration.caption.text !== "",
   ].filter(Boolean).length;
 
   const completionPercent = getCompletionPercent(state);

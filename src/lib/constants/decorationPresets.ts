@@ -1,4 +1,5 @@
 import type { FrameType } from "@/lib/qr/frameRenderer";
+import type { CaptionConfig } from "@/types/qr";
 
 export interface DecorationPreset {
   id: string;
@@ -8,8 +9,7 @@ export interface DecorationPreset {
   bgColor: string;
   frameType: FrameType;
   frameColor: string;
-  captionText: string;
-  captionFontSize: number;
+  caption: CaptionConfig;
 }
 
 export const DECORATION_PRESETS: DecorationPreset[] = [
@@ -21,8 +21,7 @@ export const DECORATION_PRESETS: DecorationPreset[] = [
     bgColor: "#ffffff",
     frameType: "none",
     frameColor: "#000000",
-    captionText: "",
-    captionFontSize: 14,
+    caption: { text: "", fontSize: 14 },
   },
   {
     id: "business",
@@ -32,8 +31,7 @@ export const DECORATION_PRESETS: DecorationPreset[] = [
     bgColor: "#ffffff",
     frameType: "business",
     frameColor: "#1a365d",
-    captionText: "詳しくはこちら",
-    captionFontSize: 12,
+    caption: { text: "詳しくはこちら", fontSize: 12 },
   },
   {
     id: "casual",
@@ -43,8 +41,7 @@ export const DECORATION_PRESETS: DecorationPreset[] = [
     bgColor: "#f0fff4",
     frameType: "rounded",
     frameColor: "#2d7d46",
-    captionText: "スキャンしてチェック",
-    captionFontSize: 14,
+    caption: { text: "スキャンしてチェック", fontSize: 14 },
   },
   {
     id: "elegant",
@@ -54,8 +51,7 @@ export const DECORATION_PRESETS: DecorationPreset[] = [
     bgColor: "#faf5ff",
     frameType: "elegant",
     frameColor: "#44337a",
-    captionText: "QRコードを読み取る",
-    captionFontSize: 12,
+    caption: { text: "QRコードを読み取る", fontSize: 12 },
   },
   {
     id: "pop",
@@ -65,7 +61,6 @@ export const DECORATION_PRESETS: DecorationPreset[] = [
     bgColor: "#fff5f5",
     frameType: "pop",
     frameColor: "#c53030",
-    captionText: "今すぐアクセス!",
-    captionFontSize: 16,
+    caption: { text: "今すぐアクセス!", fontSize: 16 },
   },
 ];

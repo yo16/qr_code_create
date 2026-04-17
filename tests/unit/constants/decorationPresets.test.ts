@@ -6,7 +6,7 @@ describe("decorationPresets", () => {
       expect(DECORATION_PRESETS).toHaveLength(5);
     });
 
-    it("各プリセットにid/name/description/fgColor/bgColor/frameType/captionTextが定義されていること", () => {
+    it("各プリセットにid/name/description/fgColor/bgColor/frameType/captionが定義されていること", () => {
       for (const preset of DECORATION_PRESETS) {
         expect(preset).toHaveProperty("id");
         expect(preset).toHaveProperty("name");
@@ -14,7 +14,7 @@ describe("decorationPresets", () => {
         expect(preset).toHaveProperty("fgColor");
         expect(preset).toHaveProperty("bgColor");
         expect(preset).toHaveProperty("frameType");
-        expect(preset).toHaveProperty("captionText");
+        expect(preset).toHaveProperty("caption");
 
         expect(typeof preset.id).toBe("string");
         expect(preset.id.length).toBeGreaterThan(0);
@@ -28,7 +28,8 @@ describe("decorationPresets", () => {
         expect(typeof preset.fgColor).toBe("string");
         expect(typeof preset.bgColor).toBe("string");
         expect(typeof preset.frameType).toBe("string");
-        expect(typeof preset.captionText).toBe("string");
+        expect(typeof preset.caption.text).toBe("string");
+        expect(typeof preset.caption.fontSize).toBe("number");
       }
     });
 

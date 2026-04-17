@@ -1,6 +1,6 @@
 import sitemap from "@/app/sitemap";
 
-const DEFAULT_SITE_URL = "https://qr-code-create.vercel.app";
+const DEFAULT_SITE_URL = "https://www.qr-create.jp";
 
 describe("sitemap", () => {
   describe("エントリ数の検証", () => {

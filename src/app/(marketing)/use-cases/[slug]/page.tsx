@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
 import { getUseCase, getUseCaseSlugList } from "@/lib/content/getUseCase";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Breadcrumb } from "@/components/layout/Breadcrumb/Breadcrumb";
@@ -63,7 +64,7 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
         <p className={styles.date}>{useCase.date}</p>
       </header>
       <div className={styles.content}>
-        <MDXRemote source={useCase.content} />
+        <MDXRemote source={useCase.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
       </div>
     </article>
   );

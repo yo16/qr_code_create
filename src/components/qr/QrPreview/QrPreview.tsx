@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { isContrastSufficient } from "@/lib/color/contrastChecker";
+import { trackQrGenerated } from "@/lib/analytics/events";
 import {
   drawFrame,
   isImageFrame,
@@ -147,6 +148,15 @@ export function QrPreview({
       if (logo != null) {
         await drawLogoOnCanvas(canvas, logo);
       }
+
+      // QRコード生成完了イベントを発火
+      trackQrGenerated({
+        hasUtm: url.includes("utm_"),
+        utmCount: (url.match(/utm_/g) || []).length,
+        hasLogo: logo != null,
+        hasFrame: hasFrame,
+        hasCaption: !!(caption && caption.text.trim() !== ""),
+      });
     } catch {
       setHasError(true);
     } finally {

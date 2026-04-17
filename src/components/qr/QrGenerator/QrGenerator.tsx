@@ -10,6 +10,8 @@ import { ColorCustomizer } from "@/components/qr/DecorationPanel/ColorCustomizer
 import { FrameSelector } from "@/components/qr/DecorationPanel/FrameSelector";
 import { LogoUploader } from "@/components/qr/DecorationPanel/LogoUploader";
 import { CaptionEditor } from "@/components/qr/DecorationPanel/CaptionEditor";
+import { PresetSelector } from "@/components/qr/DecorationPanel/PresetSelector";
+import type { DecorationPreset } from "@/lib/constants/decorationPresets";
 import { ProgressBar } from "@/components/ui/ProgressBar/ProgressBar";
 import { buildUtmUrl } from "@/lib/url/buildUtmUrl";
 import { DEFAULT_FRAME_CONFIG, type FrameConfig } from "@/lib/qr/frameRenderer";
@@ -119,6 +121,21 @@ export function QrGenerator() {
     }));
   };
 
+  const handleApplyPreset = (preset: DecorationPreset) => {
+    setFrameConfig({ type: preset.frameType, color: preset.frameColor });
+    setState((prev) => ({
+      ...prev,
+      decoration: {
+        ...prev.decoration,
+        fgColor: preset.fgColor,
+        bgColor: preset.bgColor,
+        frameType: preset.frameType,
+        caption: preset.caption,
+        preset: preset.id,
+      },
+    }));
+  };
+
   const hasUtm =
     state.utm.source.trim() !== "" ||
     state.utm.medium.trim() !== "" ||
@@ -190,6 +207,10 @@ export function QrGenerator() {
             </span>
             <h2 className={styles.stepTitle}>装飾設定</h2>
           </div>
+          <PresetSelector
+            currentPresetId={state.decoration.preset}
+            onApplyPreset={handleApplyPreset}
+          />
           <ColorCustomizer
             fgColor={state.decoration.fgColor}
             bgColor={state.decoration.bgColor}

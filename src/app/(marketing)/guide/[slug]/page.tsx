@@ -9,7 +9,7 @@ import { buildMetadata } from "@/lib/metadata/buildMetadata";
 import { buildBlogPostingSchema, buildBreadcrumbSchema } from "@/lib/schema/buildJsonLd";
 import styles from "./guide.module.css";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.qr-create.jp";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
 interface GuidePageProps {
   params: Promise<{ slug: string }>;

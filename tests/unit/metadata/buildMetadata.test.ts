@@ -1,6 +1,6 @@
 import { buildMetadata, PAGE_METADATA } from "@/lib/metadata/buildMetadata";
 
-const DEFAULT_SITE_URL = "https://www.qr-create.jp";
+const DEFAULT_SITE_URL = "https://qr-create.jp";
 
 describe("buildMetadata", () => {
   describe("正常系: 基本的な返り値の検証", () => {

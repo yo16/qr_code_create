@@ -1,5 +1,5 @@
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.qr-create.jp";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
 export function buildWebApplicationSchema() {
   return {

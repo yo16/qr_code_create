@@ -1048,5 +1048,6 @@ export function buildOrganizationSchema(): JsonLdData;
 export function buildArticleSchema(frontmatter: BaseFrontmatter, path: string): JsonLdData;
 
 // lib/schema/buildBlogPostingSchema.ts
-export function buildBlogPostingSchema(frontmatter: BlogFrontmatter, path: string): JsonLdData;
+// basePath: デフォルト "/guide"。use-casesでは "/use-cases" を指定
+export function buildBlogPostingSchema(post: { title, description, slug, datePublished, dateModified?, basePath? }): JsonLdData;
 ```

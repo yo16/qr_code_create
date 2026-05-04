@@ -1,5 +1,5 @@
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-code-create.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
 export function buildWebApplicationSchema() {
   return {
@@ -117,7 +117,9 @@ export function buildBlogPostingSchema(post: {
   slug: string;
   datePublished: string;
   dateModified?: string;
+  basePath?: string;
 }) {
+  const path = post.basePath ?? "/guide";
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -135,7 +137,7 @@ export function buildBlogPostingSchema(post: {
     dateModified: post.dateModified ?? post.datePublished,
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `${SITE_URL}/guide/${post.slug}`,
+      "@id": `${SITE_URL}${path}/${post.slug}`,
     },
     inLanguage: "ja",
   };

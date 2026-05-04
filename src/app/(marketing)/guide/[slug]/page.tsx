@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
 import { getGuide, getGuideSlugList } from "@/lib/content/getGuide";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Breadcrumb } from "@/components/layout/Breadcrumb/Breadcrumb";
@@ -8,7 +9,7 @@ import { buildMetadata } from "@/lib/metadata/buildMetadata";
 import { buildBlogPostingSchema, buildBreadcrumbSchema } from "@/lib/schema/buildJsonLd";
 import styles from "./guide.module.css";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-code-create.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
 interface GuidePageProps {
   params: Promise<{ slug: string }>;
@@ -62,7 +63,7 @@ export default async function GuidePage({ params }: GuidePageProps) {
         <p className={styles.date}>{guide.date}</p>
       </header>
       <div className={styles.content}>
-        <MDXRemote source={guide.content} />
+        <MDXRemote source={guide.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
       </div>
     </article>
   );

@@ -66,6 +66,18 @@ jest.mock("@/components/ui/ProgressBar/ProgressBar", () => ({
   ),
 }));
 
+jest.mock("@/components/qr/DecorationPanel/ColorCustomizer", () => ({
+  ColorCustomizer: ({ fgColor, bgColor }: any) => (
+    <div data-testid="color-customizer" data-fg-color={fgColor} data-bg-color={bgColor} />
+  ),
+}));
+
+jest.mock("@/components/qr/DecorationPanel/FrameSelector", () => ({
+  FrameSelector: ({ frame }: any) => (
+    <div data-testid="frame-selector" data-frame-type={frame?.type || "none"} data-frame-color={frame?.color || "#000000"} />
+  ),
+}));
+
 jest.mock("@/components/qr/DownloadPanel/DownloadPanel", () => ({
   DownloadPanel: ({ disabled, decorationCount }: { disabled: boolean; decorationCount: number }) => (
     <div
@@ -73,6 +85,62 @@ jest.mock("@/components/qr/DownloadPanel/DownloadPanel", () => ({
       data-disabled={disabled ? "true" : "false"}
       data-decoration-count={decorationCount}
     />
+  ),
+}));
+
+jest.mock("@/components/qr/DecorationPanel/PresetSelector", () => ({
+  PresetSelector: ({ currentPresetId, onApplyPreset }: any) => (
+    <div data-testid="preset-selector" data-current-preset={currentPresetId || "none"}>
+      <button
+        data-testid="apply-preset-business"
+        onClick={() => onApplyPreset({
+          id: "business",
+          name: "ビジネス",
+          description: "信頼感のある落ち着いたデザイン",
+          fgColor: "#1a365d",
+          bgColor: "#ffffff",
+          frameType: "business",
+          frameColor: "#1a365d",
+          caption: { text: "詳しくはこちら", fontSize: 12 },
+        })}
+      >
+        apply business
+      </button>
+      <button
+        data-testid="apply-preset-simple"
+        onClick={() => onApplyPreset({
+          id: "simple",
+          name: "シンプル",
+          description: "白黒でクリーンなデザイン",
+          fgColor: "#000000",
+          bgColor: "#ffffff",
+          frameType: "none",
+          frameColor: "#000000",
+          caption: { text: "", fontSize: 14 },
+        })}
+      >
+        apply simple
+      </button>
+    </div>
+  ),
+}));
+
+jest.mock("@/components/qr/DecorationPanel/CaptionEditor", () => ({
+  CaptionEditor: ({ caption, onChange }: any) => (
+    <div data-testid="caption-editor" data-caption-text={caption.text} data-caption-fontsize={caption.fontSize}>
+      <button
+        data-testid="set-caption"
+        onClick={() => onChange({ text: "テストキャプション", fontSize: 16 })}
+      >
+        set caption
+      </button>
+      <button
+        data-testid="clear-caption"
+        onClick={() => onChange({ text: "", fontSize: 14 })}
+      >
+        clear caption
+      </button>
+    </div>
   ),
 }));
 
@@ -335,6 +403,151 @@ describe("QrGenerator", () => {
       fireEvent.click(screen.getByTestId("logo-remove-btn"));
       const downloadPanel = screen.getByTestId("download-panel");
       expect(downloadPanel).toHaveAttribute("data-decoration-count", "0");
+    });
+  });
+
+  describe("CaptionEditor 接続 — caption state 管理", () => {
+    it("CaptionEditorがステップ3に表示されること", () => {
+      render(<QrGenerator />);
+      expect(screen.getByTestId("caption-editor")).toBeInTheDocument();
+    });
+
+    it("初期状態: CaptionEditorに caption.text='' が渡ること", () => {
+      render(<QrGenerator />);
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-text", "");
+    });
+
+    it("初期状態: CaptionEditorに caption.fontSize=14 が渡ること", () => {
+      render(<QrGenerator />);
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-fontsize", "14");
+    });
+
+    it("キャプション設定後に caption.text が更新されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("set-caption"));
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-text", "テストキャプション");
+    });
+
+    it("キャプション設定後に caption.fontSize が更新されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("set-caption"));
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-fontsize", "16");
+    });
+
+    it("キャプションクリア後に caption.text が空に戻ること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("set-caption"));
+      fireEvent.click(screen.getByTestId("clear-caption"));
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-text", "");
+    });
+
+    it("キャプション設定後に decorationCount が +1 されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("set-caption"));
+      const downloadPanel = screen.getByTestId("download-panel");
+      const count = Number(downloadPanel.getAttribute("data-decoration-count"));
+      expect(count).toBeGreaterThanOrEqual(1);
+    });
+
+    it("キャプションクリア後に decorationCount が元に戻ること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("set-caption"));
+      fireEvent.click(screen.getByTestId("clear-caption"));
+      const downloadPanel = screen.getByTestId("download-panel");
+      expect(downloadPanel).toHaveAttribute("data-decoration-count", "0");
+    });
+  });
+
+  describe("PresetSelector 接続 — プリセット一括適用", () => {
+    it("PresetSelectorがステップ3に表示されること", () => {
+      render(<QrGenerator />);
+      expect(screen.getByTestId("preset-selector")).toBeInTheDocument();
+    });
+
+    it("初期状態: currentPresetIdが'none'であること", () => {
+      render(<QrGenerator />);
+      const presetSelector = screen.getByTestId("preset-selector");
+      expect(presetSelector).toHaveAttribute("data-current-preset", "none");
+    });
+
+    it("ビジネスプリセット適用後にcurrentPresetIdが'business'になること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("apply-preset-business"));
+      const presetSelector = screen.getByTestId("preset-selector");
+      expect(presetSelector).toHaveAttribute("data-current-preset", "business");
+    });
+
+    it("ビジネスプリセット適用後にキャプションが更新されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("apply-preset-business"));
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-text", "詳しくはこちら");
+      expect(captionEditor).toHaveAttribute("data-caption-fontsize", "12");
+    });
+
+    it("シンプルプリセット適用後にキャプションが空に戻ること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("apply-preset-business"));
+      fireEvent.click(screen.getByTestId("apply-preset-simple"));
+      const captionEditor = screen.getByTestId("caption-editor");
+      expect(captionEditor).toHaveAttribute("data-caption-text", "");
+    });
+
+    it("プリセット適用後にdecorationCountが更新されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("apply-preset-business"));
+      const downloadPanel = screen.getByTestId("download-panel");
+      const count = Number(downloadPanel.getAttribute("data-decoration-count"));
+      expect(count).toBeGreaterThanOrEqual(1);
+    });
+
+    it("ビジネスプリセット適用後にfgColorが#1a365dに変わること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("apply-preset-business"));
+      const colorCustomizer = screen.getByTestId("color-customizer");
+      expect(colorCustomizer).toHaveAttribute("data-fg-color", "#1a365d");
+    });
+
+    it("ビジネスプリセット適用後にbgColorが#ffffffであること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("apply-preset-business"));
+      const colorCustomizer = screen.getByTestId("color-customizer");
+      expect(colorCustomizer).toHaveAttribute("data-bg-color", "#ffffff");
+    });
+
+    it("ビジネスプリセット適用後にframeTypeがbusinessに変わること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("apply-preset-business"));
+      const frameSelector = screen.getByTestId("frame-selector");
+      expect(frameSelector).toHaveAttribute("data-frame-type", "business");
+    });
+
+    it("シンプルプリセット適用後にcurrentPresetIdが'simple'になること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("apply-preset-simple"));
+      const presetSelector = screen.getByTestId("preset-selector");
+      expect(presetSelector).toHaveAttribute("data-current-preset", "simple");
+    });
+
+    it("business→simpleプリセット切り替えでcurrentPresetIdが更新されること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("apply-preset-business"));
+      fireEvent.click(screen.getByTestId("apply-preset-simple"));
+      const presetSelector = screen.getByTestId("preset-selector");
+      expect(presetSelector).toHaveAttribute("data-current-preset", "simple");
+    });
+
+    it("シンプルプリセット適用後にfgColorが#000000に戻ること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("apply-preset-business"));
+      fireEvent.click(screen.getByTestId("apply-preset-simple"));
+      const colorCustomizer = screen.getByTestId("color-customizer");
+      expect(colorCustomizer).toHaveAttribute("data-fg-color", "#000000");
     });
   });
 });

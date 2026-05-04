@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-code-create.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 const SITE_NAME = "QR Code Create";
 
 interface BuildMetadataOptions {
@@ -69,21 +69,18 @@ export const PAGE_METADATA = {
     noIndex: true,
   },
   guide: {
-    title: "使い方ガイド（準備中）",
-    description: "QR Code Createの使い方ガイド。現在準備中です。個別の記事は順次公開予定です。",
+    title: "使い方ガイド",
+    description: "QR Code Createの使い方やQRコードの活用方法を初心者にもわかりやすく解説するガイド集です。",
     path: "/guide",
-    noIndex: true,
   },
   useCases: {
-    title: "用途別QRコード（準備中）",
-    description: "名刺・チラシ・ポスターなど用途別のQRコード活用ガイド。現在準備中です。",
+    title: "用途別QRコード",
+    description: "名刺・チラシ・ポスター・イベントなど、用途別にQRコードの作り方と推奨UTM設定を解説します。",
     path: "/use-cases",
-    noIndex: true,
   },
   blog: {
-    title: "ブログ（準備中）",
-    description: "QRコードマーケティングに関するブログ。現在準備中です。",
+    title: "ブログ",
+    description: "QRコードマーケティングやUTMパラメータの活用方法について、実践的な情報をお届けします。",
     path: "/blog",
-    noIndex: true,
   },
 } as const;

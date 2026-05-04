@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { isContrastSufficient } from "@/lib/color/contrastChecker";
+import { trackQrGenerated } from "@/lib/analytics/events";
 import {
   drawFrame,
   isImageFrame,
@@ -10,7 +11,7 @@ import {
   DEFAULT_FRAME_CONFIG,
 } from "@/lib/qr/frameRenderer";
 import { drawLogoOnCanvas } from "@/lib/qr/drawLogo";
-import type { LogoConfig } from "@/types/qr";
+import type { CaptionConfig, LogoConfig } from "@/types/qr";
 import styles from "./QrPreview.module.css";
 
 /** フレーム画像仕様の定数 */
@@ -33,6 +34,8 @@ interface QrPreviewProps {
   logo?: LogoConfig | null;
   /** フレーム設定 */
   frameConfig?: FrameConfig;
+  /** キャプション設定 */
+  caption?: CaptionConfig;
   /** URL有効性（false のときプレースホルダー表示） */
   isUrlValid?: boolean;
   /** 外部から canvasRef を注入する場合に指定（省略時は内部生成） */
@@ -58,6 +61,7 @@ export function QrPreview({
   size = 256,
   logo,
   frameConfig = DEFAULT_FRAME_CONFIG,
+  caption,
   isUrlValid = false,
   canvasRef: externalCanvasRef,
 }: QrPreviewProps) {
@@ -69,6 +73,8 @@ export function QrPreview({
 
   const shouldRender = !!(url && isUrlValid);
   const contrastOk = isContrastSufficient(fgColor, bgColor);
+
+  const hasCaption = !!(caption && caption.text.trim() !== "");
 
   const hasFrame = frameConfig.type !== "none";
   const hasImageFrame = isImageFrame(frameConfig.type);
@@ -142,6 +148,15 @@ export function QrPreview({
       if (logo != null) {
         await drawLogoOnCanvas(canvas, logo);
       }
+
+      // QRコード生成完了イベントを発火
+      trackQrGenerated({
+        hasUtm: url.includes("utm_"),
+        utmCount: (url.match(/utm_/g) || []).length,
+        hasLogo: logo != null,
+        hasFrame: hasFrame,
+        hasCaption: !!(caption && caption.text.trim() !== ""),
+      });
     } catch {
       setHasError(true);
     } finally {
@@ -225,6 +240,16 @@ export function QrPreview({
           </div>
         )}
       </div>
+
+      {/* キャプションプレビュー */}
+      {shouldRender && hasCaption && (
+        <p
+          className={styles.captionPreview}
+          style={{ fontSize: caption!.fontSize }}
+        >
+          {caption!.text}
+        </p>
+      )}
 
       {/* コントラスト不足警告 */}
       {shouldRender && !contrastOk && (

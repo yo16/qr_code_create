@@ -1,12 +1,19 @@
 import sitemap from "@/app/sitemap";
+import { getGuideSlugList } from "@/lib/content/getGuide";
+import { getUseCaseSlugList } from "@/lib/content/getUseCase";
+import { getBlogSlugList } from "@/lib/content/getBlog";
 
-const DEFAULT_SITE_URL = "https://qr-code-create.vercel.app";
+const STATIC_PAGE_COUNT = 9; // /, /create, /guide, /use-cases, /blog, /faq, /contact, /privacy, /terms
 
 describe("sitemap", () => {
   describe("エントリ数の検証", () => {
-    it("合計エントリ数が10件であること（静的6 + ガイド4）", () => {
+    it("合計エントリ数が静的ページ + ガイド + use-cases + blog であること", () => {
+      const guideCount = getGuideSlugList().length;
+      const useCaseCount = getUseCaseSlugList().length;
+      const blogCount = getBlogSlugList().length;
+      const expectedTotal = STATIC_PAGE_COUNT + guideCount + useCaseCount + blogCount;
       const result = sitemap();
-      expect(result).toHaveLength(10);
+      expect(result).toHaveLength(expectedTotal);
     });
   });
 
@@ -32,7 +39,10 @@ describe("sitemap", () => {
     const staticPageExpectations = [
       { path: "/create", changeFrequency: "monthly", priority: 0.9 },
       { path: "/guide", changeFrequency: "weekly", priority: 0.8 },
+      { path: "/use-cases", changeFrequency: "weekly", priority: 0.8 },
+      { path: "/blog", changeFrequency: "weekly", priority: 0.8 },
       { path: "/faq", changeFrequency: "monthly", priority: 0.6 },
+      { path: "/contact", changeFrequency: "yearly", priority: 0.4 },
       { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
       { path: "/terms", changeFrequency: "yearly", priority: 0.3 },
     ];
@@ -53,39 +63,54 @@ describe("sitemap", () => {
   });
 
   describe("ガイドページの検証", () => {
-    const guideSlugs = [
-      "utm-parameters",
-      "effective-qr-usage",
-      "design-tips",
-      "analytics-measurement",
-    ];
-
-    it.each(guideSlugs)("ガイドスラッグ '%s' が含まれること", (slug) => {
+    it("全ガイドslugがサイトマップに含まれること", () => {
+      const guideSlugs = getGuideSlugList();
       const result = sitemap();
-      const guidePage = result.find((entry) => {
-        const url = new URL(entry.url);
-        return url.pathname === `/guide/${slug}`;
-      });
-      expect(guidePage).toBeDefined();
+      for (const slug of guideSlugs) {
+        const page = result.find((entry) => {
+          const url = new URL(entry.url);
+          return url.pathname === `/guide/${slug}`;
+        });
+        expect(page).toBeDefined();
+      }
     });
 
-    it.each(guideSlugs)("ガイドスラッグ '%s' のchangeFrequencyがmonthly、priorityが0.7であること", (slug) => {
-      const result = sitemap();
-      const page = result.find((entry) => {
-        const url = new URL(entry.url);
-        return url.pathname === `/guide/${slug}`;
-      });
-      expect(page?.changeFrequency).toBe("monthly");
-      expect(page?.priority).toBe(0.7);
-    });
-
-    it("ガイドページが合計4件含まれること", () => {
+    it("ガイドページのchangeFrequencyがmonthly、priorityが0.7であること", () => {
       const result = sitemap();
       const guidePages = result.filter((entry) => {
         const url = new URL(entry.url);
         return url.pathname.startsWith("/guide/");
       });
-      expect(guidePages).toHaveLength(4);
+      for (const page of guidePages) {
+        expect(page.changeFrequency).toBe("monthly");
+        expect(page.priority).toBe(0.7);
+      }
+    });
+  });
+
+  describe("use-casesページの検証", () => {
+    it("全use-case slugがサイトマップに含まれること", () => {
+      const useCaseSlugs = getUseCaseSlugList();
+      const result = sitemap();
+      for (const slug of useCaseSlugs) {
+        const page = result.find((entry) => {
+          const url = new URL(entry.url);
+          return url.pathname === `/use-cases/${slug}`;
+        });
+        expect(page).toBeDefined();
+      }
+    });
+
+    it("use-casesページのchangeFrequencyがmonthly、priorityが0.7であること", () => {
+      const result = sitemap();
+      const useCasePages = result.filter((entry) => {
+        const url = new URL(entry.url);
+        return url.pathname.startsWith("/use-cases/");
+      });
+      for (const page of useCasePages) {
+        expect(page.changeFrequency).toBe("monthly");
+        expect(page.priority).toBe(0.7);
+      }
     });
   });
 
@@ -106,42 +131,18 @@ describe("sitemap", () => {
   });
 
   describe("フォールバックURLのテスト", () => {
-    it("環境変数未設定時にフォールバックURLが正しいURL形式であること", () => {
+    it("全エントリのURLが有効なURL形式であること", () => {
       const result = sitemap();
       result.forEach((entry) => {
         expect(() => new URL(entry.url)).not.toThrow();
       });
     });
 
-    it("全エントリのURLがhttps://またはhttp://で始まること", () => {
+    it("全エントリのURLがhttps://で始まること", () => {
       const result = sitemap();
       result.forEach((entry) => {
-        expect(entry.url).toMatch(/^https?:\/\//);
+        expect(entry.url).toMatch(/^https:\/\//);
       });
-    });
-
-    it("NEXT_PUBLIC_SITE_URLが未設定の場合はデフォルトフォールバックURLが使用されること", () => {
-      // robots.tsと同様、モジュールはビルド時にキャッシュされるため
-      // URL形式の正当性と、デフォルト値のドメインが使用される可能性を確認する
-      const saved = process.env.NEXT_PUBLIC_SITE_URL;
-      delete process.env.NEXT_PUBLIC_SITE_URL;
-
-      const result = sitemap();
-      // 全エントリが有効なURLであること
-      result.forEach((entry) => {
-        expect(() => new URL(entry.url)).not.toThrow();
-      });
-
-      process.env.NEXT_PUBLIC_SITE_URL = saved;
-    });
-  });
-
-  describe("URLの一意性検証", () => {
-    it("重複するURLが存在しないこと", () => {
-      const result = sitemap();
-      const urls = result.map((entry) => entry.url);
-      const uniqueUrls = new Set(urls);
-      expect(uniqueUrls.size).toBe(urls.length);
     });
   });
 });

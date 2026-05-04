@@ -1,6 +1,6 @@
 import robots from "@/app/robots";
 
-const DEFAULT_SITE_URL = "https://qr-code-create.vercel.app";
+const DEFAULT_SITE_URL = "https://qr-create.jp";
 
 describe("robots", () => {
   describe("sitemapの検証", () => {
@@ -105,7 +105,7 @@ describe("robots", () => {
   describe("フォールバックURLのテスト", () => {
     it("環境変数未設定時にフォールバックURLがデフォルト値を含むこと", () => {
       // モジュールはキャッシュされるため、robots()が返すURLの形式を確認する
-      // 実際のフォールバック値 "https://qr-code-create.vercel.app" が使われることを
+      // 実際のフォールバック値 "https://qr-create.jp" が使われることを
       // 別途モジュールリセット経由で確認する代わりに、URL形式を検証する
       const result = robots();
       const sitemapUrl = result.sitemap as string;

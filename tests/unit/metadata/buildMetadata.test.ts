@@ -1,6 +1,6 @@
 import { buildMetadata, PAGE_METADATA } from "@/lib/metadata/buildMetadata";
 
-const DEFAULT_SITE_URL = "https://qr-code-create.vercel.app";
+const DEFAULT_SITE_URL = "https://qr-create.jp";
 
 describe("buildMetadata", () => {
   describe("正常系: 基本的な返り値の検証", () => {
@@ -233,16 +233,16 @@ describe("PAGE_METADATA", () => {
       expect((PAGE_METADATA.faq as { noIndex?: boolean }).noIndex).toBeUndefined();
     });
 
-    it("guideページにnoIndex=trueがあること（準備中のため）", () => {
-      expect((PAGE_METADATA.guide as { noIndex?: boolean }).noIndex).toBe(true);
+    it("guideページにnoIndexが設定されていないこと", () => {
+      expect((PAGE_METADATA.guide as { noIndex?: boolean }).noIndex).toBeUndefined();
     });
 
-    it("useCasesページにnoIndex=trueがあること（準備中のため）", () => {
-      expect((PAGE_METADATA.useCases as { noIndex?: boolean }).noIndex).toBe(true);
+    it("useCasesページにnoIndexが設定されていないこと", () => {
+      expect((PAGE_METADATA.useCases as { noIndex?: boolean }).noIndex).toBeUndefined();
     });
 
-    it("blogページにnoIndex=trueがあること（準備中のため）", () => {
-      expect((PAGE_METADATA.blog as { noIndex?: boolean }).noIndex).toBe(true);
+    it("blogページにnoIndexが設定されていないこと", () => {
+      expect((PAGE_METADATA.blog as { noIndex?: boolean }).noIndex).toBeUndefined();
     });
   });
 });

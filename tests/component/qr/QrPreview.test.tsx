@@ -237,6 +237,28 @@ describe("QrPreview", () => {
     });
   });
 
+  describe("previewArea — キャプション有無でも高さがsizeのまま正方形であること", () => {
+    it("caption未指定のときpreviewAreaの高さがsize（256px）であること", () => {
+      render(<QrPreview url="https://example.com" isUrlValid={true} />);
+      const previewArea = screen.getByRole("img");
+      expect(previewArea.style.height).toBe("256px");
+      expect(previewArea.style.width).toBe("256px");
+    });
+
+    it("caption指定時でもpreviewAreaの高さがsize（256px）のままであること", () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "テスト", fontSize: 14 }}
+        />
+      );
+      const previewArea = screen.getByRole("img");
+      expect(previewArea.style.height).toBe("256px");
+      expect(previewArea.style.width).toBe("256px");
+    });
+  });
+
   describe("ロゴ描画 (drawLogoOnCanvas)", () => {
     const mockLogo: LogoConfig = {
       dataUrl: "data:image/png;base64,abc123",
@@ -423,6 +445,75 @@ describe("QrPreview", () => {
       expect(
         screen.queryByText("QRコードの生成に失敗しました")
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("キャプションHTMLプレビュー", () => {
+    it("caption未指定のときキャプション要素が存在しないこと", () => {
+      const { container } = render(<QrPreview url="https://example.com" isUrlValid={true} />);
+      const captionEl = container.querySelector("[class*='captionPreview']");
+      expect(captionEl).toBeNull();
+    });
+
+    it("caption.text空文字のときキャプション要素が存在しないこと", () => {
+      const { container } = render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "", fontSize: 14 }}
+        />
+      );
+      const captionEl = container.querySelector("[class*='captionPreview']");
+      expect(captionEl).toBeNull();
+    });
+
+    it("caption指定時にキャプションテキストがHTMLで表示されること", () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "スキャンしてね", fontSize: 14 }}
+        />
+      );
+      expect(screen.getByText("スキャンしてね")).toBeInTheDocument();
+    });
+
+    it("caption指定時にキャプションのフォントサイズがstyleで設定されること", () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "テスト", fontSize: 20 }}
+        />
+      );
+      const captionEl = screen.getByText("テスト");
+      expect(captionEl.style.fontSize).toBe("20px");
+    });
+
+    it("isUrlValid=falseのときキャプションが表示されないこと", () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={false}
+          caption={{ text: "テスト", fontSize: 14 }}
+        />
+      );
+      expect(screen.queryByText("テスト")).not.toBeInTheDocument();
+    });
+
+    it("caption.textが空白のみのときキャプションが表示されないこと", () => {
+      render(
+        <QrPreview
+          url="https://example.com"
+          isUrlValid={true}
+          caption={{ text: "   ", fontSize: 14 }}
+        />
+      );
+      // trimで空白のみはhasCaptionがfalseになるため表示されない
+      const allP = document.querySelectorAll("p");
+      const captionP = Array.from(allP).filter((p) => p.textContent?.trim() === "");
+      // captionPreviewクラスを持つpは存在しないはず
+      expect(captionP.length === 0 || !captionP.some((p) => p.className.includes("captionPreview"))).toBe(true);
     });
   });
 });

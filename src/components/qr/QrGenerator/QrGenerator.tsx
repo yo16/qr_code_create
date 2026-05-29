@@ -248,6 +248,11 @@ export function QrGenerator() {
             hasUtm={hasUtm}
             decorationCount={decorationCount}
             caption={state.decoration.caption}
+            url={state.url}
+            isUrlValid={state.isUrlValid}
+            utm={state.utm}
+            utmEnabled={state.utmEnabled}
+            decoration={state.decoration}
           />
         </section>
       </div>

@@ -16,6 +16,7 @@
 ```
 / .......................... トップページ（SSG）
 ├── /create ................ QRコード生成ツール（SSG + CSR）
+├── /poster ................ 印刷用ポスター（A4 2x2 PDF）作成ツール（SSG + CSR）
 ├── /guide ................. 使い方ガイド一覧（SSG）
 │   └── /guide/[slug] ...... ガイド個別記事（SSG, generateStaticParams）
 ├── /use-cases/[slug] ...... 用途別QRコード（SSG, generateStaticParams）
@@ -88,6 +89,40 @@ export const metadata: Metadata = {
 ```
 
 **JSON-LD**: WebApplication, HowTo, BreadcrumbList
+
+---
+
+### 2.2.1 印刷用ポスター作成ページ（`/poster`）
+
+| 項目 | 内容 |
+|---|---|
+| ファイル | `src/app/(tool)/poster/page.tsx` |
+| レンダリング | SSG（シェル）+ CSR（PDF生成・プレビュー） |
+| レイアウト | (tool) レイアウト |
+| Server/Client | Server Component + Client Component (PosterEditor) |
+
+**コンテンツ構成**:
+1. ページタイトル + 簡易説明（「QRコードと説明文を組み合わせたA4ポスターを1ページに4枚分作成」）
+2. PosterEditor（dynamic import, ssr: false）
+   - 引き継ぎstate読込（sessionStorage の `qr-poster-handoff` キー）
+   - 引き継ぎなしの場合は最小入力欄（URL入力）から開始
+3. 関連リンク（`/create` への戻り導線、`/guide/effective-qr-usage` 等）
+
+**用途・想定動線**:
+- `/create` ステップ4のCTAから sessionStorage 経由で遷移（主動線）
+- 単独URLアクセスからの直接利用（SEO上の独立エントリ、最小入力欄から開始）
+
+**メタデータ**:
+```typescript
+export const metadata: Metadata = {
+  title: '印刷用QRコードポスター作成 | A4で4枚同時印刷',
+  description: 'QRコードと説明文を組み合わせたA4ポスターを無料作成。1枚のA4用紙に4枚分のQRコードを配置し、PDFでダウンロードできます。チラシ・店舗POP・案内ポスターに最適。',
+};
+```
+
+**JSON-LD**: WebApplication, BreadcrumbList
+
+**state引き継ぎ**: [アーキテクチャ設計 セクション9](./architecture.md#9-poster-へのstate引き継ぎ機構) を参照。
 
 ---
 
@@ -509,6 +544,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'weekly', priority: 1.0 },
     { url: `${BASE_URL}/create`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE_URL}/poster`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/guide`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/faq`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },

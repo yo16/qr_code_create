@@ -238,6 +238,13 @@ export interface DecorationConfig {
 export interface QrState {
   /** 入力URL */
   url: string;
+  /** URLバリデーション結果 */
+  isUrlValid: boolean;
+  /** UTMパラメータ全体の有効/無効フラグ (デフォルト: true)
+   *  false の場合、UTM入力欄はグレーアウトされ、生成URLからもUTMパラメータが除外される。
+   *  既存の utm フィールドの値はメモリ上に保持され、再度 true に戻したときに復元される。
+   */
+  utmEnabled: boolean;
   /** UTMパラメータ */
   utm: UtmParams;
   /** 装飾設定 */
@@ -245,7 +252,47 @@ export interface QrState {
   /** 現在のステップ (1: URL入力, 2: UTM設定, 3: 装飾, 4: ダウンロード) */
   currentStep: 1 | 2 | 3 | 4;
 }
+
+/**
+ * QrState の初期値
+ * QrGeneratorコンポーネントのuseStateで使用する。
+ * utmEnabled はデフォルト true（UTM設定ON状態でスタート）。
+ */
+export const INITIAL_QR_STATE: QrState = {
+  url: '',
+  isUrlValid: false,
+  utmEnabled: true,
+  utm: {
+    source: '',
+    medium: 'qr',  // デフォルト値（Default Effect）
+    campaign: '',
+    term: '',
+    content: '',
+  },
+  decoration: {
+    preset: null,
+    logo: null,
+    foregroundColor: '#000000',
+    backgroundColor: '#ffffff',
+    frame: null,
+    caption: {
+      text: '',
+      fontSize: 14,
+    },
+  },
+  currentStep: 1,
+};
 ```
+
+#### utmEnabled の動作仕様
+
+- **デフォルト値**: `true`（UTMパラメータ設定はONがデフォルト）
+- **OFF時の挙動**:
+  - `utm` フィールドの値はメモリ上に**保持**する（再ON時に値が復元される）
+  - `buildUtmUrl()` は `enabled=false` を受け取った場合、`baseUrl` をそのまま返す（UTM付与を行わない）
+  - 既存URLにクエリ文字列が含まれていた場合はそのまま温存し、`?utm_*` の付与のみ抑止する
+  - `utm_medium` のデフォルト値 `"qr"` も OFF 時は URL に出現させない
+- **ProgressBar 完了度算出への影響**: [UI/UX仕様 セクション3.2](./ui-ux-spec.md#32-progressbar-の完了度算出) を参照
 
 ### 2.4 QRコード生成オプション
 
@@ -615,6 +662,7 @@ export interface ContentListItem<T extends ContentType> {
  */
 export type AnalyticsEventName =
   | 'url_entered'
+  | 'utm_toggled'
   | 'utm_source_set'
   | 'utm_medium_set'
   | 'utm_campaign_set'
@@ -637,6 +685,10 @@ export type AnalyticsEventName =
 export interface AnalyticsEventParams {
   url_entered: {
     url_domain: string;
+  };
+  utm_toggled: {
+    /** トグル変更後の状態 (true: ON, false: OFF) */
+    enabled: boolean;
   };
   utm_source_set: {
     utm_source_value: string;
@@ -943,10 +995,18 @@ export const CAPTION_GUIDELINES = {
  * UTMパラメータ付きURLを構築する
  * @param baseUrl - ベースURL
  * @param utm - UTMパラメータ
- * @returns UTMパラメータ付きURL文字列
+ * @param enabled - UTM全体の有効/無効フラグ（省略時は true 扱い、後方互換）
+ *                  false の場合、baseUrl をそのまま返す（utm_* を付与しない）
+ * @returns UTMパラメータ付きURL文字列（enabled=false の場合は baseUrl そのまま）
  */
-export function buildUtmUrl(baseUrl: string, utm: UtmParams): string;
+export function buildUtmUrl(baseUrl: string, utm: UtmParams, enabled?: boolean): string;
 ```
+
+**後方互換**: 第3引数 `enabled` を省略した場合は `true` として扱う。既存の呼び出し箇所はそのまま動作する。
+
+**実装メモ**:
+- `enabled === false` のときは `baseUrl` をそのまま返す
+- ただし `baseUrl` 自体に既にクエリ文字列が含まれている場合（例: `https://example.com/page?id=123`）はそのまま返し、`utm_*` の付与のみ抑止する
 
 ### 6.2 URLバリデーション（`lib/url/validateUrl.ts`）
 

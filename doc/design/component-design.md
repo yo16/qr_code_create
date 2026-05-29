@@ -71,42 +71,25 @@ const QrGenerator = dynamic(
 
 **Props**: なし（状態は全て内部管理）
 
-**内部状態**（[データモデル設計 QrState](./data-model.md#3-qrコード生成状態)参照）:
+**内部状態**（[データモデル設計 QrState](./data-model.md#23-qrコード生成状態)参照）:
 
 ```typescript
+import { INITIAL_QR_STATE } from '@/types/qr';
 import type { QrState } from '@/types/qr';
 
 // QrGenerator 内部で管理する状態
-const [state, setState] = useState<QrState>({
-  url: '',
-  utm: {
-    source: '',
-    medium: 'qr',  // デフォルト値（Default Effect）
-    campaign: '',
-    term: '',
-    content: '',
-  },
-  decoration: {
-    preset: null,
-    logo: null,
-    foregroundColor: '#000000',
-    backgroundColor: '#ffffff',
-    frame: null,
-    caption: {
-      text: '',
-      fontSize: 14,
-    },
-  },
-  currentStep: 1,
-});
+// INITIAL_QR_STATE は src/types/qr.ts でエクスポートされる初期値定数。
+// utmEnabled: true (UTM設定ONがデフォルト) を含む。
+const [state, setState] = useState<QrState>(INITIAL_QR_STATE);
 ```
 
 **責務**:
 - 子コンポーネントへの状態配信と更新関数の提供
-- UTMパラメータ付きURLの構築（`lib/url/buildUtmUrl.ts` を使用）
+- UTMパラメータ付きURLの構築（`lib/url/buildUtmUrl.ts` を使用、`state.utmEnabled` を第3引数として渡す）
 - QRコード生成トリガー（500ms デバウンス）
-- 進捗度の算出
-- GA4イベントの発火タイミング制御
+- 進捗度の算出（UTM OFF時はUTMステップを自動完了扱い、詳細は [UI/UX仕様 3.2](./ui-ux-spec.md#32-progressbar-の完了度算出)）
+- GA4イベントの発火タイミング制御（UTM ON/OFF時の `trackUtmToggled` 含む）
+- `utmEnabled` 状態の管理（UtmBuilder の `onEnabledChange` ハンドラ経由）
 
 **レイアウト**:
 ```
@@ -169,6 +152,10 @@ import type { UtmParams } from '@/types/qr';
 interface UtmBuilderProps {
   value: UtmParams;
   onChange: (utm: UtmParams) => void;
+  /** UTM設定全体の有効/無効フラグ (デフォルト: true) */
+  enabled: boolean;
+  /** UTM ON/OFF切替時に呼ばれるコールバック */
+  onEnabledChange: (enabled: boolean) => void;
 }
 ```
 
@@ -177,20 +164,29 @@ interface UtmBuilderProps {
 - セクション開閉（プログレッシブディスクロージャー）
 - UTM未設定時の注意メッセージ（損失回避メッセージ）
 - EffectivenessIndicator の表示
+- **UTM全体のON/OFFトグル**（ヘッダー右側、詳細は [UI/UX仕様 2.3.1](./ui-ux-spec.md#231-utm-onoff-トグル仕様)）
+- OFF時の挙動:
+  - 各 `UtmField` に `disabled={true}` を渡す
+  - `UtmGuide` および 損失回避メッセージを非表示にする
+  - `EffectivenessIndicator` を淡色表示にする
+  - `utm` の値はメモリ上に保持（再ON時に復元）
+- ON/OFF切替時に `trackUtmToggled(enabled)` GA4イベントを発火
 
 **内部構成**:
 
 ```
 UtmBuilder
-├── セクションヘッダー（「マーケティング効果を上げましょう」）
-├── 損失回避メッセージ（UTM=0個のとき表示）
-├── UtmField (utm_source)     ← Select + 自由入力
-├── UtmField (utm_medium)     ← Select + 自由入力（デフォルト: qr）
-├── UtmField (utm_campaign)   ← 自由入力 + 命名ガイダンス
-├── UtmField (utm_term)       ← 自由入力（任意、折りたたみ）
-├── UtmField (utm_content)    ← 自由入力（任意、折りたたみ）
-├── EffectivenessIndicator
-└── UtmGuide（用途に応じた設定例）
+├── セクションヘッダー
+│   ├── タイトル「マーケティング効果を上げましょう」
+│   └── ON/OFFトグル（右側、「UTMを設定する [●]」）
+├── 損失回避メッセージ（enabled=true かつ UTM=0個のとき表示）
+├── UtmField (utm_source)     ← Select + 自由入力, disabled={!enabled}
+├── UtmField (utm_medium)     ← Select + 自由入力（デフォルト: qr）, disabled={!enabled}
+├── UtmField (utm_campaign)   ← 自由入力 + 命名ガイダンス, disabled={!enabled}
+├── UtmField (utm_term)       ← 自由入力（任意、折りたたみ）, disabled={!enabled}
+├── UtmField (utm_content)    ← 自由入力（任意、折りたたみ）, disabled={!enabled}
+├── EffectivenessIndicator    ← enabled=false 時は淡色表示
+└── UtmGuide                  ← enabled=false 時は非表示
 ```
 
 ---
@@ -211,6 +207,8 @@ interface UtmFieldProps {
   placeholder: string;
   options?: Array<{ value: string; label: string }>; // プルダウン選択肢
   required?: boolean;
+  /** フィールドを無効化（グレーアウト・操作不能）にする。UTM ON/OFFトグルOFF時に true (デフォルト: false) */
+  disabled?: boolean;
 }
 ```
 
@@ -221,6 +219,7 @@ interface UtmFieldProps {
 - ヘルプテキスト表示（「utm_sourceとは？」の説明）
 - 変更時に対応するGA4イベント発火（`trackUtmSet`）
 - ツールチップ表示時に `trackGuideTooltipOpened` 発火
+- **disabled時**: 入力要素を `disabled` 属性で操作不能化し、ラベル・ヘルプテキスト・ツールチップを淡色化（`opacity: 0.5` 程度、`cursor: not-allowed`）。GA4イベントは発火しない
 
 ---
 

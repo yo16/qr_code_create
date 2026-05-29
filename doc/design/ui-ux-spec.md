@@ -260,6 +260,7 @@
 ```
 ┌──────────────────────────────────────────────────┐
 │ ステップ2: マーケティング効果を上げましょう        │
+│                                  [UTMを設定する●]│ ← ON/OFFトグル
 │                                                  │
 │ ┌──────────────────────────────────────────────┐ │
 │ │ ⚠️ UTMパラメータを設定すると、Google          │ │
@@ -322,6 +323,56 @@
 | utm_campaign | 「キャンペーンや施策の名前です。後から見て何のことかわかる名前を付けましょう。日付を含めると管理しやすくなります。」 |
 | utm_term | 「検索キーワードを指定します。QRコードの場合はあまり使いませんが、特定のキーワードに紐づけたい場合に使います。」 |
 | utm_content | 「同じキャンペーンで複数のQRコードを使い分ける場合に使います。例: ヘッダーとフッターに異なるQRコードを配置する場合。」 |
+
+### 2.3.1 UTM ON/OFF トグル仕様
+
+UTMパラメータ全体の有効/無効を切り替えるトグルスイッチを提供する。UTM分析が不要なユーザー向けに、UTM入力を抑止しシンプルなQRコードを生成できるようにする。
+
+#### 配置
+
+- **位置**: UtmBuilder ヘッダー右側（セクションタイトル「ステップ2: マーケティング効果を上げましょう」の右端）
+- EffectivenessIndicator の上、もしくは並列に配置する（実装時の余白に応じて選択）
+- ラベル: `UTMを設定する`（トグルの左側に併記）
+
+#### コンポーネント
+
+- 形態: トグルスイッチ（チェックボックスではなく、ON/OFFが視覚的にひと目で分かるスイッチ）
+- アクセシビリティ: `role="switch"`, `aria-checked`, `aria-label="UTMパラメータを設定する"` を付与
+
+#### デフォルト
+
+- **ON**（`utmEnabled: true`）
+- 既存のCRO方針（UTMによる効果測定を推奨する）と整合させるため、初期表示はON
+
+#### OFF 時の挙動
+
+| 対象要素 | 挙動 |
+|---|---|
+| `UtmField` (5つ全て: source/medium/campaign/term/content) | `disabled=true` を渡してグレーアウト・操作不能化（淡色化、カーソル: not-allowed） |
+| 詳細設定アコーディオン (utm_term / utm_content) | 開閉操作は可能だが、中の入力欄はグレーアウト |
+| UtmGuide（用途別設定例カード） | 非表示にする（OFF時に「設定例から選ぶ」は意味を持たないため） |
+| EffectivenessIndicator | 淡色化（グレースケール表示）し、メッセージを「UTM未使用」と表示 |
+| 損失回避警告バナー | 非表示にする |
+| UrlPreview（生成URL表示） | `?utm_*` を含まない URL を表示 |
+| 生成されるQRコードのURL | UTMパラメータを付与しない（`buildUtmUrl(baseUrl, utm, false)` 経由で baseUrl をそのまま使用） |
+
+#### 値の保持と復元
+
+- OFF 時も `utm` フィールドの入力値はメモリ上に**保持**する
+- 再度 ON に戻したとき、入力されていた値はそのまま復元される
+- これは [データモデル設計 2.3 QRコード生成状態](./data-model.md#23-qrコード生成状態) の `utmEnabled` 仕様に基づく
+
+#### baseUrl に既存クエリがある場合の扱い
+
+- ユーザーが `https://example.com/page?id=123` のような既存クエリを持つURLを入力した場合、OFF時は **既存クエリを温存したまま** UTM付与のみを抑止する
+- つまり、生成URL = `https://example.com/page?id=123`（変更なし）
+- ON時は通常通り `&utm_source=...` の形式で追加する
+
+#### アナリティクス
+
+- ON/OFF切替時に GA4 イベント `utm_toggled` を発火する
+  - パラメータ: `{ enabled: boolean }`
+  - 関数: `trackUtmToggled(enabled: boolean)` を `lib/analytics/track.ts` に追加（[データモデル設計 4.1 イベント定義](./data-model.md#41-イベント定義) 参照）
 
 ### 2.4 ステップ3: 装飾設定
 
@@ -454,8 +505,15 @@ function getCompletionPercent(state: QrState): number {
   if (state.isUrlValid) steps += 1;
 
   // ステップ2: UTM設定 (+33%)
-  const hasUtm = /* source/medium/campaign/term/contentのいずれかが入力済み */;
-  if (hasUtm) steps += 1;
+  // utmEnabled=false の場合は「UTMは使わない」とユーザーが明示的に選択したため、
+  // 自動完了扱い（+1）とする。これにより「UTMをOFFにしただけで進捗が止まる」
+  // 不自然な挙動を避ける。
+  if (!state.utmEnabled) {
+    steps += 1;
+  } else {
+    const hasUtm = /* source/medium/campaign/term/contentのいずれかが入力済み */;
+    if (hasUtm) steps += 1;
+  }
 
   // ステップ3: 装飾設定 (+34%)
   const hasDecoration = /* 色変更/フレーム/キャプション/ロゴのいずれかが設定済み */;
@@ -464,6 +522,11 @@ function getCompletionPercent(state: QrState): number {
   return Math.round((steps / 3) * 100);
 }
 ```
+
+**UTM OFF時の完了度判定方針**:
+- `utmEnabled === false` の場合、UTMステップは**自動完了扱い**（+1）とする
+- 理由: ユーザーがOFFを明示的に選択した時点で「このステップに用はない」という意思表示と解釈できる。OFFにしただけで進捗が67%から33%に下がってしまうと UX として不自然
+- 代替案として「OFF時は分母から除外（2ステップ中の達成率で算出）」も検討したが、UI上のステップ表示数が動的に変動するため見送り。固定3ステップで自動完了扱いとする方が実装と表示が安定する
 
 ### 3.3 ProgressBar のメッセージ
 

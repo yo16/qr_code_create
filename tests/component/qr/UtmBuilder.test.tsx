@@ -10,8 +10,12 @@ jest.mock("@/lib/analytics/events");
 // Controlled wrapper to simulate real usage
 function UtmBuilderWrapper({
   onValuesChange,
+  initialEnabled = true,
+  onEnabledChange,
 }: {
   onValuesChange?: (v: UtmValues) => void;
+  initialEnabled?: boolean;
+  onEnabledChange?: (enabled: boolean) => void;
 }) {
   const [values, setValues] = useState<UtmValues>({
     source: "",
@@ -20,11 +24,26 @@ function UtmBuilderWrapper({
     term: "",
     content: "",
   });
+  const [enabled, setEnabled] = useState(initialEnabled);
+
   const handleChange = (newValues: UtmValues) => {
     setValues(newValues);
     onValuesChange?.(newValues);
   };
-  return <UtmBuilder values={values} onChange={handleChange} />;
+
+  const handleEnabledChange = (newEnabled: boolean) => {
+    setEnabled(newEnabled);
+    onEnabledChange?.(newEnabled);
+  };
+
+  return (
+    <UtmBuilder
+      values={values}
+      onChange={handleChange}
+      enabled={enabled}
+      onEnabledChange={handleEnabledChange}
+    />
+  );
 }
 
 describe("UtmBuilder", () => {
@@ -53,6 +72,19 @@ describe("UtmBuilder", () => {
       render(<UtmBuilderWrapper />);
       expect(screen.getByRole("meter")).toBeInTheDocument();
     });
+
+    it("UTM ON/OFFトグルスイッチが表示されること", () => {
+      render(<UtmBuilderWrapper />);
+      expect(
+        screen.getByRole("switch", { name: "UTMパラメータを設定する" })
+      ).toBeInTheDocument();
+    });
+
+    it("初期状態でトグルスイッチがON（aria-checked=true）であること", () => {
+      render(<UtmBuilderWrapper />);
+      const toggle = screen.getByRole("switch", { name: "UTMパラメータを設定する" });
+      expect(toggle).toHaveAttribute("aria-checked", "true");
+    });
   });
 
   describe("UTM未設定時の警告", () => {
@@ -61,6 +93,8 @@ describe("UtmBuilder", () => {
         <UtmBuilder
           values={{ source: "", medium: "", campaign: "", term: "", content: "" }}
           onChange={jest.fn()}
+          enabled={true}
+          onEnabledChange={jest.fn()}
         />
       );
       expect(screen.getByRole("alert")).toBeInTheDocument();
@@ -71,6 +105,8 @@ describe("UtmBuilder", () => {
         <UtmBuilder
           values={{ source: "", medium: "", campaign: "", term: "", content: "" }}
           onChange={jest.fn()}
+          enabled={true}
+          onEnabledChange={jest.fn()}
         />
       );
       expect(screen.getByRole("alert")).toHaveTextContent("Google Analytics");
@@ -81,6 +117,8 @@ describe("UtmBuilder", () => {
         <UtmBuilder
           values={{ source: "", medium: "qr", campaign: "", term: "", content: "" }}
           onChange={jest.fn()}
+          enabled={true}
+          onEnabledChange={jest.fn()}
         />
       );
       // medium="qr"はfilledCountに含まれるのでalertは非表示
@@ -172,6 +210,109 @@ describe("UtmBuilder", () => {
           campaign: firstExample.campaign,
         })
       );
+    });
+  });
+
+  describe("UTM ON/OFFトグル", () => {
+    it("トグルOFFのとき aria-checked=false になること", () => {
+      render(<UtmBuilderWrapper initialEnabled={false} />);
+      const toggle = screen.getByRole("switch", { name: "UTMパラメータを設定する" });
+      expect(toggle).toHaveAttribute("aria-checked", "false");
+    });
+
+    it("トグルクリックで onEnabledChange(false) が呼ばれること", async () => {
+      const user = userEvent.setup();
+      const handleEnabledChange = jest.fn();
+      render(<UtmBuilderWrapper onEnabledChange={handleEnabledChange} />);
+
+      const toggle = screen.getByRole("switch", { name: "UTMパラメータを設定する" });
+      await user.click(toggle);
+
+      expect(handleEnabledChange).toHaveBeenCalledWith(false);
+    });
+
+    it("トグルがONのときクリックするとOFFになること（aria-checked=false）", async () => {
+      const user = userEvent.setup();
+      render(<UtmBuilderWrapper />);
+
+      const toggle = screen.getByRole("switch", { name: "UTMパラメータを設定する" });
+      expect(toggle).toHaveAttribute("aria-checked", "true");
+      await user.click(toggle);
+      expect(toggle).toHaveAttribute("aria-checked", "false");
+    });
+
+    it("トグルがOFFのとき UtmField が disabled 状態であること（utm_source）", () => {
+      render(<UtmBuilderWrapper initialEnabled={false} />);
+      const sourceField = screen.getByLabelText("utm_source（掲載場所）");
+      expect(sourceField).toBeDisabled();
+    });
+
+    it("トグルがOFFのとき UtmField が disabled 状態であること（utm_medium）", () => {
+      render(<UtmBuilderWrapper initialEnabled={false} />);
+      const mediumField = screen.getByLabelText("utm_medium（配布手段）");
+      expect(mediumField).toBeDisabled();
+    });
+
+    it("トグルがOFFのとき UtmField が disabled 状態であること（utm_campaign）", () => {
+      render(<UtmBuilderWrapper initialEnabled={false} />);
+      const campaignField = screen.getByLabelText("utm_campaign（キャンペーン名）");
+      expect(campaignField).toBeDisabled();
+    });
+
+    it("トグルがOFFのとき UtmGuide が非表示になること", () => {
+      render(
+        <UtmBuilder
+          values={{ source: "", medium: "", campaign: "", term: "", content: "" }}
+          onChange={jest.fn()}
+          enabled={false}
+          onEnabledChange={jest.fn()}
+        />
+      );
+      // UtmGuide内の用途別設定例ボタンが表示されないことを確認
+      if (UTM_USAGE_EXAMPLES.length > 0) {
+        expect(
+          screen.queryByRole("button", { name: UTM_USAGE_EXAMPLES[0].label })
+        ).not.toBeInTheDocument();
+      }
+    });
+
+    it("トグルがOFFのとき警告バナーが非表示になること（全フィールド空でも）", () => {
+      render(
+        <UtmBuilder
+          values={{ source: "", medium: "", campaign: "", term: "", content: "" }}
+          onChange={jest.fn()}
+          enabled={false}
+          onEnabledChange={jest.fn()}
+        />
+      );
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("トグルOFFでトグルクリックするとONになり onEnabledChange(true) が呼ばれること", async () => {
+      const user = userEvent.setup();
+      const handleEnabledChange = jest.fn();
+      render(
+        <UtmBuilderWrapper
+          initialEnabled={false}
+          onEnabledChange={handleEnabledChange}
+        />
+      );
+
+      const toggle = screen.getByRole("switch", { name: "UTMパラメータを設定する" });
+      await user.click(toggle);
+
+      expect(handleEnabledChange).toHaveBeenCalledWith(true);
+    });
+
+    it("trackUtmToggled がトグル時に呼ばれること", async () => {
+      const { trackUtmToggled } = jest.requireMock("@/lib/analytics/events");
+      const user = userEvent.setup();
+      render(<UtmBuilderWrapper />);
+
+      const toggle = screen.getByRole("switch", { name: "UTMパラメータを設定する" });
+      await user.click(toggle);
+
+      expect(trackUtmToggled).toHaveBeenCalledWith(false);
     });
   });
 });

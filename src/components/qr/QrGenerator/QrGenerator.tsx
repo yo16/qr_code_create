@@ -21,13 +21,18 @@ import styles from "./QrGenerator.module.css";
 function getCompletionPercent(state: QrState): number {
   let steps = 0;
   if (state.isUrlValid) steps += 1;
-  const hasUtm =
-    state.utm.source.trim() !== "" ||
-    state.utm.medium.trim() !== "" ||
-    state.utm.campaign.trim() !== "" ||
-    state.utm.term.trim() !== "" ||
-    state.utm.content.trim() !== "";
-  if (hasUtm) steps += 1;
+  // utmEnabled=false の場合は UTM ステップを自動完了扱い
+  if (!state.utmEnabled) {
+    steps += 1;
+  } else {
+    const hasUtm =
+      state.utm.source.trim() !== "" ||
+      state.utm.medium.trim() !== "" ||
+      state.utm.campaign.trim() !== "" ||
+      state.utm.term.trim() !== "" ||
+      state.utm.content.trim() !== "";
+    if (hasUtm) steps += 1;
+  }
   const hasDecoration =
     state.decoration.fgColor !== "#000000" ||
     state.decoration.bgColor !== "#ffffff" ||
@@ -83,6 +88,10 @@ export function QrGenerator() {
 
   const handleUtmChange = (utm: QrState["utm"]) => {
     setState((prev) => ({ ...prev, utm }));
+  };
+
+  const handleUtmEnabledChange = (utmEnabled: boolean) => {
+    setState((prev) => ({ ...prev, utmEnabled }));
   };
 
   const handleFgColorChange = (fgColor: string) => {
@@ -153,7 +162,7 @@ export function QrGenerator() {
   const completionPercent = getCompletionPercent(state);
   const progressMessage = getProgressMessage(completionPercent);
 
-  const builtUrl = buildUtmUrl(state.url, state.utm);
+  const builtUrl = buildUtmUrl(state.url, state.utm, state.utmEnabled);
 
   const step1State = getStepState(1, state.currentStep);
   const step2State = getStepState(2, state.currentStep);
@@ -193,7 +202,12 @@ export function QrGenerator() {
             </span>
             <h2 className={styles.stepTitle}>UTMパラメータ設定</h2>
           </div>
-          <UtmBuilder values={state.utm} onChange={handleUtmChange} />
+          <UtmBuilder
+            values={state.utm}
+            onChange={handleUtmChange}
+            enabled={state.utmEnabled}
+            onEnabledChange={handleUtmEnabledChange}
+          />
         </section>
 
         {/* ステップ3: 装飾設定 */}
@@ -269,6 +283,7 @@ export function QrGenerator() {
               utmCampaign={state.utm.campaign}
               utmTerm={state.utm.term}
               utmContent={state.utm.content}
+              utmEnabled={state.utmEnabled}
             />
           </div>
           <QrPreview

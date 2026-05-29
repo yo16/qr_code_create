@@ -12,6 +12,8 @@ interface UtmFieldProps {
   placeholder?: string;
   options?: { value: string; label: string }[];
   onTooltipOpen?: () => void;
+  /** フィールドを無効化（グレーアウト・操作不能）にする。UTM ON/OFFトグルOFF時に true (デフォルト: false) */
+  disabled?: boolean;
 }
 
 export function UtmField({
@@ -23,9 +25,13 @@ export function UtmField({
   placeholder,
   options,
   onTooltipOpen,
+  disabled = false,
 }: UtmFieldProps) {
   return (
-    <div className={styles.fieldRow}>
+    <div
+      className={`${styles.fieldRow}${disabled ? ` ${styles.fieldRowDisabled}` : ""}`}
+      aria-disabled={disabled}
+    >
       <div className={styles.fieldWithTooltip}>
         {options ? (
           <Select
@@ -34,6 +40,7 @@ export function UtmField({
             onChange={onChange}
             options={options}
             allowCustom={true}
+            disabled={disabled}
           />
         ) : (
           <Input
@@ -43,13 +50,15 @@ export function UtmField({
             type="text"
             placeholder={placeholder}
             helpText={name === "campaign" ? "日付や内容を含めると管理しやすくなります" : undefined}
+            disabled={disabled}
           />
         )}
-        <Tooltip content={helpText} position="top" onOpen={onTooltipOpen}>
+        <Tooltip content={helpText} position="top" onOpen={disabled ? undefined : onTooltipOpen}>
           <button
             type="button"
             className={styles.helpButton}
             aria-label={`${label}のヘルプ`}
+            disabled={disabled}
           >
             ?
           </button>

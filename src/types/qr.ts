@@ -31,6 +31,8 @@ export interface DecorationConfig {
 export interface QrState {
   url: string;
   isUrlValid: boolean;
+  /** UTMパラメータ全体の有効/無効フラグ (デフォルト: true) */
+  utmEnabled: boolean;
   utm: UtmParams;
   decoration: DecorationConfig;
   currentStep: number; // 1-4
@@ -39,6 +41,7 @@ export interface QrState {
 export const INITIAL_QR_STATE: QrState = {
   url: "",
   isUrlValid: false,
+  utmEnabled: true,
   utm: { source: "", medium: "qr", campaign: "", term: "", content: "" },
   decoration: {
     fgColor: "#000000",

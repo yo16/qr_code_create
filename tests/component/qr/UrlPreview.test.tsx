@@ -122,4 +122,88 @@ describe("UrlPreview", () => {
       expect(liveRegion).toHaveTextContent("URLをコピーしました");
     });
   });
+
+  describe("utmEnabled プロパティ", () => {
+    it("utmEnabled={true}（デフォルト）で UTM パラメータがプレビューに表示されること", () => {
+      render(
+        <UrlPreview
+          {...defaultProps}
+          url="https://example.com"
+          utmSource="flyer"
+          utmMedium="qr"
+          utmCampaign="summer_sale"
+          utmEnabled={true}
+        />
+      );
+      const code = screen.getByRole("code");
+      expect(code).toHaveTextContent("utm_source=flyer");
+      expect(code).toHaveTextContent("utm_medium=qr");
+      expect(code).toHaveTextContent("utm_campaign=summer_sale");
+    });
+
+    it("utmEnabled={false} で UTM パラメータがプレビューに表示されないこと", () => {
+      render(
+        <UrlPreview
+          {...defaultProps}
+          url="https://example.com"
+          utmSource="flyer"
+          utmMedium="qr"
+          utmCampaign="summer_sale"
+          utmEnabled={false}
+        />
+      );
+      const code = screen.getByRole("code");
+      expect(code).not.toHaveTextContent("utm_source");
+      expect(code).not.toHaveTextContent("utm_medium");
+      expect(code).not.toHaveTextContent("utm_campaign");
+    });
+
+    it("utmEnabled={false} でも baseUrl 自体はプレビューに表示されること", () => {
+      render(
+        <UrlPreview
+          {...defaultProps}
+          url="https://example.com"
+          utmSource="flyer"
+          utmMedium="qr"
+          utmEnabled={false}
+        />
+      );
+      const code = screen.getByRole("code");
+      expect(code).toHaveTextContent("https://example.com");
+    });
+
+    it("utmEnabled prop を省略した場合も UTM パラメータが表示されること（後方互換）", () => {
+      render(
+        <UrlPreview
+          {...defaultProps}
+          url="https://example.com"
+          utmSource="google"
+          utmMedium="cpc"
+        />
+      );
+      const code = screen.getByRole("code");
+      expect(code).toHaveTextContent("utm_source=google");
+    });
+
+    it("utmEnabled={false} でコピーボタンクリック時は UTM なし URL がコピーされること", async () => {
+      render(
+        <UrlPreview
+          {...defaultProps}
+          url="https://example.com"
+          utmSource="flyer"
+          utmMedium="qr"
+          utmEnabled={false}
+        />
+      );
+      const button = screen.getByRole("button", {
+        name: "URLをクリップボードにコピー",
+      });
+      fireEvent.click(button);
+      await waitFor(() => {
+        const calledWith = mockWriteText.mock.calls[0][0] as string;
+        expect(calledWith).not.toContain("utm_");
+        expect(calledWith).toContain("example.com");
+      });
+    });
+  });
 });

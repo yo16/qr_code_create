@@ -29,13 +29,25 @@ jest.mock("@/components/qr/UrlInput/UrlInput", () => ({
 }));
 
 jest.mock("@/components/qr/UtmBuilder/UtmBuilder", () => ({
-  UtmBuilder: ({ values, onChange }: any) => (
-    <div data-testid="utm-builder">
+  UtmBuilder: ({ values, onChange, enabled, onEnabledChange }: any) => (
+    <div data-testid="utm-builder" data-enabled={enabled ? "true" : "false"}>
       <button
         data-testid="set-utm"
         onClick={() => onChange({ ...values, source: "flyer" })}
       >
         set utm
+      </button>
+      <button
+        data-testid="toggle-utm-off"
+        onClick={() => onEnabledChange(false)}
+      >
+        toggle utm off
+      </button>
+      <button
+        data-testid="toggle-utm-on"
+        onClick={() => onEnabledChange(true)}
+      >
+        toggle utm on
       </button>
     </div>
   ),
@@ -43,7 +55,12 @@ jest.mock("@/components/qr/UtmBuilder/UtmBuilder", () => ({
 
 jest.mock("@/components/qr/UrlPreview/UrlPreview", () => ({
   UrlPreview: (props: any) => (
-    <div data-testid="url-preview">{props.url}</div>
+    <div
+      data-testid="url-preview"
+      data-utm-enabled={props.utmEnabled !== undefined ? String(props.utmEnabled) : "undefined"}
+    >
+      {props.url}
+    </div>
   ),
 }));
 
@@ -460,6 +477,88 @@ describe("QrGenerator", () => {
       fireEvent.click(screen.getByTestId("clear-caption"));
       const downloadPanel = screen.getByTestId("download-panel");
       expect(downloadPanel).toHaveAttribute("data-decoration-count", "0");
+    });
+  });
+
+  describe("UTM ON/OFF 切り替え", () => {
+    it("初期状態で UtmBuilder の enabled が true であること", () => {
+      render(<QrGenerator />);
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute(
+        "data-enabled",
+        "true"
+      );
+    });
+
+    it("UtmBuilder のトグルOFFで utm-builder の data-enabled が false になること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute(
+        "data-enabled",
+        "false"
+      );
+    });
+
+    it("UtmBuilder のトグルOFFで QrPreview に渡される url から utm_* が消えること", () => {
+      render(<QrGenerator />);
+      // まず URL を入力してバリデーション通過
+      fireEvent.change(screen.getByTestId("url-field"), {
+        target: { value: "https://example.com" },
+      });
+      fireEvent.click(screen.getByTestId("validate-btn"));
+      // UTM を設定
+      fireEvent.click(screen.getByTestId("set-utm"));
+      // この時点で QrPreview の url に utm_source が含まれる
+      expect(screen.getByTestId("qr-preview")).toHaveTextContent("utm_source");
+
+      // UTM を OFF にする
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      // utm_source が消えること
+      expect(screen.getByTestId("qr-preview")).not.toHaveTextContent("utm_source");
+    });
+
+    it("UrlPreview に utmEnabled が正しく渡されること（初期値: true）", () => {
+      render(<QrGenerator />);
+      expect(screen.getByTestId("url-preview")).toHaveAttribute(
+        "data-utm-enabled",
+        "true"
+      );
+    });
+
+    it("トグルOFFで UrlPreview の utmEnabled が false になること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      expect(screen.getByTestId("url-preview")).toHaveAttribute(
+        "data-utm-enabled",
+        "false"
+      );
+    });
+
+    it("utmEnabled=false（UTM未入力）でも getCompletionPercent の UTMステップが加算されること", () => {
+      render(<QrGenerator />);
+      // URL を有効にする
+      fireEvent.click(screen.getByTestId("validate-btn"));
+      // UTM を OFF にする（UTM未入力 + utmEnabled=false）
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      // isUrlValid(+1) + utmEnabled=false(+1) = 2/3 = 67%
+      expect(screen.getByTestId("progress-bar")).toHaveAttribute(
+        "data-current",
+        "67"
+      );
+    });
+
+    it("utmEnabled=true に戻した後、QrPreview の url に utm が復元されること", () => {
+      render(<QrGenerator />);
+      fireEvent.change(screen.getByTestId("url-field"), {
+        target: { value: "https://example.com" },
+      });
+      fireEvent.click(screen.getByTestId("validate-btn"));
+      fireEvent.click(screen.getByTestId("set-utm"));
+      // UTM OFF
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      expect(screen.getByTestId("qr-preview")).not.toHaveTextContent("utm_source");
+      // UTM ON に戻す
+      fireEvent.click(screen.getByTestId("toggle-utm-on"));
+      expect(screen.getByTestId("qr-preview")).toHaveTextContent("utm_source");
     });
   });
 

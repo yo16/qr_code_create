@@ -17,6 +17,7 @@
 src/types/
 ├── content.ts      # MDXコンテンツ関連の型
 ├── qr.ts           # QRコード関連の型（状態、装飾、ダウンロード等）
+├── poster.ts       # 印刷用ポスター関連の型（PosterState, PosterHandoffPayload 等）
 └── analytics.ts    # GA4イベント関連の型
 ```
 
@@ -398,6 +399,118 @@ export interface ContrastResult {
 }
 ```
 
+### 2.8 ポスター関連の型（`src/types/poster.ts`）
+
+`/poster` ページで使用する型定義。`/create` の `QrState` から派生する Markdown 説明文を加えた状態と、ページ間引き継ぎ用のペイロード型を含む。
+
+```typescript
+import type {
+  UtmParams,
+  DecorationConfig,
+} from './qr';
+
+/**
+ * ポスター作成ページの全体状態
+ * PosterEditor コンポーネントで useState で管理する
+ */
+export interface PosterState {
+  /** 入力URL（buildUtmUrl 適用前のベースURL） */
+  url: string;
+  /** URLバリデーション結果 */
+  isUrlValid: boolean;
+  /** 説明文（Markdown文字列） */
+  description: string;
+  /** UTMパラメータ */
+  utm: UtmParams;
+  /** UTMパラメータ全体の有効/無効フラグ（QrState の utmEnabled と同じ意味） */
+  utmEnabled: boolean;
+  /** 装飾設定（QrState の decoration と同じ） */
+  decoration: DecorationConfig;
+}
+
+/**
+ * /create → /poster への引き継ぎ用ペイロード
+ * sessionStorage に JSON.stringify して保存する
+ * キー名: "qr-poster-handoff"
+ */
+export interface PosterHandoffPayload {
+  /** 入力URL */
+  url: string;
+  /** URLバリデーション結果 */
+  isUrlValid: boolean;
+  /** UTMパラメータ */
+  utm: UtmParams;
+  /** UTM全体の有効/無効フラグ */
+  utmEnabled: boolean;
+  /** 装飾設定 */
+  decoration: DecorationConfig;
+  /** 保存時刻（ISO8601文字列）。1時間以上前の payload は受信側で破棄する */
+  savedAt: string;
+}
+```
+
+#### PosterState の初期値
+
+`description` は引き継ぎなし時は空文字、引き継ぎあり時も payload に含まれない（説明文は `/poster` 側で新規入力する）。
+
+```typescript
+import { INITIAL_QR_STATE } from './qr';
+
+/**
+ * PosterState の初期値
+ * 引き継ぎなしで /poster を開いた場合に使用する。
+ * 引き継ぎありの場合は posterHandoff.load() の結果で上書きする。
+ */
+export const INITIAL_POSTER_STATE: PosterState = {
+  url: '',
+  isUrlValid: false,
+  description: '',
+  utm: INITIAL_QR_STATE.utm,
+  utmEnabled: INITIAL_QR_STATE.utmEnabled,
+  decoration: INITIAL_QR_STATE.decoration,
+};
+```
+
+#### posterHandoff モジュール（`src/lib/handoff/posterHandoff.ts`）の関数シグネチャ
+
+```typescript
+/**
+ * sessionStorage のキー名
+ */
+export const POSTER_HANDOFF_KEY = 'qr-poster-handoff';
+
+/**
+ * payload の鮮度判定の境界（ミリ秒）
+ * これ以上経過した payload は破棄する
+ */
+export const POSTER_HANDOFF_MAX_AGE_MS = 60 * 60 * 1000; // 1時間
+
+/**
+ * 引き継ぎ payload を sessionStorage に保存する。
+ * SSR環境や保存失敗時は黙って何もしない（ベストエフォート）。
+ */
+export function save(payload: PosterHandoffPayload): void;
+
+/**
+ * 引き継ぎ payload を sessionStorage から読み込む。
+ * - SSR環境: null を返す
+ * - キーが存在しない: null を返す
+ * - JSON parse失敗: null を返す
+ * - savedAt が POSTER_HANDOFF_MAX_AGE_MS より古い: null を返す
+ */
+export function load(): PosterHandoffPayload | null;
+
+/**
+ * 引き継ぎ payload を sessionStorage から削除する。
+ * SSR環境では何もしない。
+ */
+export function clear(): void;
+```
+
+実装時は以下を必ず守ること（詳細は [アーキテクチャ 9.3](./architecture.md#93-ガード条件) を参照）:
+- **`typeof window !== "undefined"` ガードを必ず入れる**
+- **try/catch で囲む**（クォータ超過・プライベートブラウジング対策）
+
 ---
 
 ## 3. MDXコンテンツ関連の型（`src/types/content.ts`）
@@ -676,6 +789,7 @@ export type AnalyticsEventName =
   | 'preset_selected'
   | 'qr_generated'
   | 'qr_downloaded'
+  | 'poster_generated'
   | 'guide_tooltip_opened'
   | 'help_article_clicked';
 
@@ -737,6 +851,14 @@ export interface AnalyticsEventParams {
     has_utm: boolean;
     decoration_count: number;
   };
+  poster_generated: {
+    /** UTM設定有無 */
+    has_utm: boolean;
+    /** ロゴ画像有無 */
+    has_logo: boolean;
+    /** Markdown説明文の文字数 */
+    description_length: number;
+  };
   guide_tooltip_opened: {
     tooltip_id: string;
     field_name: string;
@@ -746,6 +868,11 @@ export interface AnalyticsEventParams {
   };
 }
 ```
+
+**`poster_generated` イベントの実装位置**:
+- 関数: `trackPosterGenerated(params: AnalyticsEventParams['poster_generated'])`
+- 配置: `src/lib/analytics/track.ts`（既存の `trackUtmToggled` と同じファイル）
+- 発火タイミング: `PdfDownloadButton` 内で `generatePosterPdf` が成功した直後
 
 ### 4.2 gtag型拡張
 

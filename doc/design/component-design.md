@@ -38,6 +38,19 @@ app/layout.tsx (Server Component)
       ├── QrPreview
       └── QrDownload
 
+/poster ページ:
+  page.tsx (Server Component)
+  ├── JsonLd (Server Component)
+  └── PosterEditor ('use client') ← dynamic import, ssr: false
+      ├── (引き継ぎ要約表示)
+      ├── UrlInput (再編集用)
+      ├── UtmBuilder (再編集用、折りたたみ)
+      ├── MarkdownInput
+      ├── PosterPreview
+      │   ├── QrPreview (x4)
+      │   └── Markdown レンダリング (x4)
+      └── PdfDownloadButton
+
 (marketing) ページ:
   page.tsx (Server Component)
   ├── Breadcrumb (Server Component)
@@ -90,6 +103,7 @@ const [state, setState] = useState<QrState>(INITIAL_QR_STATE);
 - 進捗度の算出（UTM OFF時はUTMステップを自動完了扱い、詳細は [UI/UX仕様 3.2](./ui-ux-spec.md#32-progressbar-の完了度算出)）
 - GA4イベントの発火タイミング制御（UTM ON/OFF時の `trackUtmToggled` 含む）
 - `utmEnabled` 状態の管理（UtmBuilder の `onEnabledChange` ハンドラ経由）
+- **`DownloadPanel` への引き継ぎ用 props 配信**: `url`, `isUrlValid`, `utm`, `utmEnabled`, `decoration` を渡す。これにより DownloadPanel の「印刷用ポスターを作る →」CTA が sessionStorage 保存用の payload を構築できる（詳細は [2.13](#213-qrdownload--downloadpanel) を参照）
 
 **レイアウト**:
 ```
@@ -504,19 +518,27 @@ interface QrPreviewProps {
 
 ---
 
-### 2.13 QrDownload
+### 2.13 QrDownload / DownloadPanel
 
 ダウンロードボタン群。
+
+> 実装上のファイル名は `DownloadPanel`（`src/components/qr/DownloadPanel/DownloadPanel.tsx`）。本設計書では役割上「QrDownload」と「DownloadPanel」を同義に扱う。
 
 **種別**: Client Component（QrGeneratorの子）
 
 ```typescript
-interface QrDownloadProps {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+interface DownloadPanelProps {
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  disabled: boolean;
+  hasUtm: boolean;
+  decorationCount: number;
+  caption: CaptionConfig;
+  /** ポスターCTA用: 引き継ぎstateの構築に必要な値 */
   url: string;
+  isUrlValid: boolean;
+  utm: UtmParams;
+  utmEnabled: boolean;
   decoration: DecorationConfig;
-  utmCount: number;
-  isReady: boolean;
 }
 ```
 
@@ -527,6 +549,182 @@ interface QrDownloadProps {
 - ダウンロード時に `trackQrDownloaded` GA4イベント発火
 - ダウンロード処理は `lib/qr/downloadQr.ts` に委譲
 - PDF出力は `jsPDF` を動的インポート
+- **印刷用ポスターCTAボタン**「印刷用ポスターを作る →」を追加
+  - 配置: PNG/SVG/PDF ボタンの下に独立した行として配置（または同じ行の右端）
+  - クリック時の挙動:
+    1. `posterHandoff.save({ url, isUrlValid, utm, utmEnabled, decoration, savedAt: new Date().toISOString() })` を呼ぶ
+    2. `router.push('/poster')` で遷移
+  - 表示条件: `isUrlValid === true` のとき有効化（無効URLでは disabled）
+  - GA4 イベント: クリック時に `poster_cta_clicked`（簡易・実装時に必要に応じて追加検討、現状は `poster_generated` のみを設計に含める）
+
+---
+
+## 2A. ポスター関連コンポーネント（`src/components/poster/`）
+
+`/poster` ページで使用するコンポーネント群。全て Client Component (`'use client'`)。
+
+### 2A.1 コンポーネント階層
+
+```
+/poster ページ:
+  page.tsx (Server Component)
+  ├── JsonLd (Server Component)
+  └── PosterEditor ('use client') ← dynamic import, ssr: false
+      ├── 左カラム
+      │   ├── 引き継ぎ要約表示（URL/UTM/装飾の概要）
+      │   ├── UrlInput              ← 引き継ぎなし時、または編集時に表示
+      │   ├── UtmBuilder            ← 既存コンポーネントを再利用（任意で再編集）
+      │   ├── MarkdownInput         ← 説明文（Markdown）入力
+      │   └── PdfDownloadButton     ← A4 2x2 PDFダウンロード
+      └── 右カラム
+          └── PosterPreview         ← A4縦比率の2x2カード配置プレビュー
+              ├── QrPreview (x4)    ← 既存コンポーネントを4枚分使用
+              └── Markdownレンダリング結果 (x4)
+```
+
+### 2A.2 PosterEditor
+
+`/poster` ページのトップレベル Client Component。引き継ぎ state の読込、全体 state の管理を行う。
+
+**種別**: Client Component (`'use client'`)
+
+**読み込み方法**: `next/dynamic` で動的インポート（`ssr: false`）
+
+**Props**: なし（状態は全て内部管理）
+
+**内部状態**: `PosterState`（[データモデル設計 2.8](./data-model.md#28-ポスター関連の型) 参照）
+
+**責務**:
+- マウント時に `posterHandoff.load()` を呼び、引き継ぎ payload を読み込む
+  - 読込成功 → `INITIAL_POSTER_STATE` に対して payload の値で上書き
+  - 読込失敗（payload なし／鮮度切れ／JSON parse失敗）→ `INITIAL_POSTER_STATE` のままで開始（URL入力欄表示）
+  - 読込後、即座に `posterHandoff.clear()` でキーを削除（リロード時の二重消費を防ぐ）
+- **必ず `typeof window !== "undefined"` ガードを使う**（[アーキテクチャ 9.3](./architecture.md#93-ガード条件) 参照）。実際には `useEffect` 内で実行されるため SSR では呼ばれないが、明示的にガードを書く方針
+- URL・UTM・装飾の再編集（UtmBuilder を再利用）
+- Markdown説明文の編集
+- PosterPreview への state 配信
+- PdfDownloadButton への PosterState 配信
+
+**レイアウト**:
+
+```
+┌─────────────────────────────────────────────────────┐
+│ [ホームに戻る] [/createに戻る]                       │
+├──────────────────────────┬──────────────────────────┤
+│ 左カラム                  │ 右カラム                  │
+│                          │                          │
+│ 引き継ぎ要約             │  ┌────────────────────┐  │
+│ URL: https://...         │  │ A4縦プレビュー       │  │
+│ UTM: source=flyer 等      │  │ (210:297 比率)      │  │
+│ 装飾: ロゴあり            │  │                    │  │
+│                          │  │  ┌──────┬──────┐    │  │
+│ ── 編集 ──                │  │  │ QR   │ QR   │    │  │
+│ [URL入力] (再編集)        │  │  │ 説明  │ 説明  │    │  │
+│ [UtmBuilder] (折りたたみ) │  │  ├──────┼──────┤    │  │
+│                          │  │  │ QR   │ QR   │    │  │
+│ ── 説明文 ──              │  │  │ 説明  │ 説明  │    │  │
+│ [MarkdownInput]          │  │  └──────┴──────┘    │  │
+│                          │  └────────────────────┘  │
+│                          │                          │
+│ [PdfDownloadButton]      │                          │
+└──────────────────────────┴──────────────────────────┘
+```
+
+### 2A.3 MarkdownInput
+
+Markdown形式での説明文入力 + ライブプレビュー。
+
+**種別**: Client Component（PosterEditorの子）
+
+```typescript
+interface MarkdownInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  /** プレビュー領域の高さ目安（カード幅・行数に合わせて調整） */
+  maxRows?: number;
+}
+```
+
+**機能**:
+- 左半分: テキストエリア（Markdown入力）
+- 右半分（または下半分）: レンダリング結果プレビュー（縮小表示）
+- 入力例ヒント: 「**太字** で強調、- でリスト、見出しは ## で」
+- 文字数カウンター（A4縦1/4カードに収まる目安: 200-400文字程度、設計時 TBD として実装時に文字幅とフォントサイズから決定）
+
+**ライブラリ**:
+- `react-markdown` を使用
+- プラグイン: `remark-gfm`（テーブル・打ち消し線・タスクリスト等のGFM拡張）
+- **`rehype-raw` は使わない**: 生 HTML の埋め込みを許可するとXSSリスクが上がるため。Markdown構文のみをサポートする
+- 許可するMarkdown要素: 段落・見出し（h1-h4）・太字・斜体・リスト・リンク・コード・引用・水平線・テーブル
+
+**セキュリティ**:
+- 外部リンクの `<a>` には `rel="noopener noreferrer"` を自動付与（カスタム components プロパティで実装）
+- 画像埋め込み (`![alt](url)`) は **不許可**（カスタム components プロパティで `img` を `null` に置換、または引用文として表示）
+
+### 2A.4 PosterPreview
+
+A4縦比率の枠内に2x2のカード配置でプレビューを表示する。
+
+**種別**: Client Component（PosterEditorの子）
+
+```typescript
+interface PosterPreviewProps {
+  url: string;            // UTMパラメータ付き完成URL（buildUtmUrl 適用後）
+  description: string;    // Markdown文字列
+  decoration: DecorationConfig;
+  /** PDF生成時に html2canvas が捕捉するDOM要素にrefを当てる用 */
+  innerRef?: React.RefObject<HTMLDivElement | null>;
+}
+```
+
+**機能**:
+- 外枠: A4縦の比率 (210:297) を `aspect-ratio: 210 / 297` で表現
+- 内部: CSS Grid で 2x2 のカードを配置
+- 各カード:
+  - サイズ: A4縦の1/4 = 105mm × 148.5mm（CSS上は親要素の50% × 50%）
+  - 内部レイアウト: 上部に説明文（Markdownレンダリング結果、高さ約60%）、下部にQRコード（カード幅の60-70%を占有）
+  - QRコードは既存 `QrPreview` コンポーネントを再利用（4枚分インスタンス化、全て同一URL・同一装飾）
+- レスポンシブ: 左カラムの幅に追従して縮小表示（実寸表示ではなく比率維持の縮小プレビュー）
+- リアルタイム更新: URL / 説明文 / 装飾の変更を即時反映（500msデバウンスは不要、PosterEditor 側で必要に応じてデバウンス）
+
+### 2A.5 PdfDownloadButton
+
+A4 2x2 のPDF生成・ダウンロードボタン。
+
+**種別**: Client Component（PosterEditorの子）
+
+```typescript
+interface PdfDownloadButtonProps {
+  /** PosterPreview のDOM要素への参照（html2canvasで画像化する対象） */
+  previewRef: React.RefObject<HTMLDivElement | null>;
+  /** 無効化フラグ（URL未入力時など） */
+  disabled?: boolean;
+  /** GA4イベント発火用のメタデータ */
+  hasUtm: boolean;
+  hasLogo: boolean;
+  descriptionLength: number;
+}
+```
+
+**機能**:
+- ボタンラベル: 「PDFをダウンロード（A4印刷用）」
+- クリック時の処理:
+  1. `lib/pdf/generatePosterPdf.ts` を**動的インポート**
+  2. `generatePosterPdf({ previewElement: previewRef.current })` を呼ぶ
+  3. 内部で `html2canvas(previewElement, { scale: 2-3, useCORS: true })` を実行し、得られた canvas を A4縦サイズの `jsPDF` に `addImage` で貼り付け
+  4. `pdf.save('qr-poster.pdf')` でダウンロードトリガー
+- 生成中はローディング表示（ボタン無効化 + スピナー）
+- 成功時に GA4 イベント `poster_generated` を発火（パラメータは [データモデル 4.1](./data-model.md#41-イベント定義) 参照）
+
+### 2A.6 既存コンポーネントの再利用
+
+| 既存コンポーネント | `/poster` での用途 |
+|---|---|
+| `UrlInput` | URL再編集（または引き継ぎなし時の最小入力欄） |
+| `UtmBuilder` | UTM再編集（折りたたみで提供）。`enabled` / `onEnabledChange` プロパティをそのまま使用 |
+| `QrPreview` | PosterPreview の各カード内で4枚使用 |
+
+これらは `src/components/qr/` 配下のものを `import` してそのまま利用する。新規ラッパーは作らない。
 
 ---
 

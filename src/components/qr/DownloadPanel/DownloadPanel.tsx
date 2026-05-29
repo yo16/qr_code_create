@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { DownloadButton } from "./DownloadButton";
 import { PdfDownloadButton } from "./PdfDownloadButton";
 import { ResolutionSelector, type Resolution } from "./ResolutionSelector";
-import type { CaptionConfig } from "@/types/qr";
+import type { CaptionConfig, UtmParams, DecorationConfig } from "@/types/qr";
+import { savePosterHandoff } from "@/lib/handoff/posterHandoff";
 import styles from "./DownloadPanel.module.css";
 
 interface DownloadPanelProps {
@@ -13,6 +15,12 @@ interface DownloadPanelProps {
   hasUtm: boolean;
   decorationCount: number;
   caption?: CaptionConfig;
+  /** ポスター作成CTAに必要なQR状態 */
+  url?: string;
+  isUrlValid?: boolean;
+  utm?: UtmParams;
+  utmEnabled?: boolean;
+  decoration?: DecorationConfig;
 }
 
 export function DownloadPanel({
@@ -21,8 +29,33 @@ export function DownloadPanel({
   hasUtm,
   decorationCount,
   caption,
+  url = "",
+  isUrlValid = false,
+  utm,
+  utmEnabled = true,
+  decoration,
 }: DownloadPanelProps) {
   const [resolution, setResolution] = useState<Resolution>(1);
+  const router = useRouter();
+
+  const handlePosterCta = () => {
+    if (!isUrlValid || disabled) return;
+    savePosterHandoff({
+      url,
+      isUrlValid,
+      utm: utm ?? { source: "", medium: "qr", campaign: "", term: "", content: "" },
+      utmEnabled,
+      decoration: decoration ?? {
+        fgColor: "#000000",
+        bgColor: "#ffffff",
+        logo: null,
+        frameType: null,
+        caption: { text: "", fontSize: 14 },
+        preset: null,
+      },
+    });
+    router.push("/poster");
+  };
 
   return (
     <div className={styles.panel}>
@@ -58,6 +91,17 @@ export function DownloadPanel({
               decorationCount={decorationCount}
               caption={caption}
             />
+          </div>
+          <div className={styles.ctaSection}>
+            <button
+              type="button"
+              className={styles.ctaButton}
+              onClick={handlePosterCta}
+              disabled={!isUrlValid}
+              aria-label="印刷用ポスターを作る（/posterページへ移動）"
+            >
+              印刷用ポスターを作る →
+            </button>
           </div>
         </>
       )}

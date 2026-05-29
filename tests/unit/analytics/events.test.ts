@@ -1,6 +1,7 @@
 import {
   trackEvent,
   trackUrlEntered,
+  trackUtmToggled,
   trackUtmSet,
   trackQrGenerated,
   trackQrDownloaded,
@@ -69,6 +70,33 @@ describe("analytics/events", () => {
       expect(window.gtag).toHaveBeenCalledWith("event", "url_entered", {
         url_domain: "example.com",
       });
+    });
+  });
+
+  // ─────────────────────────────────────────────
+  // trackUtmToggled
+  // ─────────────────────────────────────────────
+  describe("trackUtmToggled", () => {
+    it("enabled=true のとき utm_toggled イベントに enabled:true が渡されること", () => {
+      trackUtmToggled(true);
+
+      expect(window.gtag).toHaveBeenCalledWith("event", "utm_toggled", {
+        enabled: true,
+      });
+    });
+
+    it("enabled=false のとき utm_toggled イベントに enabled:false が渡されること", () => {
+      trackUtmToggled(false);
+
+      expect(window.gtag).toHaveBeenCalledWith("event", "utm_toggled", {
+        enabled: false,
+      });
+    });
+
+    it("window.gtagが存在しない場合にエラーが発生しないこと", () => {
+      (window as unknown as Record<string, unknown>).gtag = undefined;
+
+      expect(() => trackUtmToggled(true)).not.toThrow();
     });
   });
 

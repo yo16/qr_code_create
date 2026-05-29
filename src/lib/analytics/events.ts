@@ -12,6 +12,11 @@ export function trackUrlEntered(urlDomain: string): void {
   trackEvent("url_entered", { url_domain: urlDomain });
 }
 
+// UTM ON/OFF切替
+export function trackUtmToggled(enabled: boolean): void {
+  trackEvent("utm_toggled", { enabled });
+}
+
 // UTMパラメータ設定
 export function trackUtmSet(
   paramName: string,

@@ -15,6 +15,7 @@ interface SelectProps {
   helpText?: string;
   error?: string;
   id?: string;
+  disabled?: boolean;
 }
 
 export function Select({
@@ -27,6 +28,7 @@ export function Select({
   helpText,
   error,
   id,
+  disabled = false,
 }: SelectProps) {
   const generatedId = useId();
   const selectId = id ?? generatedId;
@@ -77,6 +79,7 @@ export function Select({
         onChange={handleSelectChange}
         aria-describedby={describedBy}
         aria-invalid={error ? "true" : "false"}
+        disabled={disabled}
         className={[styles.select, error ? styles.selectError : ""]
           .filter(Boolean)
           .join(" ")}
@@ -98,6 +101,7 @@ export function Select({
           placeholder={customPlaceholder}
           className={styles.customInput}
           aria-label={`${label}（自由入力）`}
+          disabled={disabled}
         />
       )}
       {helpText && !error && (

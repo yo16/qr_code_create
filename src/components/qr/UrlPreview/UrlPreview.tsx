@@ -11,6 +11,8 @@ interface UrlPreviewProps {
   utmCampaign: string;
   utmTerm: string;
   utmContent: string;
+  /** UTM有効/無効フラグ。false の場合 UTM パラメータをプレビューに表示しない (デフォルト: true) */
+  utmEnabled?: boolean;
 }
 
 export function UrlPreview({
@@ -20,6 +22,7 @@ export function UrlPreview({
   utmCampaign,
   utmTerm,
   utmContent,
+  utmEnabled = true,
 }: UrlPreviewProps) {
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -30,13 +33,17 @@ export function UrlPreview({
     };
   }, []);
 
-  const builtUrl = buildUtmUrl(url, {
-    source: utmSource,
-    medium: utmMedium,
-    campaign: utmCampaign,
-    term: utmTerm,
-    content: utmContent,
-  });
+  const builtUrl = buildUtmUrl(
+    url,
+    {
+      source: utmSource,
+      medium: utmMedium,
+      campaign: utmCampaign,
+      term: utmTerm,
+      content: utmContent,
+    },
+    utmEnabled
+  );
 
   const handleCopy = useCallback(async () => {
     if (!builtUrl) return;

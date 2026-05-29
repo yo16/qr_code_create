@@ -13,6 +13,7 @@ interface InputProps {
   helpText?: string;
   required?: boolean;
   id?: string;
+  disabled?: boolean;
 }
 
 export function Input({
@@ -25,6 +26,7 @@ export function Input({
   helpText,
   required = false,
   id,
+  disabled = false,
 }: InputProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
@@ -51,6 +53,7 @@ export function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
+        disabled={disabled}
         aria-invalid={error ? "true" : "false"}
         aria-describedby={describedBy}
         className={[styles.input, error ? styles.inputError : ""]

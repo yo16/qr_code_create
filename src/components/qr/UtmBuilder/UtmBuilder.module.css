@@ -6,10 +6,87 @@
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
+}
+
+/* Header right: toggle + indicator */
+.headerRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-xs);
+}
+
+/* Toggle label (text + switch) */
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggleLabelText {
+  font-size: var(--font-size-sm);
+  color: var(--color-foreground);
+  white-space: nowrap;
+}
+
+/* Toggle switch button */
+.toggleSwitch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 2.5rem;
+  height: 1.375rem;
+  border-radius: var(--radius-full, 9999px);
+  border: none;
+  background-color: var(--color-border);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color var(--transition-fast, 150ms ease);
+  flex-shrink: 0;
+}
+
+.toggleSwitch:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.toggleSwitchOn {
+  background-color: var(--color-primary);
+}
+
+.toggleKnob {
+  position: absolute;
+  left: 0.1875rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background-color: #fff;
+  transition: transform var(--transition-fast, 150ms ease);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggleSwitchOn .toggleKnob {
+  transform: translateX(1.125rem);
+}
+
+/* Disabled indicator (greyscale) */
+.indicatorDisabled {
+  opacity: 0.4;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+/* Disabled field row (greyscale + not-allowed cursor) */
+.fieldRowDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .title {

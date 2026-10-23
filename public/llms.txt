@@ -1,12 +1,15 @@
 # QR Code Create
 
+QR Code Create is a free QR code generator in Japanese. No registration is required and there are no ads. It supports UTM parameters so you can measure access separately for each printed material. The site URL is https://qr-create.jp
+
 ## Overview
-QR Code Create is a free QR code generator with UTM parameter guidance.
+QR Code Create is a free QR code generator with UTM parameter guidance. The service is provided in Japanese at https://qr-create.jp
 
 ## Features
 - QR code generation (instant from URL input)
 - UTM parameter setup guidance (step-by-step)
-- Decorative frames (Elegant, Pop, Business styles)
+- UTM presets for flyer, poster, business card, brochure, banner, receipt, product package, menu, signage
+- Decorative frame presets (5 types: Simple, Business, Casual, Elegant, Pop)
 - Logo embedding
 - Color customization (foreground/background)
 - Caption text
@@ -21,5 +24,19 @@ Japanese small business owners, event organizers, marketers
 - Decorative frames to customize QR code appearance
 - Marketing education content included
 
+## Language
+Japanese (ja). All pages are written in Japanese.
+
+## Pages
+- https://qr-create.jp/ : Top page
+- https://qr-create.jp/create : QR code generator (the tool itself)
+- https://qr-create.jp/guide : Guide index
+- https://qr-create.jp/guide/getting-started : Getting started: create a QR code in 3 steps
+- https://qr-create.jp/guide/utm-parameters : What UTM parameters are
+- https://qr-create.jp/guide/utm-setup : How to set UTM parameters in the tool
+- https://qr-create.jp/use-cases : QR codes by use case (flyer, poster, business card, menu, signage, receipt, product package, store, event)
+- https://qr-create.jp/faq : FAQ
+- https://qr-create.jp/blog : Blog
+
 ## URL
-https://qr-code-create.vercel.app
+https://qr-create.jp

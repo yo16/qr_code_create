@@ -37,4 +37,43 @@ describe("llms.txt", () => {
     const content = fs.readFileSync(LLMS_PATH, "utf-8");
     expect(content).toContain("QR Code Create");
   });
+
+  // --- qr_code_create-ksi: URL の qr-create.jp への修正と主要ページ一覧の追加 ---
+
+  // 意図: 旧 URL https://qr-code-create.vercel.app は現在別の QR 生成サービスを返すため、
+  // AI クローラーに競合を案内しないよう、vercel.app への言及がファイル全体に残っていないことを保証する
+  it("vercel.app を含まないこと", () => {
+    const content = fs.readFileSync(LLMS_PATH, "utf-8");
+    expect(content).not.toContain("vercel.app");
+  });
+
+  // 意図: ## URL セクション（次の ## 見出しまで）に正しいサイト URL https://qr-create.jp が記載されていること。
+  // 他セクションのリンクで偶然一致しないよう、URL セクションの範囲だけを対象にする
+  it("## URL セクションに https://qr-create.jp が記載されていること", () => {
+    const content = fs.readFileSync(LLMS_PATH, "utf-8");
+    const start = content.indexOf("## URL");
+    expect(start).toBeGreaterThanOrEqual(0);
+    const rest = content.slice(start + "## URL".length);
+    const nextHeading = rest.search(/\n## /);
+    const urlSection = nextHeading === -1 ? rest : rest.slice(0, nextHeading);
+    expect(urlSection).toContain("https://qr-create.jp");
+  });
+
+  // 意図: AI クローラーが主要ページを辿れるよう、ページ一覧の ## Pages セクションが存在すること
+  it("## Pages セクションが存在すること", () => {
+    const content = fs.readFileSync(LLMS_PATH, "utf-8");
+    expect(content).toContain("## Pages");
+  });
+
+  // 意図: 主要ページが相対パスではなく qr-create.jp ドメインの絶対 URL で列挙されていること
+  it.each([
+    "https://qr-create.jp/create",
+    "https://qr-create.jp/guide",
+    "https://qr-create.jp/guide/getting-started",
+    "https://qr-create.jp/use-cases",
+    "https://qr-create.jp/faq",
+  ])("主要ページの絶対 URL %s が列挙されていること", (url) => {
+    const content = fs.readFileSync(LLMS_PATH, "utf-8");
+    expect(content).toContain(url);
+  });
 });

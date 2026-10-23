@@ -14,20 +14,27 @@ import { PresetSelector } from "@/components/qr/DecorationPanel/PresetSelector";
 import type { DecorationPreset } from "@/lib/constants/decorationPresets";
 import { ProgressBar } from "@/components/ui/ProgressBar/ProgressBar";
 import { buildUtmUrl } from "@/lib/url/buildUtmUrl";
-import { DEFAULT_FRAME_CONFIG, type FrameConfig } from "@/lib/qr/frameRenderer";
-import { INITIAL_QR_STATE, type CaptionConfig, type LogoConfig, type QrState } from "@/types/qr";
+import type { FrameConfig } from "@/lib/qr/frameRenderer";
+import { buildInitialQrState } from "@/lib/qr/buildInitialQrState";
+import type { CreateInitialParams } from "@/lib/url/parseCreateSearchParams";
+import type { CaptionConfig, LogoConfig, QrState } from "@/types/qr";
 import styles from "./QrGenerator.module.css";
 
 function getCompletionPercent(state: QrState): number {
   let steps = 0;
   if (state.isUrlValid) steps += 1;
-  const hasUtm =
-    state.utm.source.trim() !== "" ||
-    state.utm.medium.trim() !== "" ||
-    state.utm.campaign.trim() !== "" ||
-    state.utm.term.trim() !== "" ||
-    state.utm.content.trim() !== "";
-  if (hasUtm) steps += 1;
+  // utmEnabled=false の場合は UTM ステップを自動完了扱い
+  if (!state.utmEnabled) {
+    steps += 1;
+  } else {
+    const hasUtm =
+      state.utm.source.trim() !== "" ||
+      state.utm.medium.trim() !== "" ||
+      state.utm.campaign.trim() !== "" ||
+      state.utm.term.trim() !== "" ||
+      state.utm.content.trim() !== "";
+    if (hasUtm) steps += 1;
+  }
   const hasDecoration =
     state.decoration.fgColor !== "#000000" ||
     state.decoration.bgColor !== "#ffffff" ||
@@ -65,9 +72,14 @@ function stepCardClassName(
   return baseStyles.stepCard;
 }
 
-export function QrGenerator() {
-  const [state, setState] = useState<QrState>(INITIAL_QR_STATE);
-  const [frameConfig, setFrameConfig] = useState<FrameConfig>(DEFAULT_FRAME_CONFIG);
+interface QrGeneratorProps {
+  initialParams?: CreateInitialParams;
+}
+
+export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
+  const [initial] = useState(() => buildInitialQrState(initialParams));
+  const [state, setState] = useState<QrState>(initial.state);
+  const [frameConfig, setFrameConfig] = useState<FrameConfig>(initial.frameConfig);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleUrlChange = (url: string) => {
@@ -83,6 +95,10 @@ export function QrGenerator() {
 
   const handleUtmChange = (utm: QrState["utm"]) => {
     setState((prev) => ({ ...prev, utm }));
+  };
+
+  const handleUtmEnabledChange = (utmEnabled: boolean) => {
+    setState((prev) => ({ ...prev, utmEnabled }));
   };
 
   const handleFgColorChange = (fgColor: string) => {
@@ -153,7 +169,7 @@ export function QrGenerator() {
   const completionPercent = getCompletionPercent(state);
   const progressMessage = getProgressMessage(completionPercent);
 
-  const builtUrl = buildUtmUrl(state.url, state.utm);
+  const builtUrl = buildUtmUrl(state.url, state.utm, state.utmEnabled);
 
   const step1State = getStepState(1, state.currentStep);
   const step2State = getStepState(2, state.currentStep);
@@ -193,7 +209,12 @@ export function QrGenerator() {
             </span>
             <h2 className={styles.stepTitle}>UTMパラメータ設定</h2>
           </div>
-          <UtmBuilder values={state.utm} onChange={handleUtmChange} />
+          <UtmBuilder
+            values={state.utm}
+            onChange={handleUtmChange}
+            enabled={state.utmEnabled}
+            onEnabledChange={handleUtmEnabledChange}
+          />
         </section>
 
         {/* ステップ3: 装飾設定 */}
@@ -248,6 +269,11 @@ export function QrGenerator() {
             hasUtm={hasUtm}
             decorationCount={decorationCount}
             caption={state.decoration.caption}
+            url={state.url}
+            isUrlValid={state.isUrlValid}
+            utm={state.utm}
+            utmEnabled={state.utmEnabled}
+            decoration={state.decoration}
           />
         </section>
       </div>
@@ -269,6 +295,7 @@ export function QrGenerator() {
               utmCampaign={state.utm.campaign}
               utmTerm={state.utm.term}
               utmContent={state.utm.content}
+              utmEnabled={state.utmEnabled}
             />
           </div>
           <QrPreview

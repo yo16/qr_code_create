@@ -38,6 +38,19 @@ app/layout.tsx (Server Component)
       ├── QrPreview
       └── QrDownload
 
+/poster ページ:
+  page.tsx (Server Component)
+  ├── JsonLd (Server Component)
+  └── PosterEditor ('use client') ← dynamic import, ssr: false
+      ├── (引き継ぎ要約表示)
+      ├── UrlInput (再編集用)
+      ├── UtmBuilder (再編集用、折りたたみ)
+      ├── MarkdownInput
+      ├── PosterPreview
+      │   ├── QrPreview (x4)
+      │   └── Markdown レンダリング (x4)
+      └── PdfDownloadButton
+
 (marketing) ページ:
   page.tsx (Server Component)
   ├── Breadcrumb (Server Component)
@@ -69,44 +82,43 @@ const QrGenerator = dynamic(
 );
 ```
 
-**Props**: なし（状態は全て内部管理）
-
-**内部状態**（[データモデル設計 QrState](./data-model.md#3-qrコード生成状態)参照）:
+**Props**（qr_code_create-3gk で追加）:
 
 ```typescript
+interface QrGeneratorProps {
+  // /create のクエリから得た初期値。省略時は INITIAL_QR_STATE で初期化
+  initialParams?: CreateInitialParams; // { preset?: string; utmSource?: string; utmMedium?: string }
+}
+```
+
+- `initialParams` は `QrGeneratorLoader`（`src/app/(tool)/create/QrGeneratorLoader.tsx`）が `useSearchParams()` を `parseCreateSearchParams()`（`src/lib/url/parseCreateSearchParams.ts`）に通して渡す。Loader は `Suspense` 境界の内側で `useSearchParams` を呼ぶ
+- `parseCreateSearchParams` は `preset` を `DECORATION_PRESETS` の id、`utm_source` を `UTM_SOURCE_OPTIONS` の value、`utm_medium` を `UTM_MEDIUM_OPTIONS` の value と照合し、一致しない値・空文字は捨てる
+- 初期状態は純関数 `buildInitialQrState(initialParams)`（`src/lib/qr/buildInitialQrState.ts`）が `{ state, frameConfig }` を返す。preset があれば該当プリセットの色・フレーム・キャプション・id を decoration に適用し、utmSource があれば `utm.source` を設定して `utmEnabled` を true にする。utmMedium があれば `utm.medium` を設定（既定 "qr"）
+- URL 由来の初期適用では GA イベント（`preset_selected`、`utm_source_set` など）を送らない。ユーザー操作による選択と区別するため
+
+**内部状態**（[データモデル設計 QrState](./data-model.md#23-qrコード生成状態)参照）:
+
+```typescript
+import { buildInitialQrState } from '@/lib/qr/buildInitialQrState';
 import type { QrState } from '@/types/qr';
 
 // QrGenerator 内部で管理する状態
-const [state, setState] = useState<QrState>({
-  url: '',
-  utm: {
-    source: '',
-    medium: 'qr',  // デフォルト値（Default Effect）
-    campaign: '',
-    term: '',
-    content: '',
-  },
-  decoration: {
-    preset: null,
-    logo: null,
-    foregroundColor: '#000000',
-    backgroundColor: '#ffffff',
-    frame: null,
-    caption: {
-      text: '',
-      fontSize: 14,
-    },
-  },
-  currentStep: 1,
-});
+// INITIAL_QR_STATE は src/types/qr.ts でエクスポートされる初期値定数。
+// utmEnabled: true (UTM設定ONがデフォルト) を含む。
+// initialParams が無ければ INITIAL_QR_STATE / DEFAULT_FRAME_CONFIG のコピーになる。
+const [initial] = useState(() => buildInitialQrState(initialParams));
+const [state, setState] = useState<QrState>(initial.state);
+const [frameConfig, setFrameConfig] = useState<FrameConfig>(initial.frameConfig);
 ```
 
 **責務**:
 - 子コンポーネントへの状態配信と更新関数の提供
-- UTMパラメータ付きURLの構築（`lib/url/buildUtmUrl.ts` を使用）
+- UTMパラメータ付きURLの構築（`lib/url/buildUtmUrl.ts` を使用、`state.utmEnabled` を第3引数として渡す）
 - QRコード生成トリガー（500ms デバウンス）
-- 進捗度の算出
-- GA4イベントの発火タイミング制御
+- 進捗度の算出（UTM OFF時はUTMステップを自動完了扱い、詳細は [UI/UX仕様 3.2](./ui-ux-spec.md#32-progressbar-の完了度算出)）
+- GA4イベントの発火タイミング制御（UTM ON/OFF時の `trackUtmToggled` 含む）
+- `utmEnabled` 状態の管理（UtmBuilder の `onEnabledChange` ハンドラ経由）
+- **`DownloadPanel` への引き継ぎ用 props 配信**: `url`, `isUrlValid`, `utm`, `utmEnabled`, `decoration` を渡す。これにより DownloadPanel の「印刷用ポスターを作る →」CTA が sessionStorage 保存用の payload を構築できる（詳細は [2.13](#213-qrdownload--downloadpanel) を参照）
 
 **レイアウト**:
 ```
@@ -169,6 +181,10 @@ import type { UtmParams } from '@/types/qr';
 interface UtmBuilderProps {
   value: UtmParams;
   onChange: (utm: UtmParams) => void;
+  /** UTM設定全体の有効/無効フラグ (デフォルト: true) */
+  enabled: boolean;
+  /** UTM ON/OFF切替時に呼ばれるコールバック */
+  onEnabledChange: (enabled: boolean) => void;
 }
 ```
 
@@ -177,20 +193,29 @@ interface UtmBuilderProps {
 - セクション開閉（プログレッシブディスクロージャー）
 - UTM未設定時の注意メッセージ（損失回避メッセージ）
 - EffectivenessIndicator の表示
+- **UTM全体のON/OFFトグル**（ヘッダー右側、詳細は [UI/UX仕様 2.3.1](./ui-ux-spec.md#231-utm-onoff-トグル仕様)）
+- OFF時の挙動:
+  - 各 `UtmField` に `disabled={true}` を渡す
+  - `UtmGuide` および 損失回避メッセージを非表示にする
+  - `EffectivenessIndicator` を淡色表示にする
+  - `utm` の値はメモリ上に保持（再ON時に復元）
+- ON/OFF切替時に `trackUtmToggled(enabled)` GA4イベントを発火
 
 **内部構成**:
 
 ```
 UtmBuilder
-├── セクションヘッダー（「マーケティング効果を上げましょう」）
-├── 損失回避メッセージ（UTM=0個のとき表示）
-├── UtmField (utm_source)     ← Select + 自由入力
-├── UtmField (utm_medium)     ← Select + 自由入力（デフォルト: qr）
-├── UtmField (utm_campaign)   ← 自由入力 + 命名ガイダンス
-├── UtmField (utm_term)       ← 自由入力（任意、折りたたみ）
-├── UtmField (utm_content)    ← 自由入力（任意、折りたたみ）
-├── EffectivenessIndicator
-└── UtmGuide（用途に応じた設定例）
+├── セクションヘッダー
+│   ├── タイトル「マーケティング効果を上げましょう」
+│   └── ON/OFFトグル（右側、「UTMを設定する [●]」）
+├── 損失回避メッセージ（enabled=true かつ UTM=0個のとき表示）
+├── UtmField (utm_source)     ← Select + 自由入力, disabled={!enabled}
+├── UtmField (utm_medium)     ← Select + 自由入力（デフォルト: qr）, disabled={!enabled}
+├── UtmField (utm_campaign)   ← 自由入力 + 命名ガイダンス, disabled={!enabled}
+├── UtmField (utm_term)       ← 自由入力（任意、折りたたみ）, disabled={!enabled}
+├── UtmField (utm_content)    ← 自由入力（任意、折りたたみ）, disabled={!enabled}
+├── EffectivenessIndicator    ← enabled=false 時は淡色表示
+└── UtmGuide                  ← enabled=false 時は非表示
 ```
 
 ---
@@ -211,6 +236,8 @@ interface UtmFieldProps {
   placeholder: string;
   options?: Array<{ value: string; label: string }>; // プルダウン選択肢
   required?: boolean;
+  /** フィールドを無効化（グレーアウト・操作不能）にする。UTM ON/OFFトグルOFF時に true (デフォルト: false) */
+  disabled?: boolean;
 }
 ```
 
@@ -221,6 +248,7 @@ interface UtmFieldProps {
 - ヘルプテキスト表示（「utm_sourceとは？」の説明）
 - 変更時に対応するGA4イベント発火（`trackUtmSet`）
 - ツールチップ表示時に `trackGuideTooltipOpened` 発火
+- **disabled時**: 入力要素を `disabled` 属性で操作不能化し、ラベル・ヘルプテキスト・ツールチップを淡色化（`opacity: 0.5` 程度、`cursor: not-allowed`）。GA4イベントは発火しない
 
 ---
 
@@ -505,19 +533,27 @@ interface QrPreviewProps {
 
 ---
 
-### 2.13 QrDownload
+### 2.13 QrDownload / DownloadPanel
 
 ダウンロードボタン群。
+
+> 実装上のファイル名は `DownloadPanel`（`src/components/qr/DownloadPanel/DownloadPanel.tsx`）。本設計書では役割上「QrDownload」と「DownloadPanel」を同義に扱う。
 
 **種別**: Client Component（QrGeneratorの子）
 
 ```typescript
-interface QrDownloadProps {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+interface DownloadPanelProps {
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  disabled: boolean;
+  hasUtm: boolean;
+  decorationCount: number;
+  caption: CaptionConfig;
+  /** ポスターCTA用: 引き継ぎstateの構築に必要な値 */
   url: string;
+  isUrlValid: boolean;
+  utm: UtmParams;
+  utmEnabled: boolean;
   decoration: DecorationConfig;
-  utmCount: number;
-  isReady: boolean;
 }
 ```
 
@@ -528,6 +564,182 @@ interface QrDownloadProps {
 - ダウンロード時に `trackQrDownloaded` GA4イベント発火
 - ダウンロード処理は `lib/qr/downloadQr.ts` に委譲
 - PDF出力は `jsPDF` を動的インポート
+- **印刷用ポスターCTAボタン**「印刷用ポスターを作る →」を追加
+  - 配置: PNG/SVG/PDF ボタンの下に独立した行として配置（または同じ行の右端）
+  - クリック時の挙動:
+    1. `posterHandoff.save({ url, isUrlValid, utm, utmEnabled, decoration, savedAt: new Date().toISOString() })` を呼ぶ
+    2. `router.push('/poster')` で遷移
+  - 表示条件: `isUrlValid === true` のとき有効化（無効URLでは disabled）
+  - GA4 イベント: クリック時に `poster_cta_clicked`（簡易・実装時に必要に応じて追加検討、現状は `poster_generated` のみを設計に含める）
+
+---
+
+## 2A. ポスター関連コンポーネント（`src/components/poster/`）
+
+`/poster` ページで使用するコンポーネント群。全て Client Component (`'use client'`)。
+
+### 2A.1 コンポーネント階層
+
+```
+/poster ページ:
+  page.tsx (Server Component)
+  ├── JsonLd (Server Component)
+  └── PosterEditor ('use client') ← dynamic import, ssr: false
+      ├── 左カラム
+      │   ├── 引き継ぎ要約表示（URL/UTM/装飾の概要）
+      │   ├── UrlInput              ← 引き継ぎなし時、または編集時に表示
+      │   ├── UtmBuilder            ← 既存コンポーネントを再利用（任意で再編集）
+      │   ├── MarkdownInput         ← 説明文（Markdown）入力
+      │   └── PdfDownloadButton     ← A4 2x2 PDFダウンロード
+      └── 右カラム
+          └── PosterPreview         ← A4縦比率の2x2カード配置プレビュー
+              ├── QrPreview (x4)    ← 既存コンポーネントを4枚分使用
+              └── Markdownレンダリング結果 (x4)
+```
+
+### 2A.2 PosterEditor
+
+`/poster` ページのトップレベル Client Component。引き継ぎ state の読込、全体 state の管理を行う。
+
+**種別**: Client Component (`'use client'`)
+
+**読み込み方法**: `next/dynamic` で動的インポート（`ssr: false`）
+
+**Props**: なし（状態は全て内部管理）
+
+**内部状態**: `PosterState`（[データモデル設計 2.8](./data-model.md#28-ポスター関連の型) 参照）
+
+**責務**:
+- マウント時に `posterHandoff.load()` を呼び、引き継ぎ payload を読み込む
+  - 読込成功 → `INITIAL_POSTER_STATE` に対して payload の値で上書き
+  - 読込失敗（payload なし／鮮度切れ／JSON parse失敗）→ `INITIAL_POSTER_STATE` のままで開始（URL入力欄表示）
+  - 読込後、即座に `posterHandoff.clear()` でキーを削除（リロード時の二重消費を防ぐ）
+- **必ず `typeof window !== "undefined"` ガードを使う**（[アーキテクチャ 9.3](./architecture.md#93-ガード条件) 参照）。実際には `useEffect` 内で実行されるため SSR では呼ばれないが、明示的にガードを書く方針
+- URL・UTM・装飾の再編集（UtmBuilder を再利用）
+- Markdown説明文の編集
+- PosterPreview への state 配信
+- PdfDownloadButton への PosterState 配信
+
+**レイアウト**:
+
+```
+┌─────────────────────────────────────────────────────┐
+│ [ホームに戻る] [/createに戻る]                       │
+├──────────────────────────┬──────────────────────────┤
+│ 左カラム                  │ 右カラム                  │
+│                          │                          │
+│ 引き継ぎ要約             │  ┌────────────────────┐  │
+│ URL: https://...         │  │ A4縦プレビュー       │  │
+│ UTM: source=flyer 等      │  │ (210:297 比率)      │  │
+│ 装飾: ロゴあり            │  │                    │  │
+│                          │  │  ┌──────┬──────┐    │  │
+│ ── 編集 ──                │  │  │ QR   │ QR   │    │  │
+│ [URL入力] (再編集)        │  │  │ 説明  │ 説明  │    │  │
+│ [UtmBuilder] (折りたたみ) │  │  ├──────┼──────┤    │  │
+│                          │  │  │ QR   │ QR   │    │  │
+│ ── 説明文 ──              │  │  │ 説明  │ 説明  │    │  │
+│ [MarkdownInput]          │  │  └──────┴──────┘    │  │
+│                          │  └────────────────────┘  │
+│                          │                          │
+│ [PdfDownloadButton]      │                          │
+└──────────────────────────┴──────────────────────────┘
+```
+
+### 2A.3 MarkdownInput
+
+Markdown形式での説明文入力 + ライブプレビュー。
+
+**種別**: Client Component（PosterEditorの子）
+
+```typescript
+interface MarkdownInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  /** プレビュー領域の高さ目安（カード幅・行数に合わせて調整） */
+  maxRows?: number;
+}
+```
+
+**機能**:
+- 左半分: テキストエリア（Markdown入力）
+- 右半分（または下半分）: レンダリング結果プレビュー（縮小表示）
+- 入力例ヒント: 「**太字** で強調、- でリスト、見出しは ## で」
+- 文字数カウンター（A4縦1/4カードに収まる目安: 200-400文字程度、設計時 TBD として実装時に文字幅とフォントサイズから決定）
+
+**ライブラリ**:
+- `react-markdown` を使用
+- プラグイン: `remark-gfm`（テーブル・打ち消し線・タスクリスト等のGFM拡張）
+- **`rehype-raw` は使わない**: 生 HTML の埋め込みを許可するとXSSリスクが上がるため。Markdown構文のみをサポートする
+- 許可するMarkdown要素: 段落・見出し（h1-h4）・太字・斜体・リスト・リンク・コード・引用・水平線・テーブル
+
+**セキュリティ**:
+- 外部リンクの `<a>` には `rel="noopener noreferrer"` を自動付与（カスタム components プロパティで実装）
+- 画像埋め込み (`![alt](url)`) は **不許可**（カスタム components プロパティで `img` を `null` に置換、または引用文として表示）
+
+### 2A.4 PosterPreview
+
+A4縦比率の枠内に2x2のカード配置でプレビューを表示する。
+
+**種別**: Client Component（PosterEditorの子）
+
+```typescript
+interface PosterPreviewProps {
+  url: string;            // UTMパラメータ付き完成URL（buildUtmUrl 適用後）
+  description: string;    // Markdown文字列
+  decoration: DecorationConfig;
+  /** PDF生成時に html2canvas が捕捉するDOM要素にrefを当てる用 */
+  innerRef?: React.RefObject<HTMLDivElement | null>;
+}
+```
+
+**機能**:
+- 外枠: A4縦の比率 (210:297) を `aspect-ratio: 210 / 297` で表現
+- 内部: CSS Grid で 2x2 のカードを配置
+- 各カード:
+  - サイズ: A4縦の1/4 = 105mm × 148.5mm（CSS上は親要素の50% × 50%）
+  - 内部レイアウト: 上部に説明文（Markdownレンダリング結果、高さ約60%）、下部にQRコード（カード幅の60-70%を占有）
+  - QRコードは既存 `QrPreview` コンポーネントを再利用（4枚分インスタンス化、全て同一URL・同一装飾）
+- レスポンシブ: 左カラムの幅に追従して縮小表示（実寸表示ではなく比率維持の縮小プレビュー）
+- リアルタイム更新: URL / 説明文 / 装飾の変更を即時反映（500msデバウンスは不要、PosterEditor 側で必要に応じてデバウンス）
+
+### 2A.5 PdfDownloadButton
+
+A4 2x2 のPDF生成・ダウンロードボタン。
+
+**種別**: Client Component（PosterEditorの子）
+
+```typescript
+interface PdfDownloadButtonProps {
+  /** PosterPreview のDOM要素への参照（html2canvasで画像化する対象） */
+  previewRef: React.RefObject<HTMLDivElement | null>;
+  /** 無効化フラグ（URL未入力時など） */
+  disabled?: boolean;
+  /** GA4イベント発火用のメタデータ */
+  hasUtm: boolean;
+  hasLogo: boolean;
+  descriptionLength: number;
+}
+```
+
+**機能**:
+- ボタンラベル: 「PDFをダウンロード（A4印刷用）」
+- クリック時の処理:
+  1. `lib/pdf/generatePosterPdf.ts` を**動的インポート**
+  2. `generatePosterPdf({ previewElement: previewRef.current })` を呼ぶ
+  3. 内部で `html2canvas(previewElement, { scale: 2-3, useCORS: true })` を実行し、得られた canvas を A4縦サイズの `jsPDF` に `addImage` で貼り付け
+  4. `pdf.save('qr-poster.pdf')` でダウンロードトリガー
+- 生成中はローディング表示（ボタン無効化 + スピナー）
+- 成功時に GA4 イベント `poster_generated` を発火（パラメータは [データモデル 4.1](./data-model.md#41-イベント定義) 参照）
+
+### 2A.6 既存コンポーネントの再利用
+
+| 既存コンポーネント | `/poster` での用途 |
+|---|---|
+| `UrlInput` | URL再編集（または引き継ぎなし時の最小入力欄） |
+| `UtmBuilder` | UTM再編集（折りたたみで提供）。`enabled` / `onEnabledChange` プロパティをそのまま使用 |
+| `QrPreview` | PosterPreview の各カード内で4枚使用 |
+
+これらは `src/components/qr/` 配下のものを `import` してそのまま利用する。新規ラッパーは作らない。
 
 ---
 
@@ -779,18 +991,22 @@ interface UseCaseCardProps {
 }
 ```
 
-### 5.4 CtaButton
+### 5.4 ArticleCta（記事末尾の行動喚起ブロック。旧 CtaButton）
 
-行動喚起ボタン（マーケティングページ下部等）。
+ガイド・用途別ページの本文（MDX）直後に表示する行動喚起ブロック。旧設計の CtaButton を置き換える（qr_code_create-29r で実装）。配置先は `src/components/marketing/ArticleCta/ArticleCta.tsx` と `ArticleCta.module.css`。
 
 ```typescript
-interface CtaButtonProps {
-  text: string;
-  href: string;
-  variant?: 'primary' | 'secondary';
-  utmParams?: Record<string, string>; // 用途別ページからのパラメータ付きリンク用
+interface ArticleCtaProps {
+  href?: string;      // 既定 "/create"。用途別ページは buildCreateHref() の結果を渡す
+  text?: string;      // 既定 "QRコードを作成する"。用途別ページは "この設定でQRコードを作成する"
+  location?: string;  // GA イベント cta_clicked の location。既定 "article_bottom"
 }
 ```
+
+- Client Component。`<aside aria-label="QRコード作成への案内">` の中に見出し「このページの内容でQRコードを作ってみましょう」、`next/link` のリンク（文言は `text`）、補足「無料・登録不要」を描画する
+- リンクのクリック時に `trackCtaClicked(text, location)` を送る
+- リンク先の組み立ては純関数 `buildCreateHref({ preset?, utmSource? })`（`src/lib/url/buildCreateHref.ts`）が担う。クエリは `utm_source` → `utm_medium`（utmSource がある場合に `qr` 固定で付与）→ `preset` の順。両方なければ `/create`
+- スタイルは CSS Modules で、Button の primary 相当の見た目を CSS Custom Properties（`--color-primary` 等）で再現する
 
 ### 5.5 ComparisonTable
 

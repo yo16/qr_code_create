@@ -85,8 +85,10 @@ src/
 │   │
 │   └── (tool)/                     # Route Group: ツール系ページ
 │       ├── layout.tsx              # ツールページ共通レイアウト
-│       └── create/
-│           └── page.tsx            # QRコード生成ページ（/create）
+│       ├── create/
+│       │   └── page.tsx            # QRコード生成ページ（/create）
+│       └── poster/
+│           └── page.tsx            # 印刷用ポスター作成ページ（/poster）
 │
 ├── components/                     # Reactコンポーネント
 │   ├── ui/                         # 汎用UIコンポーネント
@@ -158,6 +160,20 @@ src/
 │   │   └── EffectivenessIndicator/
 │   │       ├── EffectivenessIndicator.tsx
 │   │       └── EffectivenessIndicator.module.css
+│   │
+│   ├── poster/                     # 印刷用ポスター関連コンポーネント（全て 'use client'）
+│   │   ├── PosterEditor/
+│   │   │   ├── PosterEditor.tsx           # /poster トップレベル。引き継ぎstate読込・全体state管理
+│   │   │   └── PosterEditor.module.css
+│   │   ├── MarkdownInput/
+│   │   │   ├── MarkdownInput.tsx          # Markdown入力 + ライブプレビュー
+│   │   │   └── MarkdownInput.module.css
+│   │   ├── PosterPreview/
+│   │   │   ├── PosterPreview.tsx          # A4縦比率2x2のカード配置プレビュー
+│   │   │   └── PosterPreview.module.css
+│   │   └── PdfDownloadButton/
+│   │       ├── PdfDownloadButton.tsx      # A4 2x2 PDF生成・ダウンロード
+│   │       └── PdfDownloadButton.module.css
 │   │
 │   ├── marketing/                  # マーケティングページ用コンポーネント
 │   │   ├── HeroSection/
@@ -238,6 +254,10 @@ src/
 │   │   ├── frameRenderer.ts        # フレーム描画ロジック
 │   │   ├── drawLogo.ts             # ロゴCanvas重ね描画
 │   │   └── captionCompositor.ts    # ダウンロード用キャプションCanvas合成
+│   ├── pdf/
+│   │   └── generatePosterPdf.ts    # A4 2x2 ポスターPDF生成（html2canvas + jsPDF を動的import）
+│   ├── handoff/
+│   │   └── posterHandoff.ts        # sessionStorage 経由のstate引き継ぎ（save/load/clear）
 │   ├── url/
 │   │   ├── buildUtmUrl.ts          # UTMパラメータ付きURL構築
 │   │   └── validateUrl.ts          # URL形式バリデーション
@@ -252,6 +272,7 @@ src/
 └── types/                          # TypeScript型定義
     ├── content.ts                  # MDXコンテンツ関連の型
     ├── qr.ts                       # QRコード関連の型
+    ├── poster.ts                   # 印刷用ポスター関連の型（PosterState, PosterHandoffPayload 等）
     └── analytics.ts                # GA4イベント関連の型
 ```
 
@@ -323,6 +344,8 @@ src/
 
 ```
 tests/
+├── __mocks__/                  # Jest が解析できない ESM パッケージのモック（qr_code_create-5ls で追加）
+│   └── remark-gfm.ts
 ├── unit/
 │   ├── lib/
 │   │   ├── url/

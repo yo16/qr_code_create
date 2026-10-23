@@ -27,6 +27,15 @@ describe("getGuide", () => {
       const result = getGuide("utm-parameters");
       expect(result?.slug).toBe("utm-parameters");
     });
+
+    // 意図: howto は任意項目。frontmatter に howto を持たないガイド（utm-parameters）では
+    //       getGuide の戻り値の howto が undefined であり、空配列や null に正規化されないこと
+    //       （ページ側は howto の有無で HowTo スキーマの出力を切り替える）。
+    it("howto を持たないガイド（utm-parameters）では返り値の howto が undefined であること", () => {
+      const result = getGuide("utm-parameters");
+      expect(result).not.toBeNull();
+      expect(result?.howto).toBeUndefined();
+    });
   });
 
   describe("異常系", () => {

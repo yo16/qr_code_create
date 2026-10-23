@@ -6,7 +6,8 @@ import { getGuide, getGuideSlugList } from "@/lib/content/getGuide";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Breadcrumb } from "@/components/layout/Breadcrumb/Breadcrumb";
 import { buildMetadata } from "@/lib/metadata/buildMetadata";
-import { buildBlogPostingSchema, buildBreadcrumbSchema } from "@/lib/schema/buildJsonLd";
+import { buildBlogPostingSchema, buildBreadcrumbSchema, buildHowToSchema } from "@/lib/schema/buildJsonLd";
+import { ArticleCta } from "@/components/marketing/ArticleCta/ArticleCta";
 import styles from "./guide.module.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
@@ -52,6 +53,18 @@ export default async function GuidePage({ params }: GuidePageProps) {
     <article className={styles.article}>
       <JsonLd data={blogSchema} />
       <JsonLd data={breadcrumbSchema} />
+      {guide.howto && guide.howto.length > 0 && (
+        <JsonLd
+          data={buildHowToSchema({
+            name: guide.title,
+            description: guide.description,
+            steps: guide.howto.map((step, i) => ({
+              ...step,
+              url: `${SITE_URL}/guide/${slug}#step-${i + 1}`,
+            })),
+          })}
+        />
+      )}
       <Breadcrumb
         items={[
           { label: "使い方ガイド", href: "/guide" },
@@ -65,6 +78,7 @@ export default async function GuidePage({ params }: GuidePageProps) {
       <div className={styles.content}>
         <MDXRemote source={guide.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
       </div>
+      <ArticleCta />
     </article>
   );
 }

@@ -2,6 +2,10 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QrGenerator } from "@/components/qr/QrGenerator/QrGenerator";
 import type { LogoConfig } from "@/types/qr";
+import { trackPresetSelected, trackUtmSet } from "@/lib/analytics/events";
+
+// GA イベント送信をモック（URL 由来の初期適用でイベントが飛ばないことを検証するため）
+jest.mock("@/lib/analytics/events");
 
 // 子コンポーネントをモック
 jest.mock("@/components/qr/UrlInput/UrlInput", () => ({
@@ -29,13 +33,30 @@ jest.mock("@/components/qr/UrlInput/UrlInput", () => ({
 }));
 
 jest.mock("@/components/qr/UtmBuilder/UtmBuilder", () => ({
-  UtmBuilder: ({ values, onChange }: any) => (
-    <div data-testid="utm-builder">
+  UtmBuilder: ({ values, onChange, enabled, onEnabledChange }: any) => (
+    <div
+      data-testid="utm-builder"
+      data-enabled={enabled ? "true" : "false"}
+      data-source={values.source}
+      data-medium={values.medium}
+    >
       <button
         data-testid="set-utm"
         onClick={() => onChange({ ...values, source: "flyer" })}
       >
         set utm
+      </button>
+      <button
+        data-testid="toggle-utm-off"
+        onClick={() => onEnabledChange(false)}
+      >
+        toggle utm off
+      </button>
+      <button
+        data-testid="toggle-utm-on"
+        onClick={() => onEnabledChange(true)}
+      >
+        toggle utm on
       </button>
     </div>
   ),
@@ -43,7 +64,12 @@ jest.mock("@/components/qr/UtmBuilder/UtmBuilder", () => ({
 
 jest.mock("@/components/qr/UrlPreview/UrlPreview", () => ({
   UrlPreview: (props: any) => (
-    <div data-testid="url-preview">{props.url}</div>
+    <div
+      data-testid="url-preview"
+      data-utm-enabled={props.utmEnabled !== undefined ? String(props.utmEnabled) : "undefined"}
+    >
+      {props.url}
+    </div>
   ),
 }));
 
@@ -463,6 +489,88 @@ describe("QrGenerator", () => {
     });
   });
 
+  describe("UTM ON/OFF 切り替え", () => {
+    it("初期状態で UtmBuilder の enabled が true であること", () => {
+      render(<QrGenerator />);
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute(
+        "data-enabled",
+        "true"
+      );
+    });
+
+    it("UtmBuilder のトグルOFFで utm-builder の data-enabled が false になること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute(
+        "data-enabled",
+        "false"
+      );
+    });
+
+    it("UtmBuilder のトグルOFFで QrPreview に渡される url から utm_* が消えること", () => {
+      render(<QrGenerator />);
+      // まず URL を入力してバリデーション通過
+      fireEvent.change(screen.getByTestId("url-field"), {
+        target: { value: "https://example.com" },
+      });
+      fireEvent.click(screen.getByTestId("validate-btn"));
+      // UTM を設定
+      fireEvent.click(screen.getByTestId("set-utm"));
+      // この時点で QrPreview の url に utm_source が含まれる
+      expect(screen.getByTestId("qr-preview")).toHaveTextContent("utm_source");
+
+      // UTM を OFF にする
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      // utm_source が消えること
+      expect(screen.getByTestId("qr-preview")).not.toHaveTextContent("utm_source");
+    });
+
+    it("UrlPreview に utmEnabled が正しく渡されること（初期値: true）", () => {
+      render(<QrGenerator />);
+      expect(screen.getByTestId("url-preview")).toHaveAttribute(
+        "data-utm-enabled",
+        "true"
+      );
+    });
+
+    it("トグルOFFで UrlPreview の utmEnabled が false になること", () => {
+      render(<QrGenerator />);
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      expect(screen.getByTestId("url-preview")).toHaveAttribute(
+        "data-utm-enabled",
+        "false"
+      );
+    });
+
+    it("utmEnabled=false（UTM未入力）でも getCompletionPercent の UTMステップが加算されること", () => {
+      render(<QrGenerator />);
+      // URL を有効にする
+      fireEvent.click(screen.getByTestId("validate-btn"));
+      // UTM を OFF にする（UTM未入力 + utmEnabled=false）
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      // isUrlValid(+1) + utmEnabled=false(+1) = 2/3 = 67%
+      expect(screen.getByTestId("progress-bar")).toHaveAttribute(
+        "data-current",
+        "67"
+      );
+    });
+
+    it("utmEnabled=true に戻した後、QrPreview の url に utm が復元されること", () => {
+      render(<QrGenerator />);
+      fireEvent.change(screen.getByTestId("url-field"), {
+        target: { value: "https://example.com" },
+      });
+      fireEvent.click(screen.getByTestId("validate-btn"));
+      fireEvent.click(screen.getByTestId("set-utm"));
+      // UTM OFF
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      expect(screen.getByTestId("qr-preview")).not.toHaveTextContent("utm_source");
+      // UTM ON に戻す
+      fireEvent.click(screen.getByTestId("toggle-utm-on"));
+      expect(screen.getByTestId("qr-preview")).toHaveTextContent("utm_source");
+    });
+  });
+
   describe("PresetSelector 接続 — プリセット一括適用", () => {
     it("PresetSelectorがステップ3に表示されること", () => {
       render(<QrGenerator />);
@@ -548,6 +656,143 @@ describe("QrGenerator", () => {
       fireEvent.click(screen.getByTestId("apply-preset-simple"));
       const colorCustomizer = screen.getByTestId("color-customizer");
       expect(colorCustomizer).toHaveAttribute("data-fg-color", "#000000");
+    });
+  });
+
+  /**
+   * initialParams（クエリ由来の初期値）の適用
+   *
+   * 用途別ページの CTA が /create?utm_source=poster&utm_medium=qr&preset=elegant に
+   * リンクする（タスク 29r）。/create 側は QrGeneratorLoader が useSearchParams で読み取り
+   * parseCreateSearchParams → QrGenerator の props `initialParams` として渡す。
+   * QrGenerator は useState(() => buildInitialQrState(initialParams)) 相当で初期化する。
+   * ここでは props 経由の初期化だけを検証する（useSearchParams と next/dynamic はテスト対象外）。
+   */
+  describe("initialParams — クエリ由来の初期値適用", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("(a) initialParams の utmSource 'poster' が UtmBuilder の values.source に初期反映されること", () => {
+      // 意図: ポスター用途ページから遷移した時点で utm_source が入力済みになっていること。
+      //       初期描画時点で反映されることが重要（ユーザー操作なしで確認）。
+      render(
+        <QrGenerator
+          initialParams={{ preset: "elegant", utmSource: "poster", utmMedium: "qr" }}
+        />
+      );
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute("data-source", "poster");
+    });
+
+    it("(a) initialParams の utmMedium 'qr' が UtmBuilder の values.medium に初期反映されること", () => {
+      // 意図: medium も同時に渡した値になること（既定値と同じ 'qr' だが明示的に検証）。
+      render(
+        <QrGenerator
+          initialParams={{ preset: "elegant", utmSource: "poster", utmMedium: "qr" }}
+        />
+      );
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute("data-medium", "qr");
+    });
+
+    it("(a) initialParams に utmSource があると UtmBuilder の enabled が true であること", () => {
+      // 意図: source を初期設定しても utmEnabled が false だと URL に反映されない。ON であることを保証。
+      render(
+        <QrGenerator
+          initialParams={{ preset: "elegant", utmSource: "poster", utmMedium: "qr" }}
+        />
+      );
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute("data-enabled", "true");
+    });
+
+    it("(a) initialParams の preset 'elegant' が PresetSelector の currentPresetId に初期反映されること", () => {
+      // 意図: プリセット選択 UI 上で「エレガント」が選択中として表示されること。
+      render(
+        <QrGenerator
+          initialParams={{ preset: "elegant", utmSource: "poster", utmMedium: "qr" }}
+        />
+      );
+      expect(screen.getByTestId("preset-selector")).toHaveAttribute(
+        "data-current-preset",
+        "elegant"
+      );
+    });
+
+    it("(a) initialParams の preset 'elegant' で ColorCustomizer / FrameSelector / CaptionEditor にプリセット値が渡ること", () => {
+      // 意図: PresetSelector で手動適用したときと同じく、色・フレーム・キャプションが一括で初期化されること。
+      //       値は DECORATION_PRESETS の elegant と一致する（fg #44337a / bg #faf5ff / frame elegant / 'QRコードを読み取る' 12px）。
+      render(<QrGenerator initialParams={{ preset: "elegant" }} />);
+      expect(screen.getByTestId("color-customizer")).toHaveAttribute("data-fg-color", "#44337a");
+      expect(screen.getByTestId("color-customizer")).toHaveAttribute("data-bg-color", "#faf5ff");
+      expect(screen.getByTestId("frame-selector")).toHaveAttribute("data-frame-type", "elegant");
+      expect(screen.getByTestId("frame-selector")).toHaveAttribute("data-frame-color", "#44337a");
+      expect(screen.getByTestId("caption-editor")).toHaveAttribute("data-caption-text", "QRコードを読み取る");
+      expect(screen.getByTestId("caption-editor")).toHaveAttribute("data-caption-fontsize", "12");
+    });
+
+    it("(a) initialParams の preset 適用により初期状態でも decorationCount が 1 以上になること", () => {
+      // 意図: プリセット初期適用が getCompletionPercent / decorationCount の算出に反映されること。
+      render(<QrGenerator initialParams={{ preset: "elegant" }} />);
+      const count = Number(
+        screen.getByTestId("download-panel").getAttribute("data-decoration-count")
+      );
+      expect(count).toBeGreaterThanOrEqual(1);
+    });
+
+    it("(b) initialParams なしでは UtmBuilder の values.source が空であること", () => {
+      // 意図: クエリなしで /create を開いた場合の後方互換（従来の初期状態）。
+      render(<QrGenerator />);
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute("data-source", "");
+    });
+
+    it("(b) initialParams なしでは PresetSelector の currentPresetId が未選択（'none'）であること", () => {
+      // 意図: 既存モックは currentPresetId が null のとき 'none' を出す。
+      //       既存テスト「初期状態: currentPresetIdが'none'であること」との互換を保つため同じ表現で検証する。
+      render(<QrGenerator />);
+      expect(screen.getByTestId("preset-selector")).toHaveAttribute(
+        "data-current-preset",
+        "none"
+      );
+    });
+
+    it("(b) 空の initialParams ({}) でも initialParams なしと同じ初期状態であること", () => {
+      // 意図: parseCreateSearchParams が空オブジェクトを返す経路（無関係なクエリのみ）でも既定値になること。
+      render(<QrGenerator initialParams={{}} />);
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute("data-source", "");
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute("data-medium", "qr");
+      expect(screen.getByTestId("preset-selector")).toHaveAttribute("data-current-preset", "none");
+    });
+
+    it("(c) initialParams で preset を初期適用しても trackPresetSelected が呼ばれないこと", () => {
+      // 意図: URL 由来の自動適用は「ユーザーがプリセットを選んだ」行動ではないため、
+      //       GA の preset_selected イベントに混入させない（計測値の汚染防止）。
+      render(<QrGenerator initialParams={{ preset: "elegant" }} />);
+      expect(trackPresetSelected).not.toHaveBeenCalled();
+    });
+
+    it("(c) initialParams で utmSource を初期適用しても trackUtmSet が呼ばれないこと", () => {
+      // 意図: 同様に utm_source_set / utm_medium_set イベントを自動適用で送らない。
+      render(
+        <QrGenerator initialParams={{ preset: "elegant", utmSource: "poster", utmMedium: "qr" }} />
+      );
+      expect(trackUtmSet).not.toHaveBeenCalled();
+    });
+
+    it("initialParams で初期化した後も、ユーザー操作によるプリセット変更が従来どおり動作すること", () => {
+      // 意図: 初期値の適用が useState の初期化のみで完結し、以後の setState を妨げないこと。
+      render(<QrGenerator initialParams={{ preset: "elegant" }} />);
+      fireEvent.click(screen.getByTestId("apply-preset-business"));
+      expect(screen.getByTestId("preset-selector")).toHaveAttribute(
+        "data-current-preset",
+        "business"
+      );
+      expect(screen.getByTestId("color-customizer")).toHaveAttribute("data-fg-color", "#1a365d");
+    });
+
+    it("initialParams で初期化した後も、UTM の OFF 切り替えが従来どおり動作すること", () => {
+      // 意図: utmEnabled=true で初期化しても、ユーザーが OFF にできること。
+      render(<QrGenerator initialParams={{ utmSource: "poster" }} />);
+      fireEvent.click(screen.getByTestId("toggle-utm-off"));
+      expect(screen.getByTestId("utm-builder")).toHaveAttribute("data-enabled", "false");
     });
   });
 });

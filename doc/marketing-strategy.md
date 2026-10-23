@@ -173,6 +173,7 @@ Homepage (/)
 - ガイドページと用途別ページの間でクロスリンク（例: UTMパラメータガイドから名刺用QRコードページへ）
 - ブログ記事から関連するガイドページ・用途別ページへリンク
 - ツールページ（`/create`）から関連ガイドへのコンテキストリンク
+- ガイド本文内の `/create` リンクは、ナビゲーションとは別に本文（MDX）に Markdown リンクとして最低 2 か所（冒頭付近と末尾）置く。操作手順を説明する節では、その手順の冒頭でツールへのリンクを示す。他ガイドへの言及はタイトル表記だけで済ませず必ずリンクにする（qr_code_create-3av で追加。根拠: 2026 年 10 月の GA 分析で `/guide/getting-started` に着地した 54 ユーザーのうちツール到達は 27 で、本文内リンクが 0 件だった）。`tests/unit/content/getting-started.test.ts` で検証する
 
 ---
 
@@ -197,6 +198,7 @@ Homepage (/)
 | QRコードのデザイン：読み取りやすさと見た目の両立 | 検索+共有 | 検討 | P1 |
 | 業種別QRコード活用事例 | 共有向け | 検討 | P1 |
 | QRコードの印刷サイズガイド | 検索向け | 利用 | P2 |
+| QRコードに有効期限はある？（静的QRと動的QRの違い） | 検索向け（AI アシスタントの回答にも引用されやすい質問型） | 認知 | P1（qr_code_create-31c で公開、`/blog/qr-code-expiration`） |
 
 #### Pillar 3: 効果測定・分析（検索向け）
 
@@ -232,6 +234,13 @@ Homepage (/)
 | 12 | Google Analytics初心者ガイド | 検索 | 認知 | P2 |
 | 13 | イベント集客のコツ | 共有 | 認知 | P2 |
 | 14 | 名刺を営業ツールにする方法 | 共有 | 検討 | P2 |
+| 15 | QRコードに有効期限はある？（静的QRと動的QRの違い） | 検索 | 認知 | P1（公開済み: qr_code_create-31c） |
+
+### 記事の執筆ルール（qr_code_create-31c で追加）
+
+- ブログ記事とガイドの本文は、プロジェクトのスキル `.claude/skills/yomiyasu/`（AI が書いた日本語を自然な日本語に推敲する手順と lint）に従って書き、推敲する。根拠のない統計や固有名詞の断定を書かない。
+- 公開前に `python -I .claude/skills/yomiyasu/scripts/yomiyasu_lint.py <mdx> --doc-type article --reader general --fail-on warn` を通す（終了コード 0）。lint は表現と書式の決まった規則だけを点検するもので、意味の保持や読みやすさの合否ではない。
+- 記事の構造・frontmatter・導線（`/create` へのリンク）は `tests/unit/content/blog-*.test.ts` で検証する。
 
 ---
 
@@ -655,6 +664,10 @@ Google Analyticsで追跡できません。
 }
 ```
 
+（上記の URL は設計当時のもの。実装では `NEXT_PUBLIC_SITE_URL`（本番 https://qr-create.jp）から組み立てる）
+
+**ガイド記事への適用（qr_code_create-2rz で追加）:** HowTo はツールページ用の固定スキーマに加えて、手順を解説するガイド記事にも出力する。ガイドの frontmatter に `howto:`（`name` と `text` を持つステップの配列）を書くと、`/guide/[slug]` が `buildHowToSchema({ name: タイトル, description, steps })` で HowTo の JSON-LD を BlogPosting・BreadcrumbList に加えて出力する。各ステップの `url` は `/guide/[slug]#step-N`。最初の適用先は AI アシスタントからの引用が最も多い `/guide/getting-started`（3 ステップ）。`howto` の無いガイドには出力しない。
+
 ### BreadcrumbList Schema（全ページ共通）
 
 ```json
@@ -756,6 +769,8 @@ Google Analyticsで追跡できません。
 | qr_downloaded | QRコードダウンロード | format (png/svg/pdf), has_utm, decoration_count | ダウンロードボタンクリック時 |
 | guide_tooltip_opened | ガイド表示 | tooltip_id, field_name | ツールチップ/ヘルプクリック時 |
 | help_article_clicked | ヘルプ記事クリック | article_slug | ヘルプリンククリック時 |
+
+**連続入力イベントの抑制（qr_code_create-shf で追加）:** 「フィールド変更時」「色変更時」「キャプション変更時」に送る `utm_*_set`、`color_customized`、`caption_set` は、入力のたびに送ると 1 ユーザーで数十〜数百回発火して集計がノイズになる（2026 年 10 月の GA 実測: utm_campaign_set 918 回 / 23 ユーザー、color_customized 344 回 / 2 ユーザー）。そのため `src/lib/analytics/events.ts` 内で同一イベント名ごとに trailing debounce（`EVENT_DEBOUNCE_MS` = 1000ms）をかけ、最後の入力から 1 秒後に最後の値だけを送る。`flushPendingEvents()` で保留分を即時送信できる。クリックや生成・ダウンロードなど単発操作のイベントは即時送信のまま。URL のクエリから初期値を適用した場合（qr_code_create-3gk）はこれらのイベントを送らない。
 
 ### GA4実装コード例
 
@@ -960,9 +975,18 @@ QR Code Createは、UTMパラメータガイダンス付きの無料QRコード�
 - 装飾フレームでQRコードをおしゃれにカスタマイズ
 - マーケティング教育コンテンツ付き
 
+## Pages
+- https://qr-create.jp/ : トップページ
+- https://qr-create.jp/create : QRコード作成ツール
+- https://qr-create.jp/guide/getting-started : はじめてのQRコード作成ガイド
+- https://qr-create.jp/use-cases : 用途別QRコード
+- https://qr-create.jp/faq : よくある質問
+
 ## URL
-https://qr-code-create.vercel.app
+https://qr-create.jp
 ```
+
+**運用ルール（qr_code_create-ksi で追加）:** llms.txt の URL は本番ドメイン https://qr-create.jp に統一し、旧 Vercel ドメイン（qr-code-create.vercel.app）は記載しない。旧ドメインは 2026 年 10 月時点で別サービスが使用しているため、AI クローラーに誤ったサイトを案内しないよう `tests/unit/seo/llms.test.ts` で "vercel.app" を含まないことを検証する。主要ページ一覧（## Pages）は AI アシスタントが引用先 URL を選びやすいように絶対 URL で列挙する。
 
 #### 5. robots.txt の設定
 
@@ -982,7 +1006,7 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://qr-code-create.vercel.app/sitemap.xml
+Sitemap: https://qr-create.jp/sitemap.xml
 ```
 
 #### 6. サードパーティプレゼンスの構築

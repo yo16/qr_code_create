@@ -58,6 +58,7 @@ QR Code Create は Next.js App Router ベースの**フロントエンド完結�
 | スタイリング | CSS Modules + CSS Custom Properties | - | コンポーネントスコープのスタイル |
 | QRコード生成 | qrcode (npm) | 1.5.x | QRコード画像生成 |
 | PDF出力 | jsPDF | 2.5.x | PDF形式でのダウンロード |
+| HTML→画像変換（ポスター用） | html2canvas | 1.4.x | `/poster` のA4 2x2 PDF生成（HTML要素を画像化してjsPDFへ渡す） |
 | MDX解析 | gray-matter | 4.0.x | フロントマター解析 |
 | MDXレンダリング | next-mdx-remote | 5.x | MDXコンテンツのレンダリング |
 | GFM拡張 | remark-gfm | 4.x | テーブル・打ち消し線等のGFM構文対応 |
@@ -76,6 +77,9 @@ QR Code Create は Next.js App Router ベースの**フロントエンド完結�
     "react-dom": "19.2.4",
     "qrcode": "^1.5.4",
     "jspdf": "^2.5.2",
+    "html2canvas": "^1.4.1",
+    "react-markdown": "^9.0.0",
+    "remark-gfm": "^4.0.0",
     "gray-matter": "^4.0.3",
     "next-mdx-remote": "^5.0.0"
   },
@@ -374,6 +378,8 @@ const nextConfig = {
 - ビジネスロジック（URL生成、UTMパラメータ結合、コントラスト計算等）は必ず単体テストを書く
 - QR生成ライブラリの動的インポートを含むコンポーネントは E2E テストでカバーする
 - MDXコンテンツの存在・フロントマター整合性はビルド時テストで検証する
+- ESM 専用パッケージ（remark-gfm 等）は Jest が構文解析できないため、`tests/__mocks__/` にモックを置き `jest.config.ts` の `moduleNameMapper` で差し替える。テストファイル個別の `jest.mock` ではなく設定側で解決する（qr_code_create-5ls で追加）
+- 件数を固定値で検証するテスト（サイトマップのエントリ数、フレーム種類数、ガイド本数など）は、実装の定数やコンテンツディレクトリから導出した値と比較する（qr_code_create-5ls で方針化）
 
 ---
 
@@ -406,3 +412,84 @@ Preview deploy (PR時) / Production deploy (main マージ時)
 |---|---|---|
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | GA4 測定ID | Vercel Environment Variables |
 | `NEXT_PUBLIC_SITE_URL` | サイトURL（OGP等で使用） | Vercel Environment Variables |
+
+---
+
+## 9. `/poster` への state 引き継ぎ機構
+
+### 9.1 概要
+
+`/create` で構築したQRコード設定（URL・UTM・装飾）を、別ページ `/poster` でそのまま使えるようにするための仕組み。同一オリジン内のページ間 state 受け渡しには **sessionStorage** を使用する。
+
+### 9.2 採用方針: sessionStorage
+
+| 項目 | 値 | 理由 |
+|---|---|---|
+| ストレージ | `sessionStorage` | タブを閉じた時点で破棄される。プライバシー配慮（特にロゴ画像 base64 を含むため） |
+| キー名 | `qr-poster-handoff` | プロジェクト固有プレフィクス `qr-` を付与 |
+| 値の形式 | `JSON.stringify(PosterHandoffPayload)` | 型定義は [データモデル設計 2.8](./data-model.md#28-ポスター関連の型) を参照 |
+| 寿命 | タブを閉じるまで（最大セッション内） | sessionStorage の仕様に従う |
+| 鮮度チェック | `savedAt` から **1時間以上経過した payload は破棄** | 古い state を誤って引き継ぐリスクを抑制 |
+| サイズ上限 | 概ね 5MB 以内（ブラウザ依存） | ロゴ画像 base64 を含めても通常は数百KB〜1MB以内に収まる前提。超える場合はロゴを除外して保存する |
+
+### 9.3 ガード条件
+
+- **必ず `typeof window !== "undefined"` で囲む**: SSR時（およびNext.js のビルド時）に sessionStorage にアクセスするとエラーになるため、保存・読込関数の内部で必ずブラウザ環境チェックを行う
+- **try/catch で囲む**: クォータ超過やプライベートブラウジングで例外が出る可能性があるため、保存失敗時は黙って失敗してよい（引き継ぎは「ベストエフォート」扱い）
+- **JSON.parse 失敗時**: payload を破棄して、`/poster` 側は引き継ぎなしのフォールバック（最小入力欄）にフォールバック
+
+### 9.4 ライフサイクル
+
+```
+[/create ステップ4]
+  ユーザーが「印刷用ポスターを作る →」CTAをクリック
+    ↓
+  posterHandoff.save(payload) を呼ぶ
+    ├── typeof window !== "undefined" チェック
+    ├── try: sessionStorage.setItem("qr-poster-handoff", JSON.stringify(payload))
+    └── catch: 失敗を黙殺
+    ↓
+  router.push("/poster")
+    ↓
+[/poster] PosterEditor マウント
+    ↓
+  posterHandoff.load() を呼ぶ
+    ├── typeof window !== "undefined" チェック
+    ├── sessionStorage.getItem("qr-poster-handoff")
+    ├── JSON.parse + savedAt 鮮度チェック（1時間以内か）
+    └── 成功: PosterState の初期値として展開
+        失敗: 最小入力欄から開始（URL未入力状態）
+    ↓
+  読込完了後、posterHandoff.clear() でキーを削除（リロード時に再消費しない）
+```
+
+### 9.5 ロゴ画像 base64 のサイズ配慮
+
+- ロゴ画像は dataURL (base64) として `DecorationConfig.logo.dataUrl` に格納されている
+- JPEG/PNG/SVG いずれも base64 化すると元サイズの約1.33倍になる
+- アップロード時点で 500KB 上限が設けられているため、base64化後でも 700KB 程度に収まる
+- それでも 5MB のクォータに収まらない可能性が出てきた場合、`posterHandoff.save()` 内でサイズチェックを行い、超過時は `decoration.logo = null` として保存する（ユーザーに通知する設計は実装時に検討する）
+
+### 9.6 PDF生成ライブラリ選定
+
+`/poster` のA4 2x2 PDF生成には **`jsPDF` + `html2canvas`** の組み合わせを採用する。
+
+**選定理由**:
+
+| 選択肢 | 採否 | 理由 |
+|---|---|---|
+| `jsPDF` + `html2canvas` | **採用** | (1) `/create` で既に `jsPDF` を採用しており、依存ライブラリの追加が最小限。(2) html2canvas でHTML要素（プレビュー）をそのまま画像化できるため、複雑なMarkdownレンダリング結果やCSSスタイルを忠実にPDFへ反映できる。(3) Next.js App Router 環境での動作実績が豊富。(4) Client Component + 動的インポートで bundle size の影響を初期表示から切り離せる |
+| `@react-pdf/renderer` | 不採用 | React コンポーネントとして PDF を組み立てる必要があり、Markdown レンダリング結果やフレーム画像をそのまま流用しにくい。専用のスタイル定義が必要になり実装コストが高い |
+| `pdf-lib` | 不採用 | 低レベル PDF 生成APIで、HTML/CSS のレンダリング結果を取り込む機能がない。Markdown表示やフレームの忠実な再現が困難 |
+| Vercel上のサーバーサイド生成 (puppeteer等) | 不採用 | フロントエンド完結型の方針 ([セクション1.1](#11-方針)) と整合しない |
+
+**実装方針**:
+- `/poster` の右カラムにある A4 プレビュー DOM（2x2のカード配置）を **html2canvas で高解像度 (scale: 2 〜 3) でラスタライズ**し、得られた canvas を jsPDF に `addImage` で貼り付けて A4 1ページの PDF として出力する
+- フォント: Noto Sans JP を `next/font` で読み込み済みのため、html2canvas のレンダリング結果に反映される
+- 注意点: html2canvas は外部画像（フレーム素材）の CORS に注意。`public/images/frames/` 配下の同一オリジン画像のみを使用するため CORS 問題は発生しない見込み
+- bundle size 配慮: `jsPDF` と `html2canvas` は **動的インポート**（`await import('html2canvas')`）でダウンロード操作時のみ読み込む
+
+### 9.7 セキュリティ上の留意点
+
+- sessionStorage は JavaScript からアクセス可能であり、XSS 脆弱性があれば窃取される可能性がある。本アプリは入力されるURLをサニタイズしているが、Markdown 入力では `rehype-raw` を使わない（生 HTML を許可しない）方針とする（詳細は [コンポーネント設計 7.2 MarkdownInput](./component-design.md#72-markdowninput) を参照）
+- 引き継ぎ payload にはユーザーが入力したURL・UTM値が含まれるが、機密情報（パスワード・トークン等）は構造上含まれない

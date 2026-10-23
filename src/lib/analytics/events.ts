@@ -1,15 +1,49 @@
-/// <reference path="../../types/gtag.d.ts" />
-
 type EventParams = Record<string, string | number | boolean>;
+
+// 連続発火するイベントの送信を遅延させる間隔（ms）
+export const EVENT_DEBOUNCE_MS = 1000;
 
 export function trackEvent(eventName: string, params?: EventParams): void {
   if (typeof window === "undefined" || !window.gtag) return;
   window.gtag("event", eventName, params);
 }
 
+const pendingEvents = new Map<
+  string,
+  { timer: ReturnType<typeof setTimeout>; params?: EventParams }
+>();
+
+// 入力のたびに送ると集計がノイズになるため、同一イベント名ごとに
+// 最後の呼び出しだけを EVENT_DEBOUNCE_MS 後に送る（trailing debounce）
+function trackEventDebounced(eventName: string, params?: EventParams): void {
+  const existing = pendingEvents.get(eventName);
+  if (existing) clearTimeout(existing.timer);
+
+  const timer = setTimeout(() => {
+    pendingEvents.delete(eventName);
+    trackEvent(eventName, params);
+  }, EVENT_DEBOUNCE_MS);
+  pendingEvents.set(eventName, { timer, params });
+}
+
+// 保留中のdebounceイベントを即時に送信する（ページ離脱前などに使用）
+export function flushPendingEvents(): void {
+  const entries = Array.from(pendingEvents.entries());
+  pendingEvents.clear();
+  for (const [eventName, { timer, params }] of entries) {
+    clearTimeout(timer);
+    trackEvent(eventName, params);
+  }
+}
+
 // URL入力完了
 export function trackUrlEntered(urlDomain: string): void {
   trackEvent("url_entered", { url_domain: urlDomain });
+}
+
+// UTM ON/OFF切替
+export function trackUtmToggled(enabled: boolean): void {
+  trackEvent("utm_toggled", { enabled });
 }
 
 // UTMパラメータ設定
@@ -35,7 +69,8 @@ export function trackUtmSet(
     params.has_date_pattern = /\d{4}/.test(value);
   }
 
-  trackEvent(eventName, params);
+  // 入力のたびに呼ばれるため debounce して集計ノイズを抑える
+  trackEventDebounced(eventName, params);
 }
 
 // QRコード生成
@@ -84,7 +119,8 @@ export function trackColorCustomized(
   foregroundColor: string,
   backgroundColor: string
 ): void {
-  trackEvent("color_customized", {
+  // 色選択中の連続発火を抑えるため debounce
+  trackEventDebounced("color_customized", {
     foreground_color: foregroundColor,
     background_color: backgroundColor,
   });
@@ -106,7 +142,8 @@ export function trackCaptionSet(
   captionLength: number,
   isTemplate: boolean
 ): void {
-  trackEvent("caption_set", {
+  // 文字入力のたびに送ると集計がノイズになるため debounce
+  trackEventDebounced("caption_set", {
     caption_length: captionLength,
     is_template: isTemplate,
   });

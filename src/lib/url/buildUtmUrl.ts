@@ -6,9 +6,14 @@ interface UtmParams {
   content?: string;
 }
 
-export function buildUtmUrl(baseUrl: string, utm: UtmParams): string {
+export function buildUtmUrl(baseUrl: string, utm: UtmParams, enabled?: boolean): string {
   if (!baseUrl) {
     return "";
+  }
+
+  // enabled=false の場合は UTM を付与せずベースURLをそのまま返す
+  if (enabled === false) {
+    return baseUrl;
   }
 
   let urlObj: URL;

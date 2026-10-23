@@ -11,6 +11,7 @@ import {
 } from "@/lib/constants/utmPresets";
 import {
   trackUtmSet,
+  trackUtmToggled,
   trackGuideTooltipOpened,
 } from "@/lib/analytics/events";
 import styles from "./UtmBuilder.module.css";
@@ -26,9 +27,13 @@ export interface UtmValues {
 interface UtmBuilderProps {
   values: UtmValues;
   onChange: (values: UtmValues) => void;
+  /** UTM設定全体の有効/無効フラグ (デフォルト: true) */
+  enabled: boolean;
+  /** UTM ON/OFF切替時に呼ばれるコールバック */
+  onEnabledChange: (enabled: boolean) => void;
 }
 
-export function UtmBuilder({ values, onChange }: UtmBuilderProps) {
+export function UtmBuilder({ values, onChange, enabled, onEnabledChange }: UtmBuilderProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const filledCount = [
@@ -70,14 +75,37 @@ export function UtmBuilder({ values, onChange }: UtmBuilderProps) {
     trackGuideTooltipOpened(`utm_${fieldName}_help`, fieldName);
   };
 
+  const handleToggle = () => {
+    const newEnabled = !enabled;
+    onEnabledChange(newEnabled);
+    trackUtmToggled(newEnabled);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h3 className={styles.title}>UTMパラメータ設定</h3>
-        <EffectivenessIndicator utmCount={filledCount} />
+        <div className={styles.headerRight}>
+          <label className={styles.toggleLabel}>
+            <span className={styles.toggleLabelText}>UTMを設定する</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={enabled}
+              aria-label="UTMパラメータを設定する"
+              className={`${styles.toggleSwitch}${enabled ? ` ${styles.toggleSwitchOn}` : ""}`}
+              onClick={handleToggle}
+            >
+              <span className={styles.toggleKnob} aria-hidden="true" />
+            </button>
+          </label>
+          <div className={enabled ? undefined : styles.indicatorDisabled}>
+            <EffectivenessIndicator utmCount={enabled ? filledCount : 0} />
+          </div>
+        </div>
       </div>
 
-      {hasNoUtm && (
+      {enabled && hasNoUtm && (
         <div className={styles.warningBanner} role="alert">
           <span className={styles.warningIcon} aria-hidden="true">
             ⚠
@@ -89,10 +117,12 @@ export function UtmBuilder({ values, onChange }: UtmBuilderProps) {
         </div>
       )}
 
-      <UtmGuide
-        currentSource={values.source}
-        onApplyExample={handleApplyExample}
-      />
+      {enabled && (
+        <UtmGuide
+          currentSource={values.source}
+          onApplyExample={handleApplyExample}
+        />
+      )}
 
       <div className={styles.fields}>
         <UtmField
@@ -103,6 +133,7 @@ export function UtmBuilder({ values, onChange }: UtmBuilderProps) {
           helpText={UTM_FIELD_HELP.source}
           options={UTM_SOURCE_OPTIONS}
           onTooltipOpen={makeTooltipOpenHandler("source")}
+          disabled={!enabled}
         />
 
         <UtmField
@@ -113,6 +144,7 @@ export function UtmBuilder({ values, onChange }: UtmBuilderProps) {
           helpText={UTM_FIELD_HELP.medium}
           options={UTM_MEDIUM_OPTIONS}
           onTooltipOpen={makeTooltipOpenHandler("medium")}
+          disabled={!enabled}
         />
 
         <UtmField
@@ -123,6 +155,7 @@ export function UtmBuilder({ values, onChange }: UtmBuilderProps) {
           helpText={UTM_FIELD_HELP.campaign}
           placeholder="例: spring_sale_2026"
           onTooltipOpen={makeTooltipOpenHandler("campaign")}
+          disabled={!enabled}
         />
 
         <div className={styles.advancedToggle}>
@@ -149,6 +182,7 @@ export function UtmBuilder({ values, onChange }: UtmBuilderProps) {
               helpText={UTM_FIELD_HELP.term}
               placeholder="例: QRコード 作成"
               onTooltipOpen={makeTooltipOpenHandler("term")}
+              disabled={!enabled}
             />
 
             <UtmField
@@ -159,6 +193,7 @@ export function UtmBuilder({ values, onChange }: UtmBuilderProps) {
               helpText={UTM_FIELD_HELP.content}
               placeholder="例: banner_top"
               onTooltipOpen={makeTooltipOpenHandler("content")}
+              disabled={!enabled}
             />
           </div>
         )}

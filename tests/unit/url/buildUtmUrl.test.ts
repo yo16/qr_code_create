@@ -53,6 +53,66 @@ describe("buildUtmUrl", () => {
     });
   });
 
+  describe("enabled引数", () => {
+    it("enabled=true を明示した場合でも ?utm_* が付与されること", () => {
+      const result = buildUtmUrl(
+        "https://example.com",
+        { source: "flyer", medium: "qr", campaign: "test" },
+        true
+      );
+      const url = new URL(result);
+      expect(url.searchParams.get("utm_source")).toBe("flyer");
+      expect(url.searchParams.get("utm_medium")).toBe("qr");
+      expect(url.searchParams.get("utm_campaign")).toBe("test");
+    });
+
+    it("enabled=false の場合は ?utm_* が付与されず baseUrl がそのまま返ること", () => {
+      const result = buildUtmUrl(
+        "https://example.com",
+        { source: "flyer", medium: "qr", campaign: "test" },
+        false
+      );
+      expect(result).toBe("https://example.com");
+      expect(result).not.toContain("utm_");
+    });
+
+    it("第3引数省略時のデフォルトは true として動作すること（後方互換）", () => {
+      const result = buildUtmUrl("https://example.com", { source: "google" });
+      const url = new URL(result);
+      expect(url.searchParams.get("utm_source")).toBe("google");
+    });
+
+    it("utm_medium='qr' でも enabled=false なら URL に utm_medium が出現しないこと", () => {
+      const result = buildUtmUrl(
+        "https://example.com",
+        { source: "", medium: "qr", campaign: "", term: "", content: "" },
+        false
+      );
+      expect(result).not.toContain("utm_medium");
+      expect(result).not.toContain("qr");
+    });
+
+    it("baseUrl に既存クエリがある場合、enabled=false でも既存クエリは保持されること", () => {
+      const result = buildUtmUrl(
+        "https://example.com?foo=bar",
+        { source: "flyer", medium: "qr" },
+        false
+      );
+      expect(result).toBe("https://example.com?foo=bar");
+      expect(result).toContain("foo=bar");
+      expect(result).not.toContain("utm_");
+    });
+
+    it("enabled=false のとき UTMパラメータが全て空でも baseUrl がそのまま返ること", () => {
+      const result = buildUtmUrl(
+        "https://example.com",
+        { source: "", medium: "", campaign: "" },
+        false
+      );
+      expect(result).toBe("https://example.com");
+    });
+  });
+
   describe("異常系/境界値", () => {
     it("baseUrlが空文字のとき空文字が返ること", () => {
       const result = buildUtmUrl("", { source: "google" });

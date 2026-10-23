@@ -1,8 +1,14 @@
+export interface HowToStepInput {
+  name: string;
+  text: string;
+}
+
 export interface GuideFrontmatter {
   title: string;
   description: string;
   date: string; // ISO date "YYYY-MM-DD"
   order?: number;
+  howto?: HowToStepInput[]; // HowTo構造化データ用ステップ
 }
 
 export interface GuideMeta extends GuideFrontmatter {

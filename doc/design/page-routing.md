@@ -16,6 +16,7 @@
 ```
 / .......................... トップページ（SSG）
 ├── /create ................ QRコード生成ツール（SSG + CSR）
+├── /poster ................ 印刷用ポスター（A4 2x2 PDF）作成ツール（SSG + CSR）
 ├── /guide ................. 使い方ガイド一覧（SSG）
 │   └── /guide/[slug] ...... ガイド個別記事（SSG, generateStaticParams）
 ├── /use-cases/[slug] ...... 用途別QRコード（SSG, generateStaticParams）
@@ -88,6 +89,42 @@ export const metadata: Metadata = {
 ```
 
 **JSON-LD**: WebApplication, HowTo, BreadcrumbList
+
+---
+
+### 2.2.1 印刷用ポスター作成ページ（`/poster`）
+
+| 項目 | 内容 |
+|---|---|
+| ファイル | `src/app/(tool)/poster/page.tsx` |
+| レンダリング | SSG（シェル）+ CSR（PDF生成・プレビュー） |
+| レイアウト | (tool) レイアウト |
+| Server/Client | Server Component + Client Component (PosterEditor) |
+
+**コンテンツ構成**:
+1. ページタイトル + 簡易説明（「QRコードと説明文を組み合わせたA4ポスターを1ページに4枚分作成」）
+2. PosterEditor（dynamic import, ssr: false）
+   - 引き継ぎstate読込（sessionStorage の `qr-poster-handoff` キー）
+   - 引き継ぎなしの場合は最小入力欄（URL入力）から開始
+3. 関連リンク（`/create` への戻り導線、`/guide/effective-qr-usage` 等）
+
+**用途・想定動線**:
+- `/create` ステップ4のCTAから sessionStorage 経由で遷移（主動線）
+- 単独URLアクセスからの直接利用（SEO上の独立エントリ、最小入力欄から開始）
+
+**メタデータ**:
+```typescript
+export const metadata: Metadata = {
+  title: '印刷用QRコードポスター作成 | A4で4枚同時印刷',
+  description: 'QRコードと説明文を組み合わせたA4ポスターを無料作成。1枚のA4用紙に4枚分のQRコードを配置し、PDFでダウンロードできます。チラシ・店舗POP・案内ポスターに最適。',
+};
+```
+
+**JSON-LD**: WebApplication, BreadcrumbList
+
+**state引き継ぎ**: [アーキテクチャ設計 セクション9](./architecture.md#9-poster-へのstate引き継ぎ機構) を参照。
+
+**公開制御（機能フラグ、qr_code_create-ptg で追加）**: `src/lib/constants/features.ts` の `FEATURE_FLAGS.posterPage` で公開を切り替える。false の間は (1) `/create` の DownloadPanel にポスター導線ボタンを描画しない、(2) `sitemap.ts` に `/poster` を含めない、(3) `/poster` へ直接アクセスすると `notFound()` で 404 にする。Markdown 入力（4me）と A4 2x2 PDF 出力（ro1）が完成するまで false を保ち、完成時に true に戻す。内部モジュール（posterHandoff、generatePosterPdf 等）はフラグの影響を受けない。
 
 ---
 
@@ -208,13 +245,23 @@ export default async function GuidePage({ params }: Props) {
 4. 印刷サイズガイド
 5. CTA: 「この設定でQRコードを作成する」→ `/create` にクエリパラメータ付き
 
+**節の順序の例外（qr_code_create-frp で追加）:** 検索意図が「印刷サイズ」に寄る用途（poster）では、印刷サイズガイドを本文の最初の h2 に置き、その後に 1〜3 を続ける。根拠は 2026 年 10 月の GA 実測で、/use-cases/poster の直帰率 81%・平均滞在 24 秒と、サイズ表が下部にあることで検索流入の意図に即答できていなかったため。順序は `tests/unit/content/use-cases-batch1.test.ts` で検証する。
+
 **CTAリンクのクエリパラメータ**:
 
 ```
 /create?utm_source=flyer&utm_medium=qr&preset=pop
 ```
 
-`/create` ページはクエリパラメータから初期値を設定する（QrGeneratorコンポーネント内で `useSearchParams` を使用）。
+`/create` ページはクエリパラメータから初期値を設定する。`QrGeneratorLoader` が `Suspense` 境界の内側で `useSearchParams` を呼び、`parseCreateSearchParams()` で検証した値を `QrGenerator` の `initialParams` に渡す（qr_code_create-3gk で実装。詳細は [コンポーネント設計 2.1](./component-design.md#21-qrgenerator)）。
+
+| クエリ | 受け付ける値 | 不一致時 |
+|---|---|---|
+| `preset` | `DECORATION_PRESETS` の id（simple / business / casual / elegant / pop） | 無視 |
+| `utm_source` | `UTM_SOURCE_OPTIONS` の value（flyer / poster / business_card / brochure / banner / receipt / product_package / menu / signage） | 無視 |
+| `utm_medium` | `UTM_MEDIUM_OPTIONS` の value（qr / print） | 無視（既定 qr） |
+
+URL 由来の初期適用では GA イベントを送らない。
 
 ---
 
@@ -469,24 +516,22 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
 ### 4.2 用途別ページから /create へのパラメータ渡し
 
 ```typescript
-// 用途別ページでのCTAリンク
-<CtaButton
+// 用途別ページでのCTAリンク（qr_code_create-29r で実装）
+import { ArticleCta } from "@/components/marketing/ArticleCta/ArticleCta";
+import { buildCreateHref } from "@/lib/url/buildCreateHref";
+
+<ArticleCta
   text="この設定でQRコードを作成する"
-  href="/create"
-  utmParams={{
-    utm_source: frontmatter.recommendedSource,
-    utm_medium: 'qr',
-  }}
+  href={buildCreateHref({ preset: useCase.preset, utmSource: useCase.utmSource })}
 />
 
-// CtaButton コンポーネント内でクエリパラメータを構築
-const url = new URL('/create', BASE_URL);
-if (utmParams) {
-  Object.entries(utmParams).forEach(([key, value]) => {
-    url.searchParams.set(key, value);
-  });
-}
+// buildCreateHref はクエリを utm_source → utm_medium（qr 固定）→ preset の順で組み立てる
+// 例: /create?utm_source=poster&utm_medium=qr&preset=elegant
+// utmSource が無ければ utm_medium も付けない。両方無ければ "/create"
+// ガイドページは <ArticleCta />（既定 href "/create"、文言「QRコードを作成する」）
 ```
+
+frontmatter のキーは `preset`（装飾プリセット id）と `utmSource`（UTM_SOURCE_PRESETS の value）。`/create` 側のクエリ読み取りは qr_code_create-3gk で実装する。
 
 ---
 
@@ -509,6 +554,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'weekly', priority: 1.0 },
     { url: `${BASE_URL}/create`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE_URL}/poster`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/guide`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/faq`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },

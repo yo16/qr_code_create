@@ -17,6 +17,7 @@
 src/types/
 ├── content.ts      # MDXコンテンツ関連の型
 ├── qr.ts           # QRコード関連の型（状態、装飾、ダウンロード等）
+├── poster.ts       # 印刷用ポスター関連の型（PosterState, PosterHandoffPayload 等）
 └── analytics.ts    # GA4イベント関連の型
 ```
 
@@ -238,6 +239,13 @@ export interface DecorationConfig {
 export interface QrState {
   /** 入力URL */
   url: string;
+  /** URLバリデーション結果 */
+  isUrlValid: boolean;
+  /** UTMパラメータ全体の有効/無効フラグ (デフォルト: true)
+   *  false の場合、UTM入力欄はグレーアウトされ、生成URLからもUTMパラメータが除外される。
+   *  既存の utm フィールドの値はメモリ上に保持され、再度 true に戻したときに復元される。
+   */
+  utmEnabled: boolean;
   /** UTMパラメータ */
   utm: UtmParams;
   /** 装飾設定 */
@@ -245,7 +253,47 @@ export interface QrState {
   /** 現在のステップ (1: URL入力, 2: UTM設定, 3: 装飾, 4: ダウンロード) */
   currentStep: 1 | 2 | 3 | 4;
 }
+
+/**
+ * QrState の初期値
+ * QrGeneratorコンポーネントのuseStateで使用する。
+ * utmEnabled はデフォルト true（UTM設定ON状態でスタート）。
+ */
+export const INITIAL_QR_STATE: QrState = {
+  url: '',
+  isUrlValid: false,
+  utmEnabled: true,
+  utm: {
+    source: '',
+    medium: 'qr',  // デフォルト値（Default Effect）
+    campaign: '',
+    term: '',
+    content: '',
+  },
+  decoration: {
+    preset: null,
+    logo: null,
+    foregroundColor: '#000000',
+    backgroundColor: '#ffffff',
+    frame: null,
+    caption: {
+      text: '',
+      fontSize: 14,
+    },
+  },
+  currentStep: 1,
+};
 ```
+
+#### utmEnabled の動作仕様
+
+- **デフォルト値**: `true`（UTMパラメータ設定はONがデフォルト）
+- **OFF時の挙動**:
+  - `utm` フィールドの値はメモリ上に**保持**する（再ON時に値が復元される）
+  - `buildUtmUrl()` は `enabled=false` を受け取った場合、`baseUrl` をそのまま返す（UTM付与を行わない）
+  - 既存URLにクエリ文字列が含まれていた場合はそのまま温存し、`?utm_*` の付与のみ抑止する
+  - `utm_medium` のデフォルト値 `"qr"` も OFF 時は URL に出現させない
+- **ProgressBar 完了度算出への影響**: [UI/UX仕様 セクション3.2](./ui-ux-spec.md#32-progressbar-の完了度算出) を参照
 
 ### 2.4 QRコード生成オプション
 
@@ -351,6 +399,118 @@ export interface ContrastResult {
 }
 ```
 
+### 2.8 ポスター関連の型（`src/types/poster.ts`）
+
+`/poster` ページで使用する型定義。`/create` の `QrState` から派生する Markdown 説明文を加えた状態と、ページ間引き継ぎ用のペイロード型を含む。
+
+```typescript
+import type {
+  UtmParams,
+  DecorationConfig,
+} from './qr';
+
+/**
+ * ポスター作成ページの全体状態
+ * PosterEditor コンポーネントで useState で管理する
+ */
+export interface PosterState {
+  /** 入力URL（buildUtmUrl 適用前のベースURL） */
+  url: string;
+  /** URLバリデーション結果 */
+  isUrlValid: boolean;
+  /** 説明文（Markdown文字列） */
+  description: string;
+  /** UTMパラメータ */
+  utm: UtmParams;
+  /** UTMパラメータ全体の有効/無効フラグ（QrState の utmEnabled と同じ意味） */
+  utmEnabled: boolean;
+  /** 装飾設定（QrState の decoration と同じ） */
+  decoration: DecorationConfig;
+}
+
+/**
+ * /create → /poster への引き継ぎ用ペイロード
+ * sessionStorage に JSON.stringify して保存する
+ * キー名: "qr-poster-handoff"
+ */
+export interface PosterHandoffPayload {
+  /** 入力URL */
+  url: string;
+  /** URLバリデーション結果 */
+  isUrlValid: boolean;
+  /** UTMパラメータ */
+  utm: UtmParams;
+  /** UTM全体の有効/無効フラグ */
+  utmEnabled: boolean;
+  /** 装飾設定 */
+  decoration: DecorationConfig;
+  /** 保存時刻（ISO8601文字列）。1時間以上前の payload は受信側で破棄する */
+  savedAt: string;
+}
+```
+
+#### PosterState の初期値
+
+`description` は引き継ぎなし時は空文字、引き継ぎあり時も payload に含まれない（説明文は `/poster` 側で新規入力する）。
+
+```typescript
+import { INITIAL_QR_STATE } from './qr';
+
+/**
+ * PosterState の初期値
+ * 引き継ぎなしで /poster を開いた場合に使用する。
+ * 引き継ぎありの場合は posterHandoff.load() の結果で上書きする。
+ */
+export const INITIAL_POSTER_STATE: PosterState = {
+  url: '',
+  isUrlValid: false,
+  description: '',
+  utm: INITIAL_QR_STATE.utm,
+  utmEnabled: INITIAL_QR_STATE.utmEnabled,
+  decoration: INITIAL_QR_STATE.decoration,
+};
+```
+
+#### posterHandoff モジュール（`src/lib/handoff/posterHandoff.ts`）の関数シグネチャ
+
+```typescript
+/**
+ * sessionStorage のキー名
+ */
+export const POSTER_HANDOFF_KEY = 'qr-poster-handoff';
+
+/**
+ * payload の鮮度判定の境界（ミリ秒）
+ * これ以上経過した payload は破棄する
+ */
+export const POSTER_HANDOFF_MAX_AGE_MS = 60 * 60 * 1000; // 1時間
+
+/**
+ * 引き継ぎ payload を sessionStorage に保存する。
+ * SSR環境や保存失敗時は黙って何もしない（ベストエフォート）。
+ */
+export function save(payload: PosterHandoffPayload): void;
+
+/**
+ * 引き継ぎ payload を sessionStorage から読み込む。
+ * - SSR環境: null を返す
+ * - キーが存在しない: null を返す
+ * - JSON parse失敗: null を返す
+ * - savedAt が POSTER_HANDOFF_MAX_AGE_MS より古い: null を返す
+ */
+export function load(): PosterHandoffPayload | null;
+
+/**
+ * 引き継ぎ payload を sessionStorage から削除する。
+ * SSR環境では何もしない。
+ */
+export function clear(): void;
+```
+
+実装時は以下を必ず守ること（詳細は [アーキテクチャ 9.3](./architecture.md#93-ガード条件) を参照）:
+- **`typeof window !== "undefined"` ガードを必ず入れる**
+- **try/catch で囲む**（クォータ超過・プライベートブラウジング対策）
+
 ---
 
 ## 3. MDXコンテンツ関連の型（`src/types/content.ts`）
@@ -387,6 +547,17 @@ export interface GuideFrontmatter extends BaseFrontmatter {
   ogImage?: string;
   /** 関連する用途別ページのslug一覧 */
   relatedUseCases?: string[];
+  /**
+   * HowTo 構造化データ用の手順（qr_code_create-2rz で追加）
+   * 指定すると /guide/[slug] が BlogPosting・BreadcrumbList に加えて HowTo の JSON-LD を出力する。
+   * name と text は必須。url は /guide/[slug]#step-N を実装側で付与する
+   */
+  howto?: HowToStepInput[];
+}
+
+export interface HowToStepInput {
+  name: string;
+  text: string;
 }
 ```
 
@@ -401,6 +572,22 @@ order: 1
 relatedUseCases:
   - business-card
   - flyer
+---
+```
+
+**HowTo 付きの例（getting-started）**:
+
+```yaml
+---
+title: "はじめてのQRコード作成ガイド"
+order: 10
+howto:
+  - name: "URLを入力する"
+    text: "QRコード作成ツールを開き、QRコードにしたいURLを入力します。"
+  - name: "装飾をカスタマイズする（任意）"
+    text: "プリセットや色・ロゴ・フレーム・キャプションで見た目を整えます。"
+  - name: "ダウンロードする"
+    text: "用途に合わせて PNG・SVG・PDF の形式と解像度を選んで保存します。"
 ---
 ```
 
@@ -615,6 +802,7 @@ export interface ContentListItem<T extends ContentType> {
  */
 export type AnalyticsEventName =
   | 'url_entered'
+  | 'utm_toggled'
   | 'utm_source_set'
   | 'utm_medium_set'
   | 'utm_campaign_set'
@@ -628,6 +816,7 @@ export type AnalyticsEventName =
   | 'preset_selected'
   | 'qr_generated'
   | 'qr_downloaded'
+  | 'poster_generated'
   | 'guide_tooltip_opened'
   | 'help_article_clicked';
 
@@ -637,6 +826,10 @@ export type AnalyticsEventName =
 export interface AnalyticsEventParams {
   url_entered: {
     url_domain: string;
+  };
+  utm_toggled: {
+    /** トグル変更後の状態 (true: ON, false: OFF) */
+    enabled: boolean;
   };
   utm_source_set: {
     utm_source_value: string;
@@ -685,6 +878,14 @@ export interface AnalyticsEventParams {
     has_utm: boolean;
     decoration_count: number;
   };
+  poster_generated: {
+    /** UTM設定有無 */
+    has_utm: boolean;
+    /** ロゴ画像有無 */
+    has_logo: boolean;
+    /** Markdown説明文の文字数 */
+    description_length: number;
+  };
   guide_tooltip_opened: {
     tooltip_id: string;
     field_name: string;
@@ -694,6 +895,11 @@ export interface AnalyticsEventParams {
   };
 }
 ```
+
+**`poster_generated` イベントの実装位置**:
+- 関数: `trackPosterGenerated(params: AnalyticsEventParams['poster_generated'])`
+- 配置: `src/lib/analytics/track.ts`（既存の `trackUtmToggled` と同じファイル）
+- 発火タイミング: `PdfDownloadButton` 内で `generatePosterPdf` が成功した直後
 
 ### 4.2 gtag型拡張
 
@@ -943,10 +1149,18 @@ export const CAPTION_GUIDELINES = {
  * UTMパラメータ付きURLを構築する
  * @param baseUrl - ベースURL
  * @param utm - UTMパラメータ
- * @returns UTMパラメータ付きURL文字列
+ * @param enabled - UTM全体の有効/無効フラグ（省略時は true 扱い、後方互換）
+ *                  false の場合、baseUrl をそのまま返す（utm_* を付与しない）
+ * @returns UTMパラメータ付きURL文字列（enabled=false の場合は baseUrl そのまま）
  */
-export function buildUtmUrl(baseUrl: string, utm: UtmParams): string;
+export function buildUtmUrl(baseUrl: string, utm: UtmParams, enabled?: boolean): string;
 ```
+
+**後方互換**: 第3引数 `enabled` を省略した場合は `true` として扱う。既存の呼び出し箇所はそのまま動作する。
+
+**実装メモ**:
+- `enabled === false` のときは `baseUrl` をそのまま返す
+- ただし `baseUrl` 自体に既にクエリ文字列が含まれている場合（例: `https://example.com/page?id=123`）はそのまま返し、`utm_*` の付与のみ抑止する
 
 ### 6.2 URLバリデーション（`lib/url/validateUrl.ts`）
 

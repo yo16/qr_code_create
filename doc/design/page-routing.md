@@ -504,24 +504,22 @@ export default function ToolLayout({ children }: { children: React.ReactNode }) 
 ### 4.2 用途別ページから /create へのパラメータ渡し
 
 ```typescript
-// 用途別ページでのCTAリンク
-<CtaButton
+// 用途別ページでのCTAリンク（qr_code_create-29r で実装）
+import { ArticleCta } from "@/components/marketing/ArticleCta/ArticleCta";
+import { buildCreateHref } from "@/lib/url/buildCreateHref";
+
+<ArticleCta
   text="この設定でQRコードを作成する"
-  href="/create"
-  utmParams={{
-    utm_source: frontmatter.recommendedSource,
-    utm_medium: 'qr',
-  }}
+  href={buildCreateHref({ preset: useCase.preset, utmSource: useCase.utmSource })}
 />
 
-// CtaButton コンポーネント内でクエリパラメータを構築
-const url = new URL('/create', BASE_URL);
-if (utmParams) {
-  Object.entries(utmParams).forEach(([key, value]) => {
-    url.searchParams.set(key, value);
-  });
-}
+// buildCreateHref はクエリを utm_source → utm_medium（qr 固定）→ preset の順で組み立てる
+// 例: /create?utm_source=poster&utm_medium=qr&preset=elegant
+// utmSource が無ければ utm_medium も付けない。両方無ければ "/create"
+// ガイドページは <ArticleCta />（既定 href "/create"、文言「QRコードを作成する」）
 ```
+
+frontmatter のキーは `preset`（装飾プリセット id）と `utmSource`（UTM_SOURCE_PRESETS の value）。`/create` 側のクエリ読み取りは qr_code_create-3gk で実装する。
 
 ---
 

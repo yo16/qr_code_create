@@ -547,6 +547,17 @@ export interface GuideFrontmatter extends BaseFrontmatter {
   ogImage?: string;
   /** 関連する用途別ページのslug一覧 */
   relatedUseCases?: string[];
+  /**
+   * HowTo 構造化データ用の手順（qr_code_create-2rz で追加）
+   * 指定すると /guide/[slug] が BlogPosting・BreadcrumbList に加えて HowTo の JSON-LD を出力する。
+   * name と text は必須。url は /guide/[slug]#step-N を実装側で付与する
+   */
+  howto?: HowToStepInput[];
+}
+
+export interface HowToStepInput {
+  name: string;
+  text: string;
 }
 ```
 
@@ -561,6 +572,22 @@ order: 1
 relatedUseCases:
   - business-card
   - flyer
+---
+```
+
+**HowTo 付きの例（getting-started）**:
+
+```yaml
+---
+title: "はじめてのQRコード作成ガイド"
+order: 10
+howto:
+  - name: "URLを入力する"
+    text: "QRコード作成ツールを開き、QRコードにしたいURLを入力します。"
+  - name: "装飾をカスタマイズする（任意）"
+    text: "プリセットや色・ロゴ・フレーム・キャプションで見た目を整えます。"
+  - name: "ダウンロードする"
+    text: "用途に合わせて PNG・SVG・PDF の形式と解像度を選んで保存します。"
 ---
 ```
 

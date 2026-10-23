@@ -19,6 +19,7 @@ export function getGuide(slug: string): GuideContent | null {
     description: frontmatter.description,
     date: frontmatter.date,
     order: frontmatter.order,
+    howto: frontmatter.howto,
     content,
   };
 }

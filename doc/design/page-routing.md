@@ -243,6 +243,8 @@ export default async function GuidePage({ params }: Props) {
 4. 印刷サイズガイド
 5. CTA: 「この設定でQRコードを作成する」→ `/create` にクエリパラメータ付き
 
+**節の順序の例外（qr_code_create-frp で追加）:** 検索意図が「印刷サイズ」に寄る用途（poster）では、印刷サイズガイドを本文の最初の h2 に置き、その後に 1〜3 を続ける。根拠は 2026 年 10 月の GA 実測で、/use-cases/poster の直帰率 81%・平均滞在 24 秒と、サイズ表が下部にあることで検索流入の意図に即答できていなかったため。順序は `tests/unit/content/use-cases-batch1.test.ts` で検証する。
+
 **CTAリンクのクエリパラメータ**:
 
 ```

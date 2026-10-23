@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container } from "../Container/Container";
+import { BrandMark } from "./BrandMark";
 import { MobileNav } from "./MobileNav";
 import styles from "./Header.module.css";
 
@@ -18,6 +19,7 @@ export function Header() {
         <div className={styles.inner}>
           <div className={styles.brand}>
             <Link href="/" className={styles.logo}>
+              <BrandMark className={styles.mark} />
               QR Code Create
             </Link>
           </div>

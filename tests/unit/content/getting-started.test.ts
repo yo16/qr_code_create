@@ -58,6 +58,48 @@ describe("getting-started.mdx frontmatterバリデーション", () => {
   });
 });
 
+describe("getting-started.mdx の導線", () => {
+  let content: string;
+
+  beforeAll(() => {
+    const fileContents = fs.readFileSync(MDX_FILE_PATH, "utf-8");
+    content = matter(fileContents).content;
+  });
+
+  // 意図: このページは ChatGPT 引用経由の流入が最も多いが、本文に /create へのリンクが無く
+  //       ツール到達率が約半分にとどまっている。ナビ以外に本文中の導線が複数あることを保証する。
+  it("本文に /create への Markdown リンクが 2 回以上あること", () => {
+    const matches = content.match(/\]\(\/create\)/g) ?? [];
+    expect(matches.length).toBeGreaterThanOrEqual(2);
+  });
+
+  // 意図: 読者が最初に手を動かす「ステップ1: URLを入力する」の節で、
+  //       そのまま作成ページへ遷移できる導線があることを保証する。
+  it("ステップ1 の節に /create へのリンクがあること", () => {
+    const start = content.indexOf("## ステップ1");
+    const end = content.indexOf("## ステップ2");
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeGreaterThan(start);
+    const step1Section = content.slice(start, end);
+    expect(step1Section).toContain("](/create)");
+  });
+
+  // 意図: 読了直後の「まとめ」節で、「さっそく作成してみましょう」から
+  //       実際に /create へ移動できる CTA があることを保証する。
+  it("まとめの節に /create へのリンクがあること", () => {
+    const start = content.indexOf("## まとめ");
+    expect(start).toBeGreaterThanOrEqual(0);
+    const summarySection = content.slice(start);
+    expect(summarySection).toContain("](/create)");
+  });
+
+  // 意図: 「UTMパラメータの設定方法」ガイドへの言及がテキストのみでリンクになっていないため、
+  //       /guide/utm-setup への Markdown リンクがあることを保証する（回遊導線の確保）。
+  it("UTM パラメータの設定ガイド /guide/utm-setup へのリンクがあること", () => {
+    expect(content).toContain("](/guide/utm-setup)");
+  });
+});
+
 describe("getGuide 関数との統合: getting-started", () => {
   it("getGuide('getting-started') が null でない値を返すこと", () => {
     const result = getGuide("getting-started");

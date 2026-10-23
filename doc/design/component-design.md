@@ -976,18 +976,22 @@ interface UseCaseCardProps {
 }
 ```
 
-### 5.4 CtaButton
+### 5.4 ArticleCta（記事末尾の行動喚起ブロック。旧 CtaButton）
 
-行動喚起ボタン（マーケティングページ下部等）。
+ガイド・用途別ページの本文（MDX）直後に表示する行動喚起ブロック。旧設計の CtaButton を置き換える（qr_code_create-29r で実装）。配置先は `src/components/marketing/ArticleCta/ArticleCta.tsx` と `ArticleCta.module.css`。
 
 ```typescript
-interface CtaButtonProps {
-  text: string;
-  href: string;
-  variant?: 'primary' | 'secondary';
-  utmParams?: Record<string, string>; // 用途別ページからのパラメータ付きリンク用
+interface ArticleCtaProps {
+  href?: string;      // 既定 "/create"。用途別ページは buildCreateHref() の結果を渡す
+  text?: string;      // 既定 "QRコードを作成する"。用途別ページは "この設定でQRコードを作成する"
+  location?: string;  // GA イベント cta_clicked の location。既定 "article_bottom"
 }
 ```
+
+- Client Component。`<aside aria-label="QRコード作成への案内">` の中に見出し「このページの内容でQRコードを作ってみましょう」、`next/link` のリンク（文言は `text`）、補足「無料・登録不要」を描画する
+- リンクのクリック時に `trackCtaClicked(text, location)` を送る
+- リンク先の組み立ては純関数 `buildCreateHref({ preset?, utmSource? })`（`src/lib/url/buildCreateHref.ts`）が担う。クエリは `utm_source` → `utm_medium`（utmSource がある場合に `qr` 固定で付与）→ `preset` の順。両方なければ `/create`
+- スタイルは CSS Modules で、Button の primary 相当の見た目を CSS Custom Properties（`--color-primary` 等）で再現する
 
 ### 5.5 ComparisonTable
 

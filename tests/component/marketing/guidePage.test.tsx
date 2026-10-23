@@ -26,6 +26,11 @@ jest.mock("next/link", () => {
   return MockLink;
 });
 
+// ArticleCta 内部で呼ばれる trackCtaClicked が gtag に触れないようモックする
+jest.mock("@/lib/analytics/events", () => ({
+  trackCtaClicked: jest.fn(),
+}));
+
 const { notFound } = jest.requireMock("next/navigation") as { notFound: jest.Mock };
 
 describe("GuidePage", () => {
@@ -64,6 +69,20 @@ describe("GuidePage", () => {
       const jsx = await GuidePage({ params: Promise.resolve({ slug: "utm-parameters" }) });
       render(jsx as React.ReactElement);
       expect(screen.getByText(/\d{4}-\d{2}-\d{2}/)).toBeInTheDocument();
+    });
+  });
+
+  describe("本文末尾のCTA", () => {
+    it("本文の後に「QRコードを作成する」リンク（href=\"/create\"）があること", async () => {
+      // 意図: 検索流入で本文を読み終えた人がツールへ到達できるよう、
+      //       ガイド本文（MDX）の直後に ArticleCta（既定 href "/create"）が置かれていること。
+      const jsx = await GuidePage({ params: Promise.resolve({ slug: "utm-parameters" }) });
+      render(jsx as React.ReactElement);
+      const content = screen.getByTestId("mdx-content");
+      const link = screen.getByRole("link", { name: "QRコードを作成する" });
+      expect(link).toHaveAttribute("href", "/create");
+      // DOCUMENT_POSITION_FOLLOWING (4): link が content の後方にある
+      expect(content.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 

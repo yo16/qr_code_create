@@ -758,6 +758,8 @@ Google Analyticsで追跡できません。
 | guide_tooltip_opened | ガイド表示 | tooltip_id, field_name | ツールチップ/ヘルプクリック時 |
 | help_article_clicked | ヘルプ記事クリック | article_slug | ヘルプリンククリック時 |
 
+**連続入力イベントの抑制（qr_code_create-shf で追加）:** 「フィールド変更時」「色変更時」「キャプション変更時」に送る `utm_*_set`、`color_customized`、`caption_set` は、入力のたびに送ると 1 ユーザーで数十〜数百回発火して集計がノイズになる（2026 年 10 月の GA 実測: utm_campaign_set 918 回 / 23 ユーザー、color_customized 344 回 / 2 ユーザー）。そのため `src/lib/analytics/events.ts` 内で同一イベント名ごとに trailing debounce（`EVENT_DEBOUNCE_MS` = 1000ms）をかけ、最後の入力から 1 秒後に最後の値だけを送る。`flushPendingEvents()` で保留分を即時送信できる。クリックや生成・ダウンロードなど単発操作のイベントは即時送信のまま。URL のクエリから初期値を適用した場合（qr_code_create-3gk）はこれらのイベントを送らない。
+
 ### GA4実装コード例
 
 ```typescript

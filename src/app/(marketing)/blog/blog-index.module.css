@@ -1,7 +1,7 @@
 .container {
   max-width: 800px;
   margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
+  padding: var(--spacing-xl) var(--spacing-md) var(--spacing-3xl);
 }
 
 .header {
@@ -11,6 +11,7 @@
 .title {
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
   margin-bottom: var(--spacing-sm);
 }
 
@@ -18,59 +19,65 @@
   font-size: var(--font-size-base);
   color: var(--color-muted);
   line-height: var(--line-height-relaxed);
+  max-width: var(--measure);
 }
 
+/* 日付順の記事一覧。罫で区切り、カードの箱は使わない */
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .card {
   display: block;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-lg) 0;
+  border-top: 1px solid var(--color-border);
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.card:hover .cardTitle {
+  color: var(--color-primary);
+  text-decoration: underline;
 }
 
 .cardMeta {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-md);
   margin-bottom: var(--spacing-xs);
 }
 
 .cardDate {
   font-size: var(--font-size-xs);
   color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .cardCategory {
   font-size: var(--font-size-xs);
   color: var(--color-primary);
-  background-color: var(--color-primary-light);
-  padding: 1px var(--spacing-xs);
-  border-radius: var(--radius-sm);
 }
 
 .cardTitle {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
+  font-feature-settings: var(--font-feature-heading);
+  line-height: var(--line-height-tight);
   margin-bottom: var(--spacing-xs);
-  color: var(--color-primary);
+  color: var(--color-foreground);
+  text-underline-offset: 0.2em;
 }
 
 .cardDescription {
   font-size: var(--font-size-sm);
   color: var(--color-muted);
   line-height: var(--line-height-relaxed);
+  max-width: var(--measure);
 }

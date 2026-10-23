@@ -8,13 +8,15 @@ export function CtaSection() {
     <section className={styles.cta} aria-labelledby="cta-heading">
       <Container>
         <div className={styles.inner}>
-          <h2 id="cta-heading" className={styles.heading}>
-            今すぐマーケティング効果UP
-          </h2>
-          <p className={styles.description}>
-            UTMパラメータ付きQRコードで、オフライン広告の効果も追跡できます。
-          </p>
-          <Link href="/create">
+          <div className={styles.text}>
+            <h2 id="cta-heading" className={styles.heading}>
+              URLを入れて、4つの手順でダウンロードまで
+            </h2>
+            <p className={styles.description}>
+              URLの入力、UTMパラメータ、見た目の調整、ダウンロードの順に進みます。途中で登録を求められることはありません。
+            </p>
+          </div>
+          <Link href="/create" className={styles.action}>
             <Button variant="primary" size="lg">
               無料でQRコードを作成する
             </Button>

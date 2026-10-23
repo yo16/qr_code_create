@@ -6,8 +6,7 @@
   padding: var(--spacing-lg);
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-surface);
 }
 
 .label {
@@ -25,9 +24,15 @@
   justify-content: center;
   background-color: var(--color-background);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
   overflow: hidden;
   flex-shrink: 0;
+  /*
+   * 表示サイズは TSX のインライン style（width/height = size）で決まる。
+   * モバイルでは --preview-max で上限をかけて縮める（!important を使わない）
+   */
+  max-width: var(--preview-max, none);
+  max-height: var(--preview-max, none);
 }
 
 .canvas {
@@ -122,9 +127,9 @@
   align-items: flex-start;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
-  background-color: #fffbeb;
+  background-color: var(--color-warning-wash);
   border: 1px solid var(--color-warning);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
   width: 100%;
 }
 
@@ -146,14 +151,14 @@
     padding: var(--spacing-sm);
   }
 
-  .previewArea {
-    width: 128px !important;
-    height: 128px !important;
+  .container {
+    --preview-max: 128px;
   }
 
+  /* canvas の width/height は HTML 属性なので、通常の CSS 指定で表示サイズを上書きできる */
   .previewArea canvas {
-    width: 128px !important;
-    height: 128px !important;
+    width: var(--preview-max);
+    height: var(--preview-max);
   }
 
   .label {

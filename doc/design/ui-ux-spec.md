@@ -18,68 +18,40 @@
 
 ### 1.1 カラーパレット
 
+2026-10-23 改訂（qr_code_create-h58）。Tailwind 既定値を、役割で名付けた 6 色のパレットに置き換えた。
+コンポーネントは従来どおり `--color-*` の役割名を参照し、値は `--palette-*` から引く。
+
+| パレット | hex | 役割 | コントラスト（白地） |
+|---|---|---|---|
+| `--palette-ink` 墨 | `#1e2a33` | 本文・見出し・ヒーローの QR | 14.9:1 |
+| `--palette-ink-muted` 薄墨 | `#56626d` | 補足文・メタ情報 | 6.2:1 |
+| `--palette-indigo` 藍 | `#1f5fbf` | リンク・主ボタン・フォーカスリング | 6.1:1 |
+| `--palette-indigo-deep` 濃藍 | `#184d9c` | 藍の hover | 8.3:1 |
+| `--palette-wash` 淡藍 | `#e7eef8` | 選択・hover の地、テキスト選択 | - |
+| `--palette-rule` 罫 | `#d3dae1` | 罫線・入力枠 | - |
+| `--palette-paper` 面 | `#f3f5f7` | フッター、締めの案内の面 | - |
+
 ```css
 :root {
-  /* === プライマリカラー === */
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #3b82f6;   /* メインカラー */
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
-
-  /* === グレースケール === */
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
-
-  /* === セマンティックカラー === */
-  --color-success-50: #f0fdf4;
-  --color-success-500: #22c55e;
-  --color-success-700: #15803d;
-
-  --color-warning-50: #fffbeb;
-  --color-warning-500: #f59e0b;
-  --color-warning-700: #b45309;
-
-  --color-error-50: #fef2f2;
-  --color-error-500: #ef4444;
-  --color-error-700: #b91c1c;
-
-  --color-info-50: #eff6ff;
-  --color-info-500: #3b82f6;
-  --color-info-700: #1d4ed8;
-
-  /* === テキストカラー === */
-  --color-text-primary: var(--color-gray-900);
-  --color-text-secondary: var(--color-gray-600);
-  --color-text-tertiary: var(--color-gray-400);
-  --color-text-inverse: #ffffff;
-  --color-text-link: var(--color-primary-600);
-  --color-text-link-hover: var(--color-primary-700);
-
-  /* === 背景カラー === */
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: var(--color-gray-50);
-  --color-bg-tertiary: var(--color-gray-100);
-
-  /* === ボーダーカラー === */
-  --color-border-default: var(--color-gray-200);
-  --color-border-focus: var(--color-primary-500);
-  --color-border-error: var(--color-error-500);
+  --color-primary: var(--palette-indigo);
+  --color-primary-hover: var(--palette-indigo-deep);
+  --color-primary-light: var(--palette-wash);
+  --color-secondary: var(--palette-indigo-deep);
+  --color-background: var(--palette-white);   /* #ffffff */
+  --color-on-primary: var(--palette-white);   /* 藍の上の文字 */
+  --color-foreground: var(--palette-ink);
+  --color-muted: var(--palette-ink-muted);
+  --color-border: var(--palette-rule);
+  --color-surface: var(--palette-paper);
+  --color-success: #2f7d4f;       /* 白文字 5.3:1 */
+  --color-warning: #b26b00;
+  --color-warning-wash: #fdf5e6;
+  --color-error: #c0392b;         /* 白地 5.4:1 */
+  --color-focus: var(--palette-indigo);
 }
 ```
+
+色は意味のある場所（リンク、主ボタン、フォーカス、選択・完了の状態）にだけ使う。見出しと一覧のタイトルは墨。
 
 ### 1.2 タイポグラフィ
 
@@ -104,12 +76,20 @@
   --font-weight-bold: 700;
 
   /* === 行間 === */
-  --line-height-tight: 1.25;
-  --line-height-normal: 1.5;
-  --line-height-relaxed: 1.75;
-  --line-height-loose: 2.0;
+  --line-height-tight: 1.35;    /* 見出し */
+  --line-height-normal: 1.7;
+  --line-height-relaxed: 1.85;  /* 本文 */
+
+  /* === 見出しの組版 === */
+  --font-feature-heading: "palt";   /* h1〜h4 に globals.css で適用 */
+  --letter-spacing-heading: 0.02em;
+
+  /* === 行長 === */
+  --measure: 38em;   /* 日本語で約 38 字 */
 }
 ```
+
+書体は Noto Sans JP の 1 書体。差はサイズ・ウェイト・行長・`palt` で出す。
 
 ### 1.3 スペーシング
 
@@ -138,18 +118,24 @@
   --container-default: 1200px;
   --container-wide: 1440px;
 
-  /* === ボーダー === */
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 12px;
-  --border-radius-xl: 16px;
-  --border-radius-full: 9999px;
+  /* === 角丸（2 段階） === */
+  --radius-control: 6px;    /* ボタン・入力欄・タブなど操作部品 */
+  --radius-surface: 10px;   /* /create のパネル、締めの案内など面 */
+  --radius-sm: var(--radius-control);   /* 旧名。互換のため残す */
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-surface);
+  --radius-full: 9999px;    /* 手順番号の丸のみ */
 
-  /* === シャドウ === */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  /* === シャドウ（2 段階、墨色で着色） === */
+  --shadow-edge: 0 1px 0 rgba(30, 42, 51, 0.06);              /* 面の境目 */
+  --shadow-overlay: 0 6px 18px -6px rgba(30, 42, 51, 0.22);   /* メニュー・ツールチップ */
+  --shadow-sm: var(--shadow-edge);
+  --shadow-md: var(--shadow-overlay);
+  --shadow-lg: var(--shadow-overlay);
+
+  /* === フォーカス === */
+  --focus-ring: 2px solid var(--color-focus);
+  --focus-offset: 2px;
 
   /* === トランジション === */
   --transition-fast: 150ms ease;
@@ -176,6 +162,23 @@
 | sp | 〜767px | スマートフォン |
 | tablet | 768px〜1023px | タブレット |
 | desktop | 1024px〜 | デスクトップPC |
+
+### 1.6 AIっぽさを避ける方針
+
+根拠: `.claude/references/anti-ai-design-checklist.md`（2026-10-23 確認）。個々の要素は単独なら問題ないが、重なると「既定値のまま」に見える。
+
+- **見せ場は 1 つ**: トップのヒーローに、実際に読み取れる QR コード（`public/hero-qr.svg`、`https://qr-create.jp/?utm_source=qr-create&utm_medium=qr&utm_campaign=hero`）と、その指し先 URL をパラメータごとに改行したキャプションを置く。他は静かにする
+- **配置**: 左寄せ。トップは「左に見出し、右に内容」の非対称 2 カラム（lg 以上）。中央寄せの巨大ヒーロー、h1 前後の pill バッジは使わない
+- **区切りは罫**: 一覧（guide / use-cases / blog）、特徴、FAQ はカードの箱ではなく 1px の罫で区切る。箱（角丸の面）は /create の操作パネルと締めの案内だけ
+- **同じ形のカードを並べない**: 特徴 4 項目は罫区切りの定義リスト（項目名 / 説明）
+- **記事見出し**: h2 は下罫 1 本のみ、h3 は太字のみ。左ボーダー・背景色・角丸の重ねがけはしない
+- **ホバー**: 色と下線の変化だけ。`translateY` で浮かせない、影を足さない
+- **モーション**: 開閉（FAQ の矢印、モバイルメニュー）だけ。`prefers-reduced-motion: reduce` では止める。スクロール連動・fade-in は使わない
+- **アイコン**: 絵文字を使わない。必要なら単色の小さな inline SVG
+- **書体**: ALL CAPS ラベル、見出し上の eyebrow、見出しの 1 語だけの色変え、中黒連結のメタ、リンク末尾の「→」は使わない
+- **コピー**: 「選ばれる理由」「今すぐ〜UP」「〜も完璧」のような定型句をやめ、何ができて押すと何が起きるかを平叙文で書く
+- **コード**: `!important` を使わない（例外: `QrGeneratorSkeleton` のシマー）。上書きは修飾クラス・詳細度・CSS 変数で行う
+- **品質の床**: AA コントラスト（本文 4.5:1）、全操作要素に `:focus-visible`、390px 幅まで崩れない
 
 ---
 
@@ -781,50 +784,45 @@ Zeigarnik Effect（未完了タスクが記憶に残る効果）を活用し、�
 
 ### 4.1 レイアウト構成
 
+2026-10-23 改訂（qr_code_create-h58）。実装は HeroSection / FeaturesSection / CtaSection の 3 セクション。使い方・用途別・FAQ の抜粋セクションは未実装（必要になれば別タスク）。左寄せを基本とし、lg（1024px）以上では「左に見出し、右に内容」の非対称 2 カラムで揃える。
+
 ```
-┌─────────────────────────────────────────────────────┐
-│ Header                                               │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  ヒーローセクション                                  │
-│  ┌─────────────────────────────────────────────┐    │
-│  │ UTMパラメータ付きQRコードを                    │    │
-│  │ 無料で作成                                    │    │
-│  │                                               │    │
-│  │ チラシやポスターの効果を                        │    │
-│  │ Google Analyticsで測定できるQRコードを          │    │
-│  │ 誰でも簡単に作成できます。                     │    │
-│  │ 完全無料・登録不要。                           │    │
-│  │                                               │    │
-│  │ [無料でQRコードを作成する →]                   │    │
-│  └─────────────────────────────────────────────┘    │
-│                                                     │
-│  特徴セクション（3カラム）                           │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐            │
-│  │ UTMガイド │ │ 装飾フレーム│ │ 完全無料 │            │
-│  │ ンス付き  │ │ で魅力UP  │ │ 登録不要 │            │
-│  └──────────┘ └──────────┘ └──────────┘            │
-│                                                     │
-│  使い方セクション（3ステップ）                        │
-│  ① URL入力 → ② UTM設定 → ③ ダウンロード            │
-│                                                     │
-│  用途別セクション                                    │
-│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐              │
-│  │名刺  │ │チラシ│ │ポスター│ │イベント│              │
-│  └──────┘ └──────┘ └──────┘ └──────┘              │
-│                                                     │
-│  よくある質問セクション（3-5件抜粋）                 │
-│                                                     │
-│  CTAセクション                                      │
-│  ┌─────────────────────────────────────────────┐    │
-│  │ 今すぐUTMパラメータ付きQRコードを作成           │    │
-│  │ [無料でQRコードを作成する →]                   │    │
-│  └─────────────────────────────────────────────┘    │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│ Footer                                               │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ Header: ロゴ ／ ナビ ／ [QRコード生成]（バッジなし）              │
+├──────────────────────────────────────────────────────────────┤
+│ ヒーロー（左寄せ、lg 以上は 2 カラム）                            │
+│  UTMパラメータ付きQRコードを            ┌────────────┐           │
+│  無料で作成                             │  本物の QR  │ 216px    │
+│  URLを入れるだけで、Google Analyticsで  │ hero-qr.svg │          │
+│  読み取りを計測できるQRコードが…        └────────────┘           │
+│  [無料でQRコードを作成] [使い方を見る]   このQRコードは、次のURLを │
+│  完全無料・登録不要。PNG、SVG、PDFで…    指しています。            │
+│                                        https://qr-create.jp/    │
+│                                        ?utm_source=qr-create   │
+│                                        &utm_medium=qr          │
+│                                        &utm_campaign=hero      │
+├──────────────────────────────────────────────────────────────┤
+│ できること（罫区切りの定義リスト。lg 以上は左に h2、右に一覧）     │
+│  できること │ UTMパラメータガイダンス   説明文                   │
+│            ├────────────────────────────────────────────────│
+│            │ 装飾フレーム              説明文                   │
+│            ├────────────────────────────────────────────────│
+│            │ 完全無料・登録不要         説明文                   │
+│            ├────────────────────────────────────────────────│
+│            │ PNG/SVG/PDF対応           説明文                   │
+├──────────────────────────────────────────────────────────────┤
+│ 締めの案内（面色の箱、左寄せ。色を持つのはボタンだけ）             │
+│  URLを入れて、4つの手順でダウンロードまで  [無料でQRコードを作成する]│
+│  URLの入力、UTMパラメータ、見た目の調整、…                        │
+├──────────────────────────────────────────────────────────────┤
+│ Footer（左寄せ）                                                │
+└──────────────────────────────────────────────────────────────┘
 ```
+
+- モバイル（〜767px）は 1 カラム。QR は 112px でキャプションと横並び。h1 は 23px、640px 以上で 30px、768px 以上で 40px
+- ヒーローに pill バッジ・グラデーション背景は置かない。「無料・登録不要」は平文で伝える
+- 特徴は絵文字アイコンなし、同形カードなし。ホバー効果なし
+- 締めの案内はベタ塗りの帯にしない。見出しと説明は具体的な手順を書く
 
 ---
 

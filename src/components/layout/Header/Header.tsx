@@ -20,11 +20,10 @@ export function Header() {
             <Link href="/" className={styles.logo}>
               QR Code Create
             </Link>
-            <span className={styles.badge}>完全無料・登録不要</span>
           </div>
           <nav className={styles.desktopNav}>
             {NAV_ITEMS.map((item) => (
-              <Link key={item.href} href={item.href}>
+              <Link key={item.href} href={item.href} className={styles.navLink}>
                 {item.label}
               </Link>
             ))}

@@ -1,17 +1,33 @@
 :root {
-  /* Colors */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-light: #dbeafe;
-  --color-secondary: #7c3aed;
-  --color-background: #ffffff;
-  --color-foreground: #171717;
-  --color-muted: #6b7280;
-  --color-border: #e5e7eb;
-  --color-surface: #f9fafb;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+  /*
+   * Palette（役割で命名。詳細は doc/design/ui-ux-spec.md）
+   * ink 墨 / ink-muted 薄墨 / indigo 藍 / wash 淡藍 / rule 罫 / paper 面
+   */
+  --palette-ink: #1e2a33;
+  --palette-ink-muted: #56626d;
+  --palette-indigo: #1f5fbf;
+  --palette-indigo-deep: #184d9c;
+  --palette-wash: #e7eef8;
+  --palette-rule: #d3dae1;
+  --palette-paper: #f3f5f7;
+  --palette-white: #ffffff;
+
+  /* Colors（コンポーネントが参照する役割名） */
+  --color-primary: var(--palette-indigo);
+  --color-primary-hover: var(--palette-indigo-deep);
+  --color-primary-light: var(--palette-wash);
+  --color-secondary: var(--palette-indigo-deep);
+  --color-background: var(--palette-white);
+  --color-on-primary: var(--palette-white);
+  --color-foreground: var(--palette-ink);
+  --color-muted: var(--palette-ink-muted);
+  --color-border: var(--palette-rule);
+  --color-surface: var(--palette-paper);
+  --color-success: #2f7d4f;
+  --color-warning: #b26b00;
+  --color-warning-wash: #fdf5e6;
+  --color-error: #c0392b;
+  --color-focus: var(--palette-indigo);
 
   /* Typography */
   --font-sans: var(--font-noto-sans-jp), "Hiragino Kaku Gothic ProN",
@@ -22,14 +38,19 @@
   --font-size-lg: 1.125rem;
   --font-size-xl: 1.25rem;
   --font-size-2xl: 1.5rem;
-  --font-size-3xl: 2rem;
+  --font-size-3xl: 1.875rem;
   --font-size-4xl: 2.5rem;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
-  --line-height-tight: 1.25;
+  --line-height-tight: 1.35;
   --line-height-normal: 1.7;
-  --line-height-relaxed: 1.8;
+  --line-height-relaxed: 1.85;
+  /* 見出しの組版: プロポーショナル詰め */
+  --font-feature-heading: "palt";
+  --letter-spacing-heading: 0.02em;
+  /* 本文の行長（日本語で約 38 字） */
+  --measure: 38em;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -40,10 +61,17 @@
   --spacing-2xl: 48px;
   --spacing-3xl: 64px;
 
-  /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /*
+   * Border Radius（2 段階）
+   * control: ボタン・入力欄・タブなど操作部品
+   * surface: /create のパネルなど面
+   * 一覧・FAQ・記事見出しは角丸を使わず罫で区切る
+   */
+  --radius-control: 6px;
+  --radius-surface: 10px;
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-surface);
   --radius-full: 9999px;
 
   /* Layout */
@@ -55,10 +83,20 @@
   /* Breakpoints (for reference in media queries) */
   /* --bp-sm: 640px; --bp-md: 768px; --bp-lg: 1024px; --bp-xl: 1280px; */
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  /*
+   * Shadows（2 段階。墨色で着色）
+   * edge: 面の境目をわずかに示す
+   * overlay: メニュー・ツールチップなど上に重なる層
+   */
+  --shadow-edge: 0 1px 0 rgba(30, 42, 51, 0.06);
+  --shadow-overlay: 0 6px 18px -6px rgba(30, 42, 51, 0.22);
+  --shadow-sm: var(--shadow-edge);
+  --shadow-md: var(--shadow-overlay);
+  --shadow-lg: var(--shadow-overlay);
+
+  /* Focus ring */
+  --focus-ring: 2px solid var(--color-focus);
+  --focus-offset: 2px;
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -96,13 +134,33 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.7;
+  font-feature-settings: normal;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-feature-settings: var(--font-feature-heading);
+  letter-spacing: var(--letter-spacing-heading);
 }
 
 a {
   color: var(--color-primary);
   text-decoration: none;
+  text-underline-offset: 0.2em;
 }
 
 a:hover {
   text-decoration: underline;
+}
+
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+::selection {
+  background: var(--color-primary-light);
+  color: var(--color-foreground);
 }

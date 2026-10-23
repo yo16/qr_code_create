@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
+  },
   "permissions": {
     "allow": [
       "Read",
@@ -6,7 +9,6 @@
       "Write",
       "Glob",
       "Grep",
-
       "Bash(git status)",
       "Bash(git status *)",
       "Bash(git diff)",
@@ -24,12 +26,9 @@
       "Bash(git worktree *)",
       "Bash(git show *)",
       "Bash(git reset *)",
-
       "Bash(gh pr *)",
       "Bash(gh api *)",
-
       "Bash(bd *)",
-
       "Bash(npm install)",
       "Bash(npm install *)",
       "Bash(npm test)",
@@ -46,7 +45,6 @@
       "Bash(npx supabase *)",
       "Bash(npx vite *)",
       "Bash(npx create-next-app *)",
-
       "Bash(mkdir *)",
       "Bash(rm *)",
       "Bash(cp *)",
@@ -55,10 +53,8 @@
       "Bash(pwd)",
       "Bash(node *)",
       "Bash(cat *)",
-
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-
       "Agent(*)"
     ],
     "deny": [
@@ -73,9 +69,6 @@
       "Bash(git branch -D *)",
       "Bash(npm uninstall *)"
     ]
-  },
-  "env": {
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
   },
   "hooks": {
     "PostToolUse": [
@@ -95,12 +88,14 @@
         "hooks": [
           {
             "type": "command",
-            "shell": "powershell",
-            "command":
-              "[System.Media.SystemSounds]::Exclamation.Play()"
+            "command": "[System.Media.SystemSounds]::Exclamation.Play()",
+            "shell": "powershell"
           }
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
   }
 }

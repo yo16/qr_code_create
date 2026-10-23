@@ -180,6 +180,16 @@
 - **コード**: `!important` を使わない（例外: `QrGeneratorSkeleton` のシマー）。上書きは修飾クラス・詳細度・CSS 変数で行う
 - **品質の床**: AA コントラスト（本文 4.5:1）、全操作要素に `:focus-visible`、390px 幅まで崩れない
 
+### 1.7 ブランドマーク（2026-10-24 追加、qr_code_create-9zf）
+
+- **形**: QR コードのファインダーパターン（位置検出パターン）を単純化した「回」。右下の角を 1 マス分だけ外に置き、QR が組み上がる途中のような欠けを持たせる
+- **元データ**: `public/brand/mark.svg`（viewBox 0 0 32 32、`shape-rendering="crispEdges"`）。形を変えるときはここだけを直し、`src/app/icon.svg` に同じ内容をコピーして `npm run build:icons` を実行する
+- **色**: 藍 `#1f5fbf` の 1 色のみ。ホバー・フォーカスでも変えない。反転や 2 色化はしない
+- **最小サイズ**: 16px。それ未満では使わない
+- **余白**: マーク幅の 1/8 以上を空ける。apple-icon は 180px の白地に 120px のマークを中央に置き、上下左右 30px を取る
+- **使う場所**: ヘッダーのロゴ横（24px、`src/components/layout/Header/BrandMark.tsx`）、favicon（`src/app/icon.svg`、`icon.png` 48px、`favicon.ico` 32px）、apple-icon（`src/app/apple-icon.png` 180px）。いずれも Next.js のメタデータファイル規約で `<head>` に出力される
+- **再生成**: `npm run build:icons`（`scripts/build-icons.cjs`。playwright の Chromium で PNG と ICO を `src/app` に書き出す）
+
 ---
 
 ## 2. QRコード生成ページ（`/create`）のUI仕様

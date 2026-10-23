@@ -4,6 +4,7 @@ import GuidePage, {
   generateStaticParams,
   generateMetadata,
 } from "@/app/(marketing)/guide/[slug]/page";
+import { getGuideSlugList } from "@/lib/content/getGuide";
 
 jest.mock("next-mdx-remote/rsc", () => ({
   MDXRemote: ({ source }: { source: string }) => (
@@ -77,9 +78,11 @@ describe("GuidePage", () => {
 });
 
 describe("generateStaticParams", () => {
-  it("4つのslugを返すこと", async () => {
+  it("getGuideSlugList() と同じ件数のslugを返すこと", async () => {
     const params = await generateStaticParams();
-    expect(params).toHaveLength(4);
+    const expectedCount = getGuideSlugList().length;
+    expect(expectedCount).toBeGreaterThan(0);
+    expect(params).toHaveLength(expectedCount);
   });
 
   it("各要素がslugプロパティを持つこと", async () => {
@@ -93,6 +96,7 @@ describe("generateStaticParams", () => {
   it("期待するslugがすべて含まれること", async () => {
     const params = await generateStaticParams();
     const slugs = params.map((p) => p.slug);
+    expect(slugs).toContain("getting-started");
     expect(slugs).toContain("utm-parameters");
     expect(slugs).toContain("effective-qr-usage");
     expect(slugs).toContain("design-tips");

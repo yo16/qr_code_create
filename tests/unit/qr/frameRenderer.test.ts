@@ -5,9 +5,32 @@ import {
   type FrameType,
 } from "@/lib/qr/frameRenderer";
 
+const BASIC_FRAME_TYPES: FrameType[] = [
+  "none",
+  "simple",
+  "rounded",
+  "ornate",
+  "elegant",
+  "pop",
+  "business",
+  "festive",
+];
+
 describe("FRAME_OPTIONS", () => {
-  it("8種のフレームを含むこと", () => {
-    expect(FRAME_OPTIONS).toHaveLength(8);
+  it("type が \"img-\" で始まる画像フレームが1件以上あり、それぞれ imageSrc が文字列であること", () => {
+    const imageFrames = FRAME_OPTIONS.filter((o) => o.type.startsWith("img-"));
+    expect(imageFrames.length).toBeGreaterThanOrEqual(1);
+    for (const option of imageFrames) {
+      expect(typeof option.imageSrc).toBe("string");
+    }
+  });
+
+  it("全 type が基本8種または \"img-\" で始まる画像フレームのいずれかであること", () => {
+    for (const option of FRAME_OPTIONS) {
+      const isBasic = BASIC_FRAME_TYPES.includes(option.type);
+      const isImage = option.type.startsWith("img-");
+      expect(isBasic || isImage).toBe(true);
+    }
   });
 
   it("各オプションに type / label / category があること", () => {
@@ -27,19 +50,9 @@ describe("FRAME_OPTIONS", () => {
     expect(unique.size).toBe(FRAME_OPTIONS.length);
   });
 
-  it("none / simple / rounded / ornate / elegant / pop / business / festive の8種が含まれること", () => {
+  it("基本8種（none / simple / rounded / ornate / elegant / pop / business / festive）がすべて含まれること", () => {
     const types = FRAME_OPTIONS.map((o) => o.type);
-    const expected: FrameType[] = [
-      "none",
-      "simple",
-      "rounded",
-      "ornate",
-      "elegant",
-      "pop",
-      "business",
-      "festive",
-    ];
-    for (const t of expected) {
+    for (const t of BASIC_FRAME_TYPES) {
       expect(types).toContain(t);
     }
   });

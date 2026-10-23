@@ -344,6 +344,8 @@ src/
 
 ```
 tests/
+├── __mocks__/                  # Jest が解析できない ESM パッケージのモック（qr_code_create-5ls で追加）
+│   └── remark-gfm.ts
 ├── unit/
 │   ├── lib/
 │   │   ├── url/

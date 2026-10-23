@@ -7,7 +7,8 @@ describe("Tooltip.module.css の .tooltip 幅指定", () => {
     "src/components/ui/Tooltip/Tooltip.module.css"
   );
   const content = fs.readFileSync(cssPath, "utf-8");
-  const tooltipBlock = content.match(/\.tooltip\s*\{[^}]*\}/s)?.[0] ?? "";
+  // [^}] は改行にもマッチするため、ES2018 専用の s フラグ（dotAll）は不要
+  const tooltipBlock = content.match(/\.tooltip\s*\{[^}]*\}/)?.[0] ?? "";
 
   it(".tooltip ブロックが存在すること", () => {
     expect(tooltipBlock).not.toBe("");

@@ -198,6 +198,7 @@ Homepage (/)
 | QRコードのデザイン：読み取りやすさと見た目の両立 | 検索+共有 | 検討 | P1 |
 | 業種別QRコード活用事例 | 共有向け | 検討 | P1 |
 | QRコードの印刷サイズガイド | 検索向け | 利用 | P2 |
+| QRコードに有効期限はある？（静的QRと動的QRの違い） | 検索向け（AI アシスタントの回答にも引用されやすい質問型） | 認知 | P1（qr_code_create-31c で公開、`/blog/qr-code-expiration`） |
 
 #### Pillar 3: 効果測定・分析（検索向け）
 
@@ -233,6 +234,13 @@ Homepage (/)
 | 12 | Google Analytics初心者ガイド | 検索 | 認知 | P2 |
 | 13 | イベント集客のコツ | 共有 | 認知 | P2 |
 | 14 | 名刺を営業ツールにする方法 | 共有 | 検討 | P2 |
+| 15 | QRコードに有効期限はある？（静的QRと動的QRの違い） | 検索 | 認知 | P1（公開済み: qr_code_create-31c） |
+
+### 記事の執筆ルール（qr_code_create-31c で追加）
+
+- ブログ記事とガイドの本文は、プロジェクトのスキル `.claude/skills/yomiyasu/`（AI が書いた日本語を自然な日本語に推敲する手順と lint）に従って書き、推敲する。根拠のない統計や固有名詞の断定を書かない。
+- 公開前に `python -I .claude/skills/yomiyasu/scripts/yomiyasu_lint.py <mdx> --doc-type article --reader general --fail-on warn` を通す（終了コード 0）。lint は表現と書式の決まった規則だけを点検するもので、意味の保持や読みやすさの合否ではない。
+- 記事の構造・frontmatter・導線（`/create` へのリンク）は `tests/unit/content/blog-*.test.ts` で検証する。
 
 ---
 

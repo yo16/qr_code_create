@@ -2,8 +2,11 @@ import sitemap from "@/app/sitemap";
 import { getGuideSlugList } from "@/lib/content/getGuide";
 import { getUseCaseSlugList } from "@/lib/content/getUseCase";
 import { getBlogSlugList } from "@/lib/content/getBlog";
+import { FEATURE_FLAGS } from "@/lib/constants/features";
 
-const STATIC_PAGE_COUNT = 10; // /, /create, /poster, /guide, /use-cases, /blog, /faq, /contact, /privacy, /terms
+// 静的ページ: /, /create, /guide, /use-cases, /blog, /faq, /contact, /privacy, /terms の 9 件
+// /poster は機能フラグ FEATURE_FLAGS.posterPage が true のときだけ追加され、10 件になる
+const STATIC_PAGE_COUNT = FEATURE_FLAGS.posterPage ? 10 : 9;
 
 describe("sitemap", () => {
   describe("エントリ数の検証", () => {
@@ -38,7 +41,6 @@ describe("sitemap", () => {
 
     const staticPageExpectations = [
       { path: "/create", changeFrequency: "monthly", priority: 0.9 },
-      { path: "/poster", changeFrequency: "monthly", priority: 0.8 },
       { path: "/guide", changeFrequency: "weekly", priority: 0.8 },
       { path: "/use-cases", changeFrequency: "weekly", priority: 0.8 },
       { path: "/blog", changeFrequency: "weekly", priority: 0.8 },
@@ -61,6 +63,30 @@ describe("sitemap", () => {
         expect(page?.priority).toBe(priority);
       }
     );
+
+    it("/poster の有無が FEATURE_FLAGS.posterPage と一致すること（false なら含まれない）", () => {
+      // 意図: 未完成の /poster をフラグ OFF 時は sitemap から除外し、検索エンジンに露出させない
+      const result = sitemap();
+      const posterPage = result.find((entry) => {
+        const url = new URL(entry.url);
+        return url.pathname === "/poster";
+      });
+      expect(posterPage !== undefined).toBe(FEATURE_FLAGS.posterPage);
+    });
+
+    it("/poster が含まれる場合は changeFrequency=monthly、priority=0.8 であること", () => {
+      // 意図: フラグ ON 時のエントリ属性を固定する（OFF 時は対象 0 件のため検証をスキップした形になる）
+      const result = sitemap();
+      const posterPages = result.filter((entry) => {
+        const url = new URL(entry.url);
+        return url.pathname === "/poster";
+      });
+      expect(posterPages.length).toBeLessThanOrEqual(1);
+      for (const page of posterPages) {
+        expect(page.changeFrequency).toBe("monthly");
+        expect(page.priority).toBe(0.8);
+      }
+    });
   });
 
   describe("ガイドページの検証", () => {

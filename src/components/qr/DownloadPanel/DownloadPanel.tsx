@@ -7,6 +7,7 @@ import { PdfDownloadButton } from "./PdfDownloadButton";
 import { ResolutionSelector, type Resolution } from "./ResolutionSelector";
 import type { CaptionConfig, UtmParams, DecorationConfig } from "@/types/qr";
 import { savePosterHandoff } from "@/lib/handoff/posterHandoff";
+import { FEATURE_FLAGS } from "@/lib/constants/features";
 import styles from "./DownloadPanel.module.css";
 
 interface DownloadPanelProps {
@@ -92,17 +93,19 @@ export function DownloadPanel({
               caption={caption}
             />
           </div>
-          <div className={styles.ctaSection}>
-            <button
-              type="button"
-              className={styles.ctaButton}
-              onClick={handlePosterCta}
-              disabled={!isUrlValid}
-              aria-label="印刷用ポスターを作る（/posterページへ移動）"
-            >
-              印刷用ポスターを作る →
-            </button>
-          </div>
+          {FEATURE_FLAGS.posterPage && (
+            <div className={styles.ctaSection}>
+              <button
+                type="button"
+                className={styles.ctaButton}
+                onClick={handlePosterCta}
+                disabled={!isUrlValid}
+                aria-label="印刷用ポスターを作る（/posterページへ移動）"
+              >
+                印刷用ポスターを作る →
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

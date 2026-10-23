@@ -14,8 +14,10 @@ import { PresetSelector } from "@/components/qr/DecorationPanel/PresetSelector";
 import type { DecorationPreset } from "@/lib/constants/decorationPresets";
 import { ProgressBar } from "@/components/ui/ProgressBar/ProgressBar";
 import { buildUtmUrl } from "@/lib/url/buildUtmUrl";
-import { DEFAULT_FRAME_CONFIG, type FrameConfig } from "@/lib/qr/frameRenderer";
-import { INITIAL_QR_STATE, type CaptionConfig, type LogoConfig, type QrState } from "@/types/qr";
+import type { FrameConfig } from "@/lib/qr/frameRenderer";
+import { buildInitialQrState } from "@/lib/qr/buildInitialQrState";
+import type { CreateInitialParams } from "@/lib/url/parseCreateSearchParams";
+import type { CaptionConfig, LogoConfig, QrState } from "@/types/qr";
 import styles from "./QrGenerator.module.css";
 
 function getCompletionPercent(state: QrState): number {
@@ -70,9 +72,14 @@ function stepCardClassName(
   return baseStyles.stepCard;
 }
 
-export function QrGenerator() {
-  const [state, setState] = useState<QrState>(INITIAL_QR_STATE);
-  const [frameConfig, setFrameConfig] = useState<FrameConfig>(DEFAULT_FRAME_CONFIG);
+interface QrGeneratorProps {
+  initialParams?: CreateInitialParams;
+}
+
+export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
+  const [initial] = useState(() => buildInitialQrState(initialParams));
+  const [state, setState] = useState<QrState>(initial.state);
+  const [frameConfig, setFrameConfig] = useState<FrameConfig>(initial.frameConfig);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleUrlChange = (url: string) => {

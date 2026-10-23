@@ -82,18 +82,33 @@ const QrGenerator = dynamic(
 );
 ```
 
-**Props**: なし（状態は全て内部管理）
+**Props**（qr_code_create-3gk で追加）:
+
+```typescript
+interface QrGeneratorProps {
+  // /create のクエリから得た初期値。省略時は INITIAL_QR_STATE で初期化
+  initialParams?: CreateInitialParams; // { preset?: string; utmSource?: string; utmMedium?: string }
+}
+```
+
+- `initialParams` は `QrGeneratorLoader`（`src/app/(tool)/create/QrGeneratorLoader.tsx`）が `useSearchParams()` を `parseCreateSearchParams()`（`src/lib/url/parseCreateSearchParams.ts`）に通して渡す。Loader は `Suspense` 境界の内側で `useSearchParams` を呼ぶ
+- `parseCreateSearchParams` は `preset` を `DECORATION_PRESETS` の id、`utm_source` を `UTM_SOURCE_OPTIONS` の value、`utm_medium` を `UTM_MEDIUM_OPTIONS` の value と照合し、一致しない値・空文字は捨てる
+- 初期状態は純関数 `buildInitialQrState(initialParams)`（`src/lib/qr/buildInitialQrState.ts`）が `{ state, frameConfig }` を返す。preset があれば該当プリセットの色・フレーム・キャプション・id を decoration に適用し、utmSource があれば `utm.source` を設定して `utmEnabled` を true にする。utmMedium があれば `utm.medium` を設定（既定 "qr"）
+- URL 由来の初期適用では GA イベント（`preset_selected`、`utm_source_set` など）を送らない。ユーザー操作による選択と区別するため
 
 **内部状態**（[データモデル設計 QrState](./data-model.md#23-qrコード生成状態)参照）:
 
 ```typescript
-import { INITIAL_QR_STATE } from '@/types/qr';
+import { buildInitialQrState } from '@/lib/qr/buildInitialQrState';
 import type { QrState } from '@/types/qr';
 
 // QrGenerator 内部で管理する状態
 // INITIAL_QR_STATE は src/types/qr.ts でエクスポートされる初期値定数。
 // utmEnabled: true (UTM設定ONがデフォルト) を含む。
-const [state, setState] = useState<QrState>(INITIAL_QR_STATE);
+// initialParams が無ければ INITIAL_QR_STATE / DEFAULT_FRAME_CONFIG のコピーになる。
+const [initial] = useState(() => buildInitialQrState(initialParams));
+const [state, setState] = useState<QrState>(initial.state);
+const [frameConfig, setFrameConfig] = useState<FrameConfig>(initial.frameConfig);
 ```
 
 **責務**:

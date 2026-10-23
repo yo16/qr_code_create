@@ -249,7 +249,15 @@ export default async function GuidePage({ params }: Props) {
 /create?utm_source=flyer&utm_medium=qr&preset=pop
 ```
 
-`/create` ページはクエリパラメータから初期値を設定する（QrGeneratorコンポーネント内で `useSearchParams` を使用）。
+`/create` ページはクエリパラメータから初期値を設定する。`QrGeneratorLoader` が `Suspense` 境界の内側で `useSearchParams` を呼び、`parseCreateSearchParams()` で検証した値を `QrGenerator` の `initialParams` に渡す（qr_code_create-3gk で実装。詳細は [コンポーネント設計 2.1](./component-design.md#21-qrgenerator)）。
+
+| クエリ | 受け付ける値 | 不一致時 |
+|---|---|---|
+| `preset` | `DECORATION_PRESETS` の id（simple / business / casual / elegant / pop） | 無視 |
+| `utm_source` | `UTM_SOURCE_OPTIONS` の value（flyer / poster / business_card / brochure / banner / receipt / product_package / menu / signage） | 無視 |
+| `utm_medium` | `UTM_MEDIUM_OPTIONS` の value（qr / print） | 無視（既定 qr） |
+
+URL 由来の初期適用では GA イベントを送らない。
 
 ---
 

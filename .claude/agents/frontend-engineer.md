@@ -3,7 +3,6 @@ name: frontend-engineer
 description: フロントエンド実装の専門エージェント。Reactベースのコンポーネント、ページ、クライアントサイドロジックを実装する。使用フレームワーク（Next.js or React+Vite）はCLAUDE.mdの技術スタックに従う。Beadsタスクの要件に基づいてフロントエンドコードを書く。
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
-isolation: worktree
 maxTurns: 50
 permissionMode: acceptEdits
 color: green

@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { Breadcrumb } from "@/components/layout/Breadcrumb/Breadcrumb";
 import { buildMetadata } from "@/lib/metadata/buildMetadata";
 import { buildBlogPostingSchema, buildBreadcrumbSchema } from "@/lib/schema/buildJsonLd";
+import { ArticleCta } from "@/components/marketing/ArticleCta/ArticleCta";
 import styles from "./guide.module.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
@@ -65,6 +66,7 @@ export default async function GuidePage({ params }: GuidePageProps) {
       <div className={styles.content}>
         <MDXRemote source={guide.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
       </div>
+      <ArticleCta />
     </article>
   );
 }

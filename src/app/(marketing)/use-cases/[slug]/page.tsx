@@ -7,6 +7,8 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { Breadcrumb } from "@/components/layout/Breadcrumb/Breadcrumb";
 import { buildMetadata } from "@/lib/metadata/buildMetadata";
 import { buildBlogPostingSchema, buildBreadcrumbSchema } from "@/lib/schema/buildJsonLd";
+import { ArticleCta } from "@/components/marketing/ArticleCta/ArticleCta";
+import { buildCreateHref } from "@/lib/url/buildCreateHref";
 import styles from "./use-case.module.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
@@ -66,6 +68,10 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
       <div className={styles.content}>
         <MDXRemote source={useCase.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
       </div>
+      <ArticleCta
+        text="この設定でQRコードを作成する"
+        href={buildCreateHref({ preset: useCase.preset, utmSource: useCase.utmSource })}
+      />
     </article>
   );
 }

@@ -18,16 +18,32 @@
   align-items: center;
 }
 
+/*
+ * ロゴ = マーク（24px 固定、1 モジュール 3px で画素に揃う）+ 文字。
+ * マークは常に藍。hover で変わるのは文字だけ（墨→藍）で、マークと文字が一色にまとまる。
+ */
 .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.01em;
+  line-height: 1;
   color: var(--color-foreground);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .logo:hover {
   text-decoration: none;
+  color: var(--color-primary);
+}
+
+.mark {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
   color: var(--color-primary);
 }
 

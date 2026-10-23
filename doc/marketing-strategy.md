@@ -900,6 +900,50 @@ QRコード生成 (qr_generated)
 - 生成→ダウンロードの遷移率（プレビューの品質を測定）
 - ガイドツールチップの表示率と表示後のUTM入力率
 
+### コンバージョン率と形式別利用頻度の見方（2026-10-23 追加、qr_code_create-0em）
+
+**定義**
+
+- コンバージョン: QRコードを生成したあとに PNG / SVG / PDF のいずれかでダウンロードする。イベントは `qr_downloaded`、形式はパラメータ `format`（png / svg / pdf）
+- 生成後コンバージョン率 = `qr_downloaded` が発生したセッション数 ÷ `qr_generated` が発生したセッション数（ユーザー数でも同様に出す）
+- 参考値: 全セッションに対するダウンロード率は GA の指標 `sessionKeyEventRate:qr_downloaded`
+- 形式別の利用頻度 = `qr_downloaded` を `format` で分けたイベント数・セッション数・ユーザー数
+
+**GA4 側の状態（2026-10-23 確認）**
+
+- `qr_downloaded` はキーイベントとして登録済み
+- カスタムディメンション `format` は未登録。登録するまで形式別の集計はできず、登録後のデータからしか効かない（qr_code_create-0em）
+
+**GA 管理画面での見方**
+
+- 全体: レポート → エンゲージメント → イベント → `qr_downloaded`（キーイベント数、ユーザー数）
+- 生成後の率: 探索 → ファネルデータ探索で `session_start` → `qr_generated` → `qr_downloaded` の 3 段を作る
+- 形式別: 上のイベントレポートでセカンダリディメンションに `format` を追加（カスタムディメンション登録後）
+
+**analytics-mcp での取り方**（プロパティ `properties/533111812`。`/ga-conversion-report` でまとめて実行できる）
+
+1. 生成後コンバージョン率: `run_funnel_report` で steps を `session_start` → `qr_generated` → `qr_downloaded`（funnel_event_filter）。`funnel_breakdown` に `deviceCategory` を付けると端末別
+2. 形式別の利用頻度: `run_report` で dimensions `["customEvent:format"]`、metrics `["eventCount", "sessions", "totalUsers"]`、dimension_filter で `eventName = qr_downloaded`
+3. 全セッションに対する率: `run_report` で metrics `["sessions", "keyEvents:qr_downloaded", "sessionKeyEventRate:qr_downloaded"]`
+
+**基準値（2026-09-23〜2026-10-22 の 30 日間）**
+
+| 指標 | 値 |
+|------|----|
+| セッション数 | 116 |
+| QR生成（ユーザー / セッション） | 27 / 31 |
+| ダウンロード（ユーザー / セッション） | 19 / 21 |
+| 生成後コンバージョン率（ユーザー） | 70%（19 / 27） |
+| 生成後コンバージョン率（セッション） | 68%（21 / 31） |
+| 全セッションに対するダウンロード率 | 18%（21 / 116。desktop 18%、mobile 17%） |
+| `qr_downloaded` イベント数 | 39（1 セッションで複数形式を落とす人がいるため、セッション数より多い） |
+| 形式別 | 未計測（カスタムディメンション未登録のため） |
+
+**読むときの注意**
+
+- `qr_generated` はプレビューの再描画ごとに発火する（30 日で 560 件 / 27 ユーザー）。件数ではなくユーザー数・セッション数で見る
+- `url_entered` は 2026-10-23 まで配線漏れで一度も届いていなかった（qr_code_create-djg で修正。本番反映後のデータから入る）。それ以前の期間では URL入力の段をファネルに入れない。送る値はドメインのみ（`url_domain`）で、同じ値の再 blur では重複送信しない
+
 ---
 
 ## 11. AI SEO戦略

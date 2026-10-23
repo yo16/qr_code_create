@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:icons": "node scripts/build-icons.cjs"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",

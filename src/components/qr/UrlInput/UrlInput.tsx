@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
+import { trackUrlEntered } from "@/lib/analytics/events";
 import { Input } from "@/components/ui/Input/Input";
 import { validateUrl } from "@/lib/url/validateUrl";
 import styles from "./UrlInput.module.css";
@@ -13,6 +14,7 @@ interface UrlInputProps {
 
 export function UrlInput({ value, onChange, onValidationChange }: UrlInputProps) {
   const [error, setError] = useState<string | undefined>(undefined);
+  const lastTrackedRef = useRef<string>("");
 
   const handleChange = useCallback(
     (url: string) => {
@@ -34,10 +36,11 @@ export function UrlInput({ value, onChange, onValidationChange }: UrlInputProps)
   );
 
   const handleBlur = useCallback(() => {
-    if (value && validateUrl(value).isValid) {
-      // GA4トラッキング（tue.2タスクで実装予定）
-      // trackUrlEntered(value);
-    }
+    if (!value || !validateUrl(value).isValid) return;
+    // 同じ値での blur 繰り返しでは二重送信しない
+    if (lastTrackedRef.current === value) return;
+    lastTrackedRef.current = value;
+    trackUrlEntered(new URL(value).hostname);
   }, [value]);
 
   return (

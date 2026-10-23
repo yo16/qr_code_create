@@ -19,7 +19,7 @@ QR Code Create は、URLからQRコードを生成する際にマーケティン
 
 | カテゴリ | 技術 |
 |---|---|
-| フレームワーク | Next.js 15.x (App Router) |
+| フレームワーク | Next.js 16.x (App Router)。2026-10-23 時点で 16.4.2（qr_code_create-4j0 で更新）。`next` と `eslint-config-next` は同じバージョンに揃え、セキュリティ更新は `tests/unit/deps/nextVersion.test.ts` の下限値を上げて追従する |
 | 言語 | TypeScript 5.x |
 | スタイリング | CSS Modules + CSS Custom Properties |
 | QRコード生成 | qrcode (npm) |

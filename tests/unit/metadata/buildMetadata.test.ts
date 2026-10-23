@@ -81,7 +81,11 @@ describe("buildMetadata", () => {
 
     it("twitter.cardが'summary_large_image'であること", () => {
       const result = buildMetadata(options);
-      expect(result.twitter?.card).toBe("summary_large_image");
+      // Next.js 16.4 で Metadata.twitter がユニオン型になり、card を持たないメンバーが含まれるため in で絞り込む
+      const twitter = result.twitter;
+      expect(twitter && "card" in twitter ? twitter.card : undefined).toBe(
+        "summary_large_image"
+      );
     });
 
     it("twitter.titleが正しいこと", () => {

@@ -30,4 +30,18 @@ describe("FeaturesSection", () => {
       expect(screen.getByText("PNG/SVG/PDF対応")).toBeInTheDocument();
     });
   });
+
+  describe("絵文字アイコンの不使用（デザインブラッシュアップ qr_code_create-h58）", () => {
+    // 意図: 絵文字アイコンは「AI 生成風」の兆候なので、各 listitem のテキスト
+    // （aria-hidden のアイコン span も textContent に含まれる）に
+    // Extended_Pictographic（絵文字・絵文字候補の記号）が含まれないことを確認する
+    it("各 listitem のテキストに絵文字が含まれないこと", () => {
+      render(<FeaturesSection />);
+      const items = screen.getAllByRole("listitem");
+      const offending = items
+        .map((item) => item.textContent ?? "")
+        .filter((text) => /\p{Extended_Pictographic}/u.test(text));
+      expect(offending).toEqual([]);
+    });
+  });
 });

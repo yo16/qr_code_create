@@ -1,80 +1,73 @@
 .features {
-  padding: var(--spacing-3xl) 0;
-  background: var(--color-surface);
+  padding: var(--spacing-2xl) 0;
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-lg);
 }
 
 .heading {
-  font-size: var(--font-size-3xl);
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-foreground);
-  text-align: center;
-  margin-bottom: var(--spacing-2xl);
   line-height: var(--line-height-tight);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-lg);
+.list {
   list-style: none;
   padding: 0;
   margin: 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.card {
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--transition-normal);
+.item {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-lg) 0;
+  border-top: 1px solid var(--color-border);
 }
 
-.card:hover {
-  box-shadow: var(--shadow-md);
-}
-
-.icon {
-  font-size: 2.5rem;
-  line-height: 1;
-}
-
-.cardTitle {
-  font-size: var(--font-size-xl);
+.itemTitle {
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-foreground);
   line-height: var(--line-height-tight);
 }
 
-.cardDescription {
+.itemDescription {
   font-size: var(--font-size-base);
   color: var(--color-muted);
-  line-height: var(--line-height-normal);
+  line-height: var(--line-height-relaxed);
+  max-width: var(--measure);
 }
 
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .features {
-    padding: var(--spacing-2xl) 0;
+    padding: var(--spacing-3xl) 0;
+  }
+
+  .item {
+    grid-template-columns: 13em minmax(0, 1fr);
+    gap: var(--spacing-xl);
+    padding: var(--spacing-lg) 0 28px;
+  }
+
+  .itemTitle {
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-relaxed);
+  }
+}
+
+@media (min-width: 1024px) {
+  .inner {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: var(--spacing-3xl);
   }
 
   .heading {
-    font-size: var(--font-size-2xl);
-    margin-bottom: var(--spacing-xl);
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-
-  .card {
-    padding: var(--spacing-lg);
-  }
-
-  .cardTitle {
-    font-size: var(--font-size-lg);
+    padding-top: 20px;
   }
 }

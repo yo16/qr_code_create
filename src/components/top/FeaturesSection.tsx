@@ -3,28 +3,24 @@ import styles from "./FeaturesSection.module.css";
 
 const FEATURES = [
   {
-    icon: "📊",
     title: "UTMパラメータガイダンス",
     description:
-      "マーケティング効果測定の必須項目を初心者にもわかりやすくガイド。Google Analyticsでの効果測定がすぐに始められます。",
+      "utm_source や utm_medium に何を書けばよいか、入力欄ごとに例が出ます。用途別の設定例を見ながら、Google Analyticsで集計できる形のURLを組み立てられます。",
   },
   {
-    icon: "🎨",
     title: "装飾フレーム",
     description:
-      "シンプル/ビジネス/エレガント/ポップ等、用途に応じたデザインフレームを選択してブランドイメージを高められます。",
+      "シンプル、ビジネス、エレガント、ポップなどのフレームに、色、ロゴ、キャプションを組み合わせられます。チラシやポスターにそのまま置ける形で書き出せます。",
   },
   {
-    icon: "🆓",
     title: "完全無料・登録不要",
     description:
-      "アカウント登録なしで即座に利用可能。面倒なサインアップ手続きは一切不要で、今すぐQRコードを作成できます。",
+      "アカウントもメールアドレスも要りません。QRコードはお使いのブラウザの中で作られ、画像やURLがこのサイトに保存されることはありません。",
   },
   {
-    icon: "📥",
     title: "PNG/SVG/PDF対応",
     description:
-      "印刷・Web・プレゼン資料、用途に合わせた形式で出力。高解像度設定で印刷物にも鮮明に使用できます。",
+      "WebやスライドにはPNG、拡大しても粗くならない印刷用にはSVGかPDF。PNGは用途に合わせて解像度を選べます。",
   },
 ] as const;
 
@@ -32,20 +28,19 @@ export function FeaturesSection() {
   return (
     <section className={styles.features} aria-labelledby="features-heading">
       <Container>
-        <h2 id="features-heading" className={styles.heading}>
-          選ばれる理由
-        </h2>
-        <ul className={styles.grid} role="list">
-          {FEATURES.map((feature) => (
-            <li key={feature.title} className={styles.card}>
-              <span className={styles.icon} aria-hidden="true">
-                {feature.icon}
-              </span>
-              <h3 className={styles.cardTitle}>{feature.title}</h3>
-              <p className={styles.cardDescription}>{feature.description}</p>
-            </li>
-          ))}
-        </ul>
+        <div className={styles.inner}>
+          <h2 id="features-heading" className={styles.heading}>
+            できること
+          </h2>
+          <ul className={styles.list} role="list">
+            {FEATURES.map((feature) => (
+              <li key={feature.title} className={styles.item}>
+                <h3 className={styles.itemTitle}>{feature.title}</h3>
+                <p className={styles.itemDescription}>{feature.description}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
       </Container>
     </section>
   );

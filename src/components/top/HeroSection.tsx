@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button/Button";
 import { Container } from "@/components/layout/Container/Container";
@@ -8,27 +9,54 @@ export function HeroSection() {
     <section className={styles.hero}>
       <Container>
         <div className={styles.inner}>
-          <h1 className={styles.heading}>
-            UTMパラメータ付きQRコードを
-            <br />
-            無料で作成
-          </h1>
-          <p className={styles.description}>
-            マーケティング効果の測定を忘れずに。装飾フレームでブランディングも完璧。
-          </p>
-          <div className={styles.actions}>
-            <Link href="/create">
-              <Button variant="primary" size="lg">
-                無料でQRコードを作成
-              </Button>
-            </Link>
-            <Link href="/guide">
-              <Button variant="secondary" size="lg">
-                使い方を見る
-              </Button>
-            </Link>
+          <div className={styles.text}>
+            <h1 className={styles.heading}>
+              UTMパラメータ付きQRコードを
+              <br />
+              無料で作成
+            </h1>
+            <p className={styles.description}>
+              URLを入れるだけで、Google Analyticsで読み取りを計測できるQRコードができます。チラシ、ポスター、名刺と、置き場所ごとに分けて数えられます。
+            </p>
+            <div className={styles.actions}>
+              <Link href="/create">
+                <Button variant="primary" size="lg">
+                  無料でQRコードを作成
+                </Button>
+              </Link>
+              <Link href="/guide">
+                <Button variant="secondary" size="lg">
+                  使い方を見る
+                </Button>
+              </Link>
+            </div>
+            <p className={styles.note}>
+              完全無料・登録不要。PNG、SVG、PDFでダウンロードできます。
+            </p>
           </div>
-          <p className={styles.badge}>完全無料・登録不要・3分で完成</p>
+
+          <figure className={styles.specimen}>
+            <Image
+              className={styles.qr}
+              src="/hero-qr.svg"
+              alt="qr-create.jp のトップページを指すQRコード"
+              width={200}
+              height={200}
+              unoptimized
+              priority
+            />
+            <figcaption className={styles.caption}>
+              <span className={styles.captionLead}>
+                このQRコードは、次のURLを指しています。
+              </span>
+              <span className={styles.url}>
+                <span className={styles.urlLine}>https://qr-create.jp/</span>
+                <span className={styles.urlLine}>?utm_source=qr-create</span>
+                <span className={styles.urlLine}>&amp;utm_medium=qr</span>
+                <span className={styles.urlLine}>&amp;utm_campaign=hero</span>
+              </span>
+            </figcaption>
+          </figure>
         </div>
       </Container>
     </section>

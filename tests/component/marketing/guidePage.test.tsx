@@ -4,7 +4,7 @@ import GuidePage, {
   generateStaticParams,
   generateMetadata,
 } from "@/app/(marketing)/guide/[slug]/page";
-import { getGuideSlugList } from "@/lib/content/getGuide";
+import { getGuide, getGuideSlugList } from "@/lib/content/getGuide";
 
 jest.mock("next-mdx-remote/rsc", () => ({
   MDXRemote: ({ source }: { source: string }) => (
@@ -83,6 +83,52 @@ describe("GuidePage", () => {
       expect(link).toHaveAttribute("href", "/create");
       // DOCUMENT_POSITION_FOLLOWING (4): link が content の後方にある
       expect(content.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+  });
+
+  describe("HowTo 構造化データ", () => {
+    // 描画された JSON-LD の <script type="application/ld+json"> をすべて JSON.parse して返す
+    const readJsonLdScripts = (): Record<string, unknown>[] =>
+      Array.from(document.querySelectorAll('script[type="application/ld+json"]')).map(
+        (el) => JSON.parse(el.textContent ?? "") as Record<string, unknown>
+      );
+
+    // 意図: マーケティング戦略 P0 の HowTo スキーマが getting-started で出力されること。
+    //       frontmatter の howto（3 ステップ）から @type 'HowTo' を 1 件生成し、name はガイドの
+    //       タイトル、各 step の url はページ内アンカー（/guide/getting-started#step-N）を指す。
+    it("'getting-started' で @type 'HowTo' の JSON-LD が 1 件あり、step 3 件・name がタイトル・step url がアンカー付きであること", async () => {
+      const jsx = await GuidePage({ params: Promise.resolve({ slug: "getting-started" }) });
+      render(jsx as React.ReactElement);
+
+      const howtos = readJsonLdScripts().filter((d) => d["@type"] === "HowTo");
+      expect(howtos).toHaveLength(1);
+
+      const howto = howtos[0] as {
+        name: string;
+        step: { "@type": string; name: string; text: string; url: string }[];
+      };
+      expect(howto.name).toBe(getGuide("getting-started")?.title);
+      expect(howto.step).toHaveLength(3);
+      howto.step.forEach((step, i) => {
+        expect(step["@type"]).toBe("HowToStep");
+        expect(typeof step.name).toBe("string");
+        expect(typeof step.text).toBe("string");
+        expect(step.url.endsWith(`/guide/getting-started#step-${i + 1}`)).toBe(true);
+      });
+    });
+
+    // 意図: howto を持たないガイドでは HowTo を出力しない（空の HowTo や誤った手順を
+    //       検索エンジンに渡さない）。従来どおり BlogPosting と BreadcrumbList の 2 件のみ。
+    it("'utm-parameters' では HowTo の JSON-LD が無く、BlogPosting と BreadcrumbList の 2 件のみであること", async () => {
+      const jsx = await GuidePage({ params: Promise.resolve({ slug: "utm-parameters" }) });
+      render(jsx as React.ReactElement);
+
+      const schemas = readJsonLdScripts();
+      const types = schemas.map((d) => d["@type"]);
+      expect(schemas).toHaveLength(2);
+      expect(types).toContain("BlogPosting");
+      expect(types).toContain("BreadcrumbList");
+      expect(types).not.toContain("HowTo");
     });
   });
 

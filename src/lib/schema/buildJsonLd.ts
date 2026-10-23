@@ -45,7 +45,31 @@ export function buildFaqSchema(
   };
 }
 
-export function buildHowToSchema() {
+export function buildHowToSchema(options?: {
+  name: string;
+  description: string;
+  steps: { name: string; text: string; url?: string }[];
+  totalTime?: string;
+}) {
+  if (options) {
+    return {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      name: options.name,
+      description: options.description,
+      totalTime: options.totalTime ?? "PT3M",
+      tool: {
+        "@type": "HowToTool",
+        name: "QR Code Create",
+      },
+      step: options.steps.map((step) => ({
+        "@type": "HowToStep",
+        name: step.name,
+        text: step.text,
+        ...(step.url ? { url: step.url } : {}),
+      })),
+    };
+  }
   return {
     "@context": "https://schema.org",
     "@type": "HowTo",

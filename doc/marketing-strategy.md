@@ -656,6 +656,10 @@ Google Analyticsで追跡できません。
 }
 ```
 
+（上記の URL は設計当時のもの。実装では `NEXT_PUBLIC_SITE_URL`（本番 https://qr-create.jp）から組み立てる）
+
+**ガイド記事への適用（qr_code_create-2rz で追加）:** HowTo はツールページ用の固定スキーマに加えて、手順を解説するガイド記事にも出力する。ガイドの frontmatter に `howto:`（`name` と `text` を持つステップの配列）を書くと、`/guide/[slug]` が `buildHowToSchema({ name: タイトル, description, steps })` で HowTo の JSON-LD を BlogPosting・BreadcrumbList に加えて出力する。各ステップの `url` は `/guide/[slug]#step-N`。最初の適用先は AI アシスタントからの引用が最も多い `/guide/getting-started`（3 ステップ）。`howto` の無いガイドには出力しない。
+
 ### BreadcrumbList Schema（全ページ共通）
 
 ```json

@@ -56,6 +56,33 @@ describe("getting-started.mdx frontmatterバリデーション", () => {
   it("コンテンツにステップ3の見出しが含まれること", () => {
     expect(content).toMatch(/ステップ3/);
   });
+
+  // 意図: このガイドは ChatGPT に引用される主要な流入元だが、構造化データが BlogPosting と
+  //       BreadcrumbList のみで HowTo が無い。HowTo スキーマの元データとして frontmatter に
+  //       howto（3 ステップ）が定義されていることを保証する。
+  it("howto が 3 件の配列であること", () => {
+    expect(Array.isArray(frontmatter.howto)).toBe(true);
+    expect(frontmatter.howto as unknown[]).toHaveLength(3);
+  });
+
+  // 意図: 各ステップが HowToStep に必要な name / text を非空の文字列で持つこと。
+  it("howto の各要素が文字列の name と text を持つこと", () => {
+    const howto = frontmatter.howto as { name: unknown; text: unknown }[];
+    howto.forEach((step) => {
+      expect(typeof step.name).toBe("string");
+      expect((step.name as string).length).toBeGreaterThan(0);
+      expect(typeof step.text).toBe("string");
+      expect((step.text as string).length).toBeGreaterThan(0);
+    });
+  });
+
+  // 意図: 本文の「ステップ1: URLを入力する」「ステップ3: ダウンロードする」と HowTo の
+  //       ステップ名が対応していること（検索結果の手順表示と本文の整合）。
+  it("howto の 1 件目の name が「URLを入力する」、3 件目が「ダウンロードする」であること", () => {
+    const howto = frontmatter.howto as { name: string; text: string }[];
+    expect(howto[0].name).toBe("URLを入力する");
+    expect(howto[2].name).toBe("ダウンロードする");
+  });
 });
 
 describe("getting-started.mdx の導線", () => {
@@ -134,6 +161,17 @@ describe("getGuide 関数との統合: getting-started", () => {
   it("返り値の order が 10 であること", () => {
     const result = getGuide("getting-started");
     expect(result?.order).toBe(10);
+  });
+
+  // 意図: ページ側は getGuide の戻り値から HowTo スキーマを組み立てるため、
+  //       frontmatter の howto が GuideContent.howto にそのまま渡ってくることを保証する。
+  it("返り値の howto が frontmatter の howto と一致すること（3 件）", () => {
+    const fileContents = fs.readFileSync(MDX_FILE_PATH, "utf-8");
+    const frontmatter = matter(fileContents).data as { howto?: unknown };
+    const result = getGuide("getting-started");
+    expect(Array.isArray(result?.howto)).toBe(true);
+    expect(result?.howto).toHaveLength(3);
+    expect(result?.howto).toEqual(frontmatter.howto);
   });
 });
 

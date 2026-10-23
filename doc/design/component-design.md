@@ -164,7 +164,7 @@ interface UrlInputProps {
 - URL入力フィールド（type="url"）
 - リアルタイムバリデーション（`lib/url/validateUrl.ts`）
 - エラーメッセージ表示（「有効なURLを入力してください」）
-- blur時に `trackUrlEntered` GA4イベント発火
+- blur時に `trackUrlEntered` GA4イベント発火（qr_code_create-djg で配線）。送る値は URL 全体ではなく `new URL(value).hostname`（例: `example.com`）。`validateUrl` が有効と判定した値のときだけ送り、未入力・無効な URL では送らない。直前に送った値と同じなら blur を繰り返しても再送しない（`useRef` で最後に送った値を保持）。値を変えて blur すれば再送する
 - プレースホルダー: `https://example.com`
 
 ---

@@ -28,6 +28,13 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
+// 機能フラグ モック（ON）
+// 既定値は false（未完成の /poster を隠す）だが、このファイルの「ポスター作成CTA」describe は
+// フラグ ON 時の挙動を検証するため明示的に true にする。OFF 時の挙動は DownloadPanel.flagOff.test.tsx で検証する
+jest.mock("@/lib/constants/features", () => ({
+  FEATURE_FLAGS: { posterPage: true },
+}));
+
 // CanvasRef ヘルパー
 function makeCanvasRef(canvas?: HTMLCanvasElement | null) {
   return { current: canvas ?? null } as React.RefObject<HTMLCanvasElement | null>;

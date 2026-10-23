@@ -124,6 +124,8 @@ export const metadata: Metadata = {
 
 **state引き継ぎ**: [アーキテクチャ設計 セクション9](./architecture.md#9-poster-へのstate引き継ぎ機構) を参照。
 
+**公開制御（機能フラグ、qr_code_create-ptg で追加）**: `src/lib/constants/features.ts` の `FEATURE_FLAGS.posterPage` で公開を切り替える。false の間は (1) `/create` の DownloadPanel にポスター導線ボタンを描画しない、(2) `sitemap.ts` に `/poster` を含めない、(3) `/poster` へ直接アクセスすると `notFound()` で 404 にする。Markdown 入力（4me）と A4 2x2 PDF 出力（ro1）が完成するまで false を保ち、完成時に true に戻す。内部モジュール（posterHandoff、generatePosterPdf 等）はフラグの影響を受けない。
+
 ---
 
 ### 2.3 ガイド一覧ページ（`/guide`）

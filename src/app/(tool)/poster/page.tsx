@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+import { FEATURE_FLAGS } from "@/lib/constants/features";
 import { PosterEditorLoader } from "./PosterEditorLoader";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/metadata/buildMetadata";
@@ -29,6 +31,10 @@ const breadcrumbSchema = buildBreadcrumbSchema([
 ]);
 
 export default function PosterPage() {
+  if (!FEATURE_FLAGS.posterPage) {
+    notFound();
+  }
+
   return (
     <main className={styles.main}>
       <JsonLd data={posterAppSchema} />

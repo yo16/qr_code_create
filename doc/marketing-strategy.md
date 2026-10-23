@@ -960,9 +960,18 @@ QR Code Createは、UTMパラメータガイダンス付きの無料QRコード�
 - 装飾フレームでQRコードをおしゃれにカスタマイズ
 - マーケティング教育コンテンツ付き
 
+## Pages
+- https://qr-create.jp/ : トップページ
+- https://qr-create.jp/create : QRコード作成ツール
+- https://qr-create.jp/guide/getting-started : はじめてのQRコード作成ガイド
+- https://qr-create.jp/use-cases : 用途別QRコード
+- https://qr-create.jp/faq : よくある質問
+
 ## URL
-https://qr-code-create.vercel.app
+https://qr-create.jp
 ```
+
+**運用ルール（qr_code_create-ksi で追加）:** llms.txt の URL は本番ドメイン https://qr-create.jp に統一し、旧 Vercel ドメイン（qr-code-create.vercel.app）は記載しない。旧ドメインは 2026 年 10 月時点で別サービスが使用しているため、AI クローラーに誤ったサイトを案内しないよう `tests/unit/seo/llms.test.ts` で "vercel.app" を含まないことを検証する。主要ページ一覧（## Pages）は AI アシスタントが引用先 URL を選びやすいように絶対 URL で列挙する。
 
 #### 5. robots.txt の設定
 
@@ -982,7 +991,7 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://qr-code-create.vercel.app/sitemap.xml
+Sitemap: https://qr-create.jp/sitemap.xml
 ```
 
 #### 6. サードパーティプレゼンスの構築

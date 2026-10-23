@@ -3,16 +3,22 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-xs);
-  border: 2px solid transparent;
-  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
   font-family: inherit;
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition: background-color var(--transition-fast),
     color var(--transition-fast), border-color var(--transition-fast),
     opacity var(--transition-fast);
   white-space: nowrap;
   text-decoration: none;
+}
+
+.button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .button:disabled {
@@ -24,7 +30,7 @@
 /* Variants */
 .primary {
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
   border-color: var(--color-primary);
 }
 
@@ -33,10 +39,11 @@
   border-color: var(--color-primary-hover);
 }
 
+/* 主ボタンと並ぶ 2 番手。藍の枠ではなく墨の細罫にして、主従をはっきりさせる */
 .secondary {
   background-color: var(--color-background);
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  color: var(--color-foreground);
+  border-color: var(--color-foreground);
 }
 
 .secondary:hover:not(:disabled) {
@@ -67,7 +74,7 @@
 }
 
 .lg {
-  font-size: var(--font-size-lg);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  min-height: 48px;
+  font-size: var(--font-size-base);
+  padding: 12px 28px;
+  min-height: 50px;
 }

@@ -1,68 +1,167 @@
 .hero {
-  background: linear-gradient(
-    135deg,
-    var(--color-primary-light) 0%,
-    var(--color-background) 60%
-  );
-  padding: var(--spacing-3xl) 0;
+  padding: var(--spacing-2xl) 0 var(--spacing-xl);
 }
 
 .inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--spacing-xl);
+  align-items: start;
 }
 
+.text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+}
+
+/* 390px 幅で「QRコードを」が途中で折れないよう、モバイルは 1 行 15 字が収まる大きさにする */
 .heading {
-  font-size: var(--font-size-4xl);
+  font-size: 1.4375rem;
   font-weight: var(--font-weight-bold);
   color: var(--color-foreground);
-  line-height: var(--line-height-tight);
-  letter-spacing: -0.02em;
+  line-height: 1.35;
+  letter-spacing: 0;
 }
 
 .description {
-  font-size: var(--font-size-lg);
-  color: var(--color-muted);
-  max-width: 560px;
-  line-height: var(--line-height-normal);
+  font-size: var(--font-size-base);
+  color: var(--color-foreground);
+  max-width: var(--measure);
+  line-height: var(--line-height-relaxed);
 }
 
 .actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
 }
 
-.badge {
+.actions a {
+  display: block;
+}
+
+.actions a button {
+  width: 100%;
+}
+
+.actions a:hover {
+  text-decoration: none;
+}
+
+.note {
   font-size: var(--font-size-sm);
   color: var(--color-muted);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  padding: var(--spacing-xs) var(--spacing-lg);
 }
 
-@media (max-width: 768px) {
-  .hero {
-    padding: var(--spacing-2xl) 0;
-  }
+/* 見せ場: 実際に読み取れる QR コードと、その指し先 */
+.specimen {
+  display: grid;
+  /* QR 本体 111px + 余白 8px x 2 + 枠 1px x 2 */
+  grid-template-columns: 129px 1fr;
+  gap: var(--spacing-md);
+  align-items: start;
+  margin: 0;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
 
+/*
+ * hero-qr.svg は 37 モジュール。本体の表示サイズをモジュール数の整数倍にして
+ * 1 モジュールが端数ピクセルにならないようにする（モバイル 3px、デスクトップ 5px）。
+ * content-box にして width/height を QR 本体の大きさとして扱う
+ */
+.qr {
+  display: block;
+  box-sizing: content-box;
+  width: 111px;
+  height: 111px;
+  /* 読み取りに必要な余白（クワイエットゾーン）を白で確保する */
+  padding: 8px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+}
+
+.caption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+  color: var(--color-muted);
+}
+
+.captionLead {
+  display: block;
+}
+
+.url {
+  display: block;
+  color: var(--color-foreground);
+  font-size: var(--font-size-sm);
+  word-break: break-all;
+}
+
+.urlLine {
+  display: block;
+}
+
+@media (min-width: 640px) {
   .heading {
-    font-size: var(--font-size-2xl);
-  }
-
-  .description {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-3xl);
+    letter-spacing: 0.01em;
   }
 
   .actions {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-    max-width: 320px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: auto;
+    gap: var(--spacing-md);
+  }
+
+  .actions a button {
+    width: auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero {
+    padding: var(--spacing-3xl) 0;
+  }
+
+  .heading {
+    font-size: var(--font-size-4xl);
+    line-height: 1.25;
+  }
+
+  .description {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero {
+    padding: 88px 0 var(--spacing-3xl);
+  }
+
+  .inner {
+    grid-template-columns: minmax(0, 1fr) 248px;
+    gap: var(--spacing-3xl);
+  }
+
+  .specimen {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    padding-top: 0;
+    border-top: none;
+  }
+
+  /* 本体 185px + 余白 12px x 2 + 枠 1px x 2 = 211px（右カラム 248px に収まる） */
+  .qr {
+    width: 185px;
+    height: 185px;
+    padding: 12px;
   }
 }

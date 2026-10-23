@@ -1,7 +1,7 @@
 .container {
   max-width: 800px;
   margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
+  padding: var(--spacing-xl) var(--spacing-md) var(--spacing-3xl);
 }
 
 .header {
@@ -11,6 +11,7 @@
 .title {
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
   margin-bottom: var(--spacing-sm);
 }
 
@@ -18,45 +19,46 @@
   font-size: var(--font-size-base);
   color: var(--color-muted);
   line-height: var(--line-height-relaxed);
+  max-width: var(--measure);
 }
 
+/* 罫で区切った索引。カードの箱は使わない */
 .grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--spacing-md);
-}
-
-@media (min-width: 640px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  border-bottom: 1px solid var(--color-border);
 }
 
 .card {
   display: block;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-lg) 0;
+  border-top: 1px solid var(--color-border);
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.card:hover .cardTitle {
+  color: var(--color-primary);
+  text-decoration: underline;
 }
 
 .cardTitle {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
+  font-feature-settings: var(--font-feature-heading);
+  line-height: var(--line-height-tight);
   margin-bottom: var(--spacing-xs);
-  color: var(--color-primary);
+  color: var(--color-foreground);
+  text-underline-offset: 0.2em;
 }
 
 .cardDescription {
   font-size: var(--font-size-sm);
   color: var(--color-muted);
   line-height: var(--line-height-relaxed);
+  max-width: var(--measure);
 }

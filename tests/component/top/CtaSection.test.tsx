@@ -6,7 +6,7 @@ describe("CtaSection", () => {
   describe("見出し表示", () => {
     it("セクション見出しが表示されること", () => {
       render(<CtaSection />);
-      expect(screen.getByRole("heading", { name: /今すぐマーケティング効果UP/ })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /URLを入れて、4つの手順でダウンロードまで/ })).toBeInTheDocument();
     });
   });
 

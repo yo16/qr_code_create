@@ -71,9 +71,9 @@ QR Code Create は Next.js App Router ベースの**フロントエンド完結�
 ```json
 {
   "dependencies": {
-    "next": "^15.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "next": "16.4.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
     "qrcode": "^1.5.4",
     "jspdf": "^2.5.2",
     "gray-matter": "^4.0.3",

@@ -1,5 +1,5 @@
 import { INITIAL_QR_STATE } from "@/types/qr";
-import type { CaptionConfig, DecorationConfig } from "@/types/qr";
+import type { DecorationConfig } from "@/types/qr";
 import { DECORATION_PRESETS } from "@/lib/constants/decorationPresets";
 
 describe("CaptionConfig 型整合性", () => {

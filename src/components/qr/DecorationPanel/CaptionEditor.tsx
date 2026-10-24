@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { trackCaptionSet } from "@/lib/analytics/events";
 import type { CaptionConfig } from "@/types/qr";
 import styles from "./CaptionEditor.module.css";
@@ -13,7 +12,6 @@ interface CaptionEditorProps {
 }
 
 const MAX_LENGTH = 15;
-const DEFAULT_FONT_SIZE = 14;
 const MIN_FONT_SIZE = 10;
 const MAX_FONT_SIZE = 24;
 
@@ -26,10 +24,7 @@ const TEMPLATE_OPTIONS = [
 ];
 
 export function CaptionEditor({ caption, onChange }: CaptionEditorProps) {
-  const [isTemplate, setIsTemplate] = useState(false);
-
   const handleTextChange = (text: string) => {
-    setIsTemplate(false);
     onChange({ ...caption, text });
     trackCaptionSet(text.length, false);
   };
@@ -37,7 +32,6 @@ export function CaptionEditor({ caption, onChange }: CaptionEditorProps) {
   const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value === "") return;
-    setIsTemplate(true);
     onChange({ ...caption, text: value });
     trackCaptionSet(value.length, true);
   };

@@ -15,8 +15,6 @@
   font-size: var(--font-size-xs);
   color: var(--color-muted);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .grid {

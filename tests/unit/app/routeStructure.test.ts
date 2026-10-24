@@ -98,10 +98,28 @@ describe("ルートグループごとの not-found", () => {
   });
 });
 
-describe("英語版の仮ページ", () => {
-  // T3（英語版トップの本実装）で noindex を外すときに、このテストを更新すること
-  it("src/app/en/page.tsx が noindex（index: false）であること", () => {
+describe("英語版トップ（T3 で本実装）", () => {
+  // 仮ページの noindex は T3 で外した。英語の metadata（PAGE_METADATA_EN.home）で出力する
+  it("src/app/en/page.tsx が noindex ではなく、PAGE_METADATA_EN.home と HomePageView(en) を使うこと", () => {
     expect(exists("en", "page.tsx")).toBe(true);
-    expect(read("en", "page.tsx")).toMatch(/index:\s*false/);
+    const src = read("en", "page.tsx");
+    expect(src).not.toMatch(/index:\s*false/);
+    expect(src).toMatch(/buildMetadata\(PAGE_METADATA_EN\.home,\s*"en"\)/);
+    expect(src).toMatch(/<HomePageView\s+locale="en"/);
+  });
+
+  it("src/app/en/(tool)/create/page.tsx が CreatePageView(en) を使うこと", () => {
+    expect(exists("en", "(tool)", "create", "page.tsx")).toBe(true);
+    expect(read("en", "(tool)", "create", "page.tsx")).toMatch(
+      /<CreatePageView\s+locale="en"/
+    );
+  });
+
+  // 意図（qr_code_create-01z.4）: 英語の /create は英語の metadata（PAGE_METADATA_EN.create）で出力する
+  it("src/app/en/(tool)/create/page.tsx が buildMetadata(PAGE_METADATA_EN.create, \"en\") を使い noindex でないこと", () => {
+    const src = read("en", "(tool)", "create", "page.tsx");
+    expect(src).toMatch(/buildMetadata\(PAGE_METADATA_EN\.create,\s*"en"\)/);
+    expect(src).not.toMatch(/PAGE_METADATA\.create/);
+    expect(src).not.toMatch(/index:\s*false/);
   });
 });

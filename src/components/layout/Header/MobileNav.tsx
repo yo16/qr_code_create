@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { TrackedLink } from "@/components/analytics/TrackedLink";
-import { useDict } from "@/i18n/useDict";
+import { useDict, useLocale } from "@/i18n/useDict";
+import { localePath } from "@/lib/i18n/routes";
 import styles from "./MobileNav.module.css";
 
 interface NavItem {
@@ -18,6 +19,7 @@ interface MobileNavProps {
 export function MobileNav({ items }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { mobileMenu } = useDict().common;
+  const locale = useLocale();
 
   return (
     <div className={styles.mobileNav}>
@@ -44,7 +46,7 @@ export function MobileNav({ items }: MobileNavProps) {
             </Link>
           ))}
           <TrackedLink
-            href="/create"
+            href={localePath(locale, "/create")}
             className={styles.ctaLink}
             location="mobile_nav"
             onClick={() => setIsOpen(false)}

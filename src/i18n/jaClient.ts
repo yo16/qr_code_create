@@ -62,6 +62,7 @@ export const jaClient = {
     },
   },
   tool: {
+    pageHeading: "QRコード生成",
     steps: {
       url: { label: "ステップ1: URL入力", title: "URLを入力" },
       utm: { label: "ステップ2: UTMパラメータ設定", title: "UTMパラメータ設定" },

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { Container } from "@/components/layout/Container/Container";
 import { getDict } from "@/i18n/getDict";
 import type { Locale } from "@/i18n/types";
+import { localePath } from "@/lib/i18n/routes";
 import styles from "./CtaSection.module.css";
 
 interface CtaSectionProps {
@@ -22,7 +23,7 @@ export function CtaSection({ locale = "ja" }: CtaSectionProps = {}) {
             <p className={styles.description}>{cta.description}</p>
           </div>
           <TrackedLink
-            href="/create"
+            href={localePath(locale, "/create")}
             className={styles.action}
             location="top_bottom"
             buttonText={cta.button}

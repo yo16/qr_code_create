@@ -1,9 +1,20 @@
 import type { Locale } from "@/i18n/types";
 
 /**
+ * 英語版があるページ（ja 側のパスで持つ）。
+ * T4（英語ガイド）、T5a で拡張する。英語版の無いページへの導線は、これに含まれるかで出し分ける。
+ */
+export const EN_AVAILABLE_PATHS: readonly string[] = ["/", "/create"];
+
+/** ja 側のパスに英語版があるか */
+export function hasEnVersion(path: string): boolean {
+  return EN_AVAILABLE_PATHS.includes(path);
+}
+
+/**
  * ロケールに応じたパスを返す。
  * ja は日本語版のパスそのまま、en は `/en` を前置する（`/` は `/en`）。
- * getAlternatePath と EN_AVAILABLE_PATHS は T5a で追加する。
+ * getAlternatePath は T5a で追加する。
  */
 export function localePath(locale: Locale, path: string): string {
   if (locale === "ja") return path;

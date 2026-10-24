@@ -35,11 +35,13 @@ const eslintConfig = defineConfig([
                 "@/i18n/jaClient",
                 "@/i18n/en",
                 "@/i18n/en.*",
+                "@/i18n/enClient",
                 "**/i18n/ja",
                 "**/i18n/ja.*",
                 "**/i18n/jaClient",
                 "**/i18n/en",
                 "**/i18n/en.*",
+                "**/i18n/enClient",
               ],
               message:
                 "コンポーネントから辞書を直接 import しない。useDict()（Client）または getDict()（Server）を使う。",

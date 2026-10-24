@@ -27,6 +27,41 @@
   margin-bottom: var(--spacing-md);
 }
 
+.container ul,
+.container ol {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-md);
+  padding-left: var(--spacing-lg);
+}
+
+.container ul {
+  list-style: disc;
+}
+
+.container ol {
+  list-style: decimal;
+}
+
+.container li {
+  line-height: var(--line-height-relaxed);
+  margin-bottom: var(--spacing-xs);
+}
+
+.container li::marker {
+  color: var(--color-muted);
+}
+
+.container a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  overflow-wrap: anywhere;
+}
+
+.container a:hover {
+  color: var(--color-primary-hover);
+}
+
 .container section {
   margin-bottom: var(--spacing-lg);
 }

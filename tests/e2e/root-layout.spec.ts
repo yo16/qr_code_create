@@ -121,13 +121,14 @@ test.describe("src/app 直下のメタデータファイル", () => {
     });
   }
 
-  test("sitemap.xml に /en の URL が含まれないこと", async ({ request }) => {
+  // 01z.1 時点では「/en を含まない」だったが、01z.7 で英語 3 ページを sitemap に載せた。
+  // 意図を「英語版のあるページ以外の /en URL が載らない」に改める
+  test("sitemap.xml の /en の URL は英語版のある 3 ページだけであること", async ({ request }) => {
     const response = await request.get("/sitemap.xml", { timeout: NAV_TIMEOUT });
     const xml = await response.text();
     const locs = Array.from(xml.matchAll(/<loc>([^<]*)<\/loc>/g), (m) => m[1]);
     expect(locs.length).toBeGreaterThan(0);
-    for (const loc of locs) {
-      expect(new URL(loc).pathname).not.toMatch(/^\/en(\/|$)/);
-    }
+    const enPaths = locs.map((loc) => new URL(loc).pathname).filter((p) => /^\/en(\/|$)/.test(p));
+    expect(enPaths.sort()).toEqual(["/en", "/en/create", "/en/guide/getting-started"]);
   });
 });

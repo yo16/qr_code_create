@@ -85,6 +85,117 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     for (const n of CLIENT_NEEDLES) expect(createHtml).toContain(n);
   });
 
+  // 意図（qr_code_create-01z.7）: 両言語が揃う 6 ページの静的 HTML の head に hreflang が 3 本ずつ出ている。
+  // React は属性を hrefLang と出すので、属性名の大文字小文字は無視して照合する
+  const HREFLANG_PAGES: { file: string; ja: string; en: string }[] = [
+    { file: "index.html", ja: "/", en: "/en" },
+    { file: "en.html", ja: "/", en: "/en" },
+    { file: "create.html", ja: "/create", en: "/en/create" },
+    { file: "en/create.html", ja: "/create", en: "/en/create" },
+    { file: "guide/getting-started.html", ja: "/guide/getting-started", en: "/en/guide/getting-started" },
+    { file: "en/guide/getting-started.html", ja: "/guide/getting-started", en: "/en/guide/getting-started" },
+  ];
+  const readHead = (file: string): string => {
+    const full = path.join(BUILD_APP, ...file.split("/"));
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const html = fs.readFileSync(full, "utf8");
+    const head = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+    if (!head) throw new Error(`${file} に <head> がありません`);
+    return head[1];
+  };
+  /** head 内の <link rel="alternate" hreflang=...> を { hreflang: pathname } にする */
+  const alternateLinks = (head: string): Record<string, string> => {
+    const out: Record<string, string> = {};
+    for (const tag of head.match(/<link\b[^>]*>/gi) ?? []) {
+      if (!/\brel="alternate"/i.test(tag)) continue;
+      const lang = tag.match(/\bhreflang="([^"]*)"/i);
+      const href = tag.match(/\bhref="([^"]*)"/i);
+      if (lang && href) out[lang[1]] = new URL(href[1]).pathname;
+    }
+    return out;
+  };
+
+  it.each(HREFLANG_PAGES)("$file の head に hreflang が ja / en / x-default の 3 本", ({ file, ja, en }) => {
+    const head = readHead(file);
+    expect((head.match(/<link\b[^>]*\bhreflang="/gi) ?? []).length).toBe(3);
+    expect(alternateLinks(head)).toEqual({ ja, en, "x-default": ja });
+  });
+
+  // 意図: 英語版の無いページの head には hreflang が出ない（ヘッダーの切り替えリンク a[hreflang] は body 側なので数えない）
+  it.each(["guide/utm-setup.html", "faq.html"])("%s の head に hreflang が無い", (file) => {
+    const head = readHead(file);
+    expect(head).not.toMatch(/hreflang=/i);
+    // 空振り防止: canonical は出ている
+    expect(head).toMatch(/<link rel="canonical"/);
+  });
+
+  // 意図: sitemap の出力に en 3 件と xhtml:link（hreflang）が含まれる
+  it("sitemap.xml.body に en 3 件と xhtml:link がある", () => {
+    const full = path.join(BUILD_APP, "sitemap.xml.body");
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const xml = fs.readFileSync(full, "utf8");
+    const locs = [...xml.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => new URL(m[1]).pathname);
+    expect(locs.filter((p) => /^\/en(\/|$)/.test(p)).sort()).toEqual(
+      ["/en", "/en/create", "/en/guide/getting-started"].sort()
+    );
+    // 6 エントリ × 3 本
+    expect((xml.match(/<xhtml:link rel="alternate" hreflang="/g) ?? []).length).toBe(18);
+    expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
+  });
+
+  // 意図: sitemap の xhtml:link と HTML の hreflang が食い違わない。
+  // sitemap を <url> 単位で解析し、xhtml:link を持つ 6 件それぞれで
+  // (1) 自言語の xhtml:link が loc と一致、(2) 同じページの HTML の hreflang 3 本と一致（new URL().href で正規化）
+  it("sitemap の xhtml:link を持つ 6 件が自言語で loc と一致し、HTML の hreflang 3 本とも一致する", () => {
+    const full = path.join(BUILD_APP, "sitemap.xml.body");
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const xml = fs.readFileSync(full, "utf8");
+    const href = (u: string) => new URL(u).href;
+    const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)]
+      .map((m) => {
+        const loc = m[1].match(/<loc>([^<]*)<\/loc>/);
+        if (!loc) throw new Error(`<loc> の無い <url>: ${m[1]}`);
+        const links: Record<string, string> = {};
+        for (const l of m[1].matchAll(/<xhtml:link rel="alternate" hreflang="([^"]*)" href="([^"]*)"/g)) {
+          links[l[1]] = href(l[2]);
+        }
+        return { loc: href(loc[1]), links };
+      })
+      .filter((e) => Object.keys(e.links).length > 0);
+
+    // パス → ビルド成果物の HTML
+    const fileOf: Record<string, string> = Object.fromEntries(
+      HREFLANG_PAGES.map((p) => {
+        const isEn = p.file.startsWith("en");
+        return [isEn ? p.en : p.ja, p.file];
+      })
+    );
+    expect(entries.map((e) => new URL(e.loc).pathname).sort()).toEqual(Object.keys(fileOf).sort());
+
+    for (const { loc, links } of entries) {
+      const pathname = new URL(loc).pathname;
+      const self = /^\/en(\/|$)/.test(pathname) ? "en" : "ja";
+      expect({ loc, keys: Object.keys(links).sort() }).toEqual({ loc, keys: ["en", "ja", "x-default"] });
+      expect({ loc, self: links[self] }).toEqual({ loc, self: loc });
+
+      const head = readHead(fileOf[pathname]);
+      const htmlLinks: Record<string, string> = {};
+      for (const tag of head.match(/<link\b[^>]*>/gi) ?? []) {
+        if (!/\brel="alternate"/i.test(tag)) continue;
+        const lang = tag.match(/\bhreflang="([^"]*)"/i);
+        const h = tag.match(/\bhref="([^"]*)"/i);
+        if (lang && h) htmlLinks[lang[1]] = href(h[1]);
+      }
+      expect({ loc, htmlLinks }).toEqual({ loc, htmlLinks: links });
+    }
+  });
+
   it(".next/static に en 固有の文字列（Server / Client スライスの代表）が無いこと", () => {
     const STATIC = path.join(ROOT, ".next", "static");
     if (!fs.existsSync(STATIC)) {

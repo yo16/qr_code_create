@@ -44,7 +44,8 @@ export function GuideArticlePageView({ locale, slug, guide }: GuideArticlePageVi
           { name: breadcrumb.home, url: `${SITE_URL}/` },
           { name: breadcrumb.guide, url: `${SITE_URL}/guide` },
           { name: guide.title, url: `${SITE_URL}/guide/${slug}` },
-        ]
+        ],
+    locale
   );
 
   const breadcrumbItems = isEn
@@ -57,14 +58,17 @@ export function GuideArticlePageView({ locale, slug, guide }: GuideArticlePageVi
       <JsonLd data={breadcrumbSchema} />
       {guide.howto && guide.howto.length > 0 && (
         <JsonLd
-          data={buildHowToSchema({
-            name: guide.title,
-            description: guide.description,
-            steps: guide.howto.map((step, i) => ({
-              ...step,
-              url: `${SITE_URL}${prefix}/guide/${slug}#step-${i + 1}`,
-            })),
-          })}
+          data={buildHowToSchema(
+            {
+              name: guide.title,
+              description: guide.description,
+              steps: guide.howto.map((step, i) => ({
+                ...step,
+                url: `${SITE_URL}${prefix}/guide/${slug}#step-${i + 1}`,
+              })),
+            },
+            locale
+          )}
         />
       )}
       <Breadcrumb items={breadcrumbItems} locale={locale} />

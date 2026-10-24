@@ -55,6 +55,7 @@ export function buildHowToSchema(options?: {
       name: options.name,
       description: options.description,
       totalTime: options.totalTime ?? "PT3M",
+      ...(locale === "en" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
       tool: {
         "@type": "HowToTool",
         name: "QR Code Create",
@@ -73,6 +74,7 @@ export function buildHowToSchema(options?: {
     name: howTo.name,
     description: howTo.description,
     totalTime: "PT3M",
+    ...(locale === "en" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
     tool: {
       "@type": "HowToTool",
       name: "QR Code Create",
@@ -107,11 +109,13 @@ export function buildHowToSchema(options?: {
 }
 
 export function buildBreadcrumbSchema(
-  items: { name: string; url: string }[]
+  items: { name: string; url: string }[],
+  locale: Locale = "ja"
 ) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
+    ...(locale === "en" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
     itemListElement: items.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,

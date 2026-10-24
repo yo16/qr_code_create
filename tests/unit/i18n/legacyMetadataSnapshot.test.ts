@@ -22,12 +22,16 @@ describe("PAGE_METADATA は T2b 前と同じ", () => {
         description:
           "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
         path: "/",
+        // qr_code_create-01z.7 で追加（hreflang 用。設計 10.1 の 3 で認めた変更）
+        alternatePaths: { ja: "/", en: "/en" },
       },
       create: {
         title: "QRコード生成 - QR Code Create",
         description:
           "URLを入力するだけ。UTMパラメータと装飾フレームでマーケティング効果を最大化するQRコードを無料で作成できます。",
         path: "/create",
+        // qr_code_create-01z.7 で追加（hreflang 用。設計 10.1 の 3 で認めた変更）
+        alternatePaths: { ja: "/create", en: "/en/create" },
       },
       faq: {
         title: "よくある質問",

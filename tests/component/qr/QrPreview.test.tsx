@@ -16,6 +16,16 @@ jest.mock("@/lib/qr/drawLogo", () => ({
 import { drawLogoOnCanvas } from "@/lib/qr/drawLogo";
 const mockDrawLogoOnCanvas = drawLogoOnCanvas as jest.Mock;
 
+// analytics は trackErrorOccurred だけをモックし、ほかの関数（trackQrGenerated など）は実物のまま使う
+// （qr_code_create-pa6: 描画失敗時のエラー計測を検証するため）
+jest.mock("@/lib/analytics/events", () => ({
+  ...jest.requireActual("@/lib/analytics/events"),
+  trackErrorOccurred: jest.fn(),
+}));
+
+import { trackErrorOccurred } from "@/lib/analytics/events";
+const mockTrackErrorOccurred = trackErrorOccurred as jest.MockedFunction<typeof trackErrorOccurred>;
+
 // 動的 import（await import("qrcode")）もモックが効くよう jest.mock で解決済み
 
 import QRCode from "qrcode";
@@ -153,6 +163,82 @@ describe("QrPreview", () => {
           screen.getByText("QRコードの生成に失敗しました")
         ).toBeInTheDocument();
       });
+    });
+  });
+
+  // エラー計測（qr_code_create-pa6）: 描画失敗を error_occurred として、種類（error.name）だけを送る
+  describe("エラー計測 (trackErrorOccurred)", () => {
+    beforeEach(() => {
+      mockTrackErrorOccurred.mockClear();
+    });
+
+    it("toCanvas が Error で失敗すると trackErrorOccurred(\"qr_render\", \"Error\") が 1 回呼ばれること", async () => {
+      // 意図: catch で種類だけを送ること。既存の「エラーメッセージ表示」と同じ経路で、表示と計測の両方が動く
+      mockToCanvas.mockRejectedValueOnce(new Error("QR generation failed"));
+
+      render(<QrPreview url="https://example.com" isUrlValid={true} />);
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockTrackErrorOccurred).toHaveBeenCalledTimes(1);
+      });
+      expect(mockTrackErrorOccurred).toHaveBeenCalledWith("qr_render", "Error");
+      expect(screen.getByText("QRコードの生成に失敗しました")).toBeInTheDocument();
+    });
+
+    it("第 2 引数が種類だけで、message に含まれる URL や入力値を含まないこと", async () => {
+      // 意図: プライバシーポリシー「エラーの発生とその種類（入力した内容は含みません）」との整合。
+      //       入力 URL が message に混ざっても送るのは name（ここでは TypeError）だけであること
+      const url = "https://example.com/secret?token=abc";
+      mockToCanvas.mockRejectedValueOnce(new TypeError(`cannot encode ${url}`));
+
+      render(<QrPreview url={url} isUrlValid={true} />);
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockTrackErrorOccurred).toHaveBeenCalledTimes(1);
+      });
+      const [errorType, errorMessage] = mockTrackErrorOccurred.mock.calls[0];
+      expect(errorType).toBe("qr_render");
+      expect(errorMessage).toBe("TypeError");
+      expect(errorMessage).not.toContain("https://");
+      expect(errorMessage).not.toContain("token");
+    });
+
+    it("Error 以外の値で失敗した場合は種類が \"unknown\" になること", async () => {
+      // 意図: 文字列などが throw されても、その値（入力内容を含みうる）を送らず unknown に丸めること
+      mockToCanvas.mockRejectedValueOnce("https://example.com/secret");
+
+      render(<QrPreview url="https://example.com" isUrlValid={true} />);
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockTrackErrorOccurred).toHaveBeenCalledTimes(1);
+      });
+      expect(mockTrackErrorOccurred).toHaveBeenCalledWith("qr_render", "unknown");
+    });
+
+    it("描画に成功した場合は trackErrorOccurred が呼ばれないこと", async () => {
+      // 意図: 正常系で error_occurred が誤発火しないこと
+      render(<QrPreview url="https://example.com" isUrlValid={true} />);
+
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(mockToCanvas).toHaveBeenCalledTimes(1);
+      });
+      expect(mockTrackErrorOccurred).not.toHaveBeenCalled();
     });
   });
 

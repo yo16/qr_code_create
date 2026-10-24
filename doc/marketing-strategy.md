@@ -759,7 +759,6 @@ Google Analyticsで追跡できません。
 | utm_campaign_set | utm_campaign設定 | has_date_pattern (bool) | フィールド変更時 |
 | utm_term_set | utm_term設定 | - | フィールド変更時 |
 | utm_content_set | utm_content設定 | - | フィールド変更時 |
-| utm_params_count | UTMパラメータ設定数 | count (0-5) | QRコード生成時 |
 | logo_uploaded | ロゴアップロード | file_type, file_size_kb | アップロード完了時 |
 | color_customized | 色カスタマイズ | foreground_color, background_color | 色変更時 |
 | frame_selected | フレーム選択 | frame_type, frame_category | フレーム選択時 |
@@ -768,7 +767,8 @@ Google Analyticsで追跡できません。
 | qr_generated | QRコード生成 | has_utm, utm_count, has_logo, has_frame, has_caption | 生成ボタンクリック時 |
 | qr_downloaded | QRコードダウンロード | format (png/svg/pdf), has_utm, decoration_count | ダウンロードボタンクリック時 |
 | guide_tooltip_opened | ガイド表示 | tooltip_id, field_name | ツールチップ/ヘルプクリック時 |
-| help_article_clicked | ヘルプ記事クリック | article_slug | ヘルプリンククリック時 |
+| cta_clicked | CTAクリック | button_text, location (hero / top_bottom / header / mobile_nav / article_bottom) | QRコード作成への導線リンククリック時 |
+| error_occurred | エラー発生 | error_type (qr_render / pdf_export), error_message (エラーの種類のみ。メッセージ本文やURLは含めない) | QRコード描画またはPDF出力の失敗時 |
 
 **連続入力イベントの抑制（qr_code_create-shf で追加）:** 「フィールド変更時」「色変更時」「キャプション変更時」に送る `utm_*_set`、`color_customized`、`caption_set` は、入力のたびに送ると 1 ユーザーで数十〜数百回発火して集計がノイズになる（2026 年 10 月の GA 実測: utm_campaign_set 918 回 / 23 ユーザー、color_customized 344 回 / 2 ユーザー）。そのため `src/lib/analytics/events.ts` 内で同一イベント名ごとに trailing debounce（`EVENT_DEBOUNCE_MS` = 1000ms）をかけ、最後の入力から 1 秒後に最後の値だけを送る。`flushPendingEvents()` で保留分を即時送信できる。クリックや生成・ダウンロードなど単発操作のイベントは即時送信のまま。URL のクエリから初期値を適用した場合（qr_code_create-3gk）はこれらのイベントを送らない。
 
@@ -885,7 +885,7 @@ export function trackGuideTooltipOpened(tooltipId: string, fieldName: string): v
 ```
 URL入力 (url_entered)
   ↓ ドロップ率を計測
-UTM設定 (utm_params_count > 0)
+UTM設定 (qr_generated の utm_count > 0)
   ↓ ドロップ率を計測
 装飾設定 (frame_selected / color_customized)
   ↓ ドロップ率を計測

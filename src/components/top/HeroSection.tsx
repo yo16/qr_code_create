@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import { TrackedLink } from "@/components/analytics/TrackedLink";
 import { Button } from "@/components/ui/Button/Button";
 import { Container } from "@/components/layout/Container/Container";
 import styles from "./HeroSection.module.css";
@@ -19,16 +19,24 @@ export function HeroSection() {
               URLを入れるだけで、Google Analyticsで読み取りを計測できるQRコードができます。チラシ、ポスター、名刺と、置き場所ごとに分けて数えられます。
             </p>
             <div className={styles.actions}>
-              <Link href="/create">
+              <TrackedLink
+                href="/create"
+                location="hero"
+                buttonText="無料でQRコードを作成"
+              >
                 <Button variant="primary" size="lg">
                   無料でQRコードを作成
                 </Button>
-              </Link>
-              <Link href="/guide">
+              </TrackedLink>
+              <TrackedLink
+                href="/guide"
+                location="hero"
+                buttonText="使い方を見る"
+              >
                 <Button variant="secondary" size="lg">
                   使い方を見る
                 </Button>
-              </Link>
+              </TrackedLink>
             </div>
             <p className={styles.note}>
               完全無料・登録不要。PNG、SVG、PDFでダウンロードできます。

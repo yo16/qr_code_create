@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TrackedLink } from "@/components/analytics/TrackedLink";
 import { Container } from "../Container/Container";
 import { BrandMark } from "./BrandMark";
 import { MobileNav } from "./MobileNav";
@@ -29,9 +30,9 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            <Link href="/create" className={styles.ctaLink}>
+            <TrackedLink href="/create" className={styles.ctaLink} location="header">
               QRコード生成
-            </Link>
+            </TrackedLink>
           </nav>
           <MobileNav items={NAV_ITEMS} />
         </div>

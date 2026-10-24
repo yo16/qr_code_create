@@ -7,6 +7,7 @@
 - [コンポーネント設計](./component-design.md)
 - [データモデル設計](./data-model.md)
 - [UI/UX仕様](./ui-ux-spec.md)
+- [英語版（/en）設計](./i18n-en.md)
 - [マーケティング戦略 - サイトアーキテクチャ](../marketing-strategy.md)
 
 ---
@@ -28,7 +29,13 @@
 ├── /faq ................... よくある質問（SSG）
 ├── /privacy ............... プライバシーポリシー（SSG）
 └── /terms ................. 利用規約（SSG）
+
+/en ........................ 英語版トップ（SSG、Phase 1.5）
+├── /en/create ............. 英語版 QRコード生成ツール（SSG + CSR）
+└── /en/guide/[slug] ....... 英語版ガイド（SSG、Phase 1.5 は getting-started のみ。dynamicParams = false）
 ```
+
+英語版の詳細（対象ページ、404、hreflang、言語切り替え）は [英語版（/en）設計](./i18n-en.md#3-ルーティングとレイアウト) を参照。
 
 ---
 
@@ -411,6 +418,8 @@ const FAQ_ITEMS = [
 ### 3.1 ルートレイアウト（`src/app/layout.tsx`）
 
 全ページ共通のレイアウト。
+
+> **Phase 1.5（英語版）での変更**: ルートレイアウトは `src/app/(ja)/layout.tsx` と `src/app/en/layout.tsx` の 2 つに分割し、`src/app/layout.tsx` は廃止する。下記の本体（html、フォント、Header、Footer、GA4）は `src/components/layout/RootShell/RootShell.tsx` に移し、両レイアウトは `<RootShell locale="ja|en">` を呼ぶだけにする。既存の `(marketing)` / `(tool)` は `(ja)` の下へ移す（URL 不変）。詳細は [英語版（/en）設計 3 節](./i18n-en.md#3-ルーティングとレイアウト)。
 
 ```typescript
 import { Noto_Sans_JP } from 'next/font/google';

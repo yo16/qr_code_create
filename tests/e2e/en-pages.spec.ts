@@ -17,8 +17,17 @@ const JAPANESE = /[぀-ゟ゠-ヿ一-鿿]/;
 const ALLOWED_JA_LINKS = ["/privacy", "/terms", "/contact"];
 
 async function expectNoJapanese(page: Page) {
+  // 言語切り替え（qr_code_create-01z.6）の「日本語」だけは意図した日本語なので除く。
+  // そのリンクが lang="ja" の切り替えリンクであることも確かめる
+  await expect(page.locator("header a[hreflang]")).toHaveText(
+    new RegExp(`^${enClient.common.languageSwitch.label}`)
+  );
+  await expect(page.locator("header a[hreflang]")).toHaveAttribute("lang", "ja");
   const text = await page.locator("body").innerText();
-  const found = text.split("\n").filter((line) => JAPANESE.test(line));
+  const found = text
+    .split("\n")
+    .filter((line) => line.trim() !== enClient.common.languageSwitch.label)
+    .filter((line) => JAPANESE.test(line));
   expect(found).toEqual([]);
 }
 
@@ -43,8 +52,10 @@ async function expectNoJapaneseInAttributes(page: Page) {
 
 /** 内部リンクが /en 系か、英語版の無い規約系（日本語ページ）だけを指す */
 async function expectInternalLinksEnOnly(page: Page) {
+  // 言語切り替え（a[hreflang]、qr_code_create-01z.6）は日本語版の対応ページを指すのが仕様なので除く
+  // （行き先は tests/e2e/language-switch.spec.ts で検査する）
   const hrefs = await page
-    .locator('a[href^="/"]')
+    .locator('a[href^="/"]:not([hreflang])')
     .evaluateAll((els) => els.map((el) => el.getAttribute("href") ?? ""));
   expect(hrefs.length).toBeGreaterThan(0);
   const bad = hrefs.filter(

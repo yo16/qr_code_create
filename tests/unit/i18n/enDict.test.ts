@@ -83,11 +83,12 @@ describe("en 辞書の値", () => {
   });
 
   // 意図: 英語辞書に日本語（仮名・漢字・全角記号）が残っていない
-  it("文字列の葉に日本語が含まれない", () => {
+  // 例外: 設計 10.2 の言語切り替えラベル（自言語名）だけは日本語を許す
+  it("文字列の葉に日本語が含まれない（common.languageSwitch.label を除く）", () => {
     const withJa = enLeaves
       .filter((l) => typeof l.value === "string" && JAPANESE.test(l.value as string))
       .map((l) => `${l.path}: ${l.value as string}`);
-    expect(withJa).toEqual([]);
+    expect(withJa).toEqual(["common.languageSwitch.label: 日本語"]);
   });
 
   // 意図: 検出用の正規表現が日本語を拾い、英語を拾わない（検査ロジックの確認）

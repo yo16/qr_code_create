@@ -2,61 +2,72 @@ import Image from "next/image";
 import { TrackedLink } from "@/components/analytics/TrackedLink";
 import { Button } from "@/components/ui/Button/Button";
 import { Container } from "@/components/layout/Container/Container";
+import { getDict } from "@/i18n/getDict";
+import type { Locale } from "@/i18n/types";
+import { hasEnVersion, localePath } from "@/lib/i18n/routes";
 import styles from "./HeroSection.module.css";
 
-export function HeroSection() {
+interface HeroSectionProps {
+  locale?: Locale;
+}
+
+export function HeroSection({ locale = "ja" }: HeroSectionProps = {}) {
+  const { hero } = getDict(locale).home;
+  // ja は /guide。en は英語のガイド記事ができるまで（EN_AVAILABLE_PATHS に載るまで）出さない
+  const guidePath =
+    locale === "ja"
+      ? "/guide"
+      : hasEnVersion("/guide/getting-started")
+        ? localePath(locale, "/guide/getting-started")
+        : null;
   return (
     <section className={styles.hero}>
       <Container>
         <div className={styles.inner}>
           <div className={styles.text}>
             <h1 className={styles.heading}>
-              UTMパラメータ付きQRコードを
+              {hero.headingLine1}
               <br />
-              無料で作成
+              {hero.headingLine2}
             </h1>
-            <p className={styles.description}>
-              URLを入れるだけで、Google Analyticsで読み取りを計測できるQRコードができます。チラシ、ポスター、名刺と、置き場所ごとに分けて数えられます。
-            </p>
+            <p className={styles.description}>{hero.description}</p>
             <div className={styles.actions}>
               <TrackedLink
-                href="/create"
+                href={localePath(locale, "/create")}
                 location="hero"
-                buttonText="無料でQRコードを作成"
+                buttonText={hero.primaryCta}
               >
                 <Button variant="primary" size="lg">
-                  無料でQRコードを作成
+                  {hero.primaryCta}
                 </Button>
               </TrackedLink>
-              <TrackedLink
-                href="/guide"
-                location="hero"
-                buttonText="使い方を見る"
-              >
-                <Button variant="secondary" size="lg">
-                  使い方を見る
-                </Button>
-              </TrackedLink>
+              {guidePath && (
+                <TrackedLink
+                  href={guidePath}
+                  location="hero"
+                  buttonText={hero.secondaryCta}
+                >
+                  <Button variant="secondary" size="lg">
+                    {hero.secondaryCta}
+                  </Button>
+                </TrackedLink>
+              )}
             </div>
-            <p className={styles.note}>
-              完全無料・登録不要。PNG、SVG、PDFでダウンロードできます。
-            </p>
+            <p className={styles.note}>{hero.note}</p>
           </div>
 
           <figure className={styles.specimen}>
             <Image
               className={styles.qr}
               src="/hero-qr.svg"
-              alt="qr-create.jp のトップページを指すQRコード"
+              alt={hero.qrAlt}
               width={200}
               height={200}
               unoptimized
               priority
             />
             <figcaption className={styles.caption}>
-              <span className={styles.captionLead}>
-                このQRコードは、次のURLを指しています。
-              </span>
+              <span className={styles.captionLead}>{hero.captionLead}</span>
               <span className={styles.url}>
                 <span className={styles.urlLine}>https://qr-create.jp/</span>
                 <span className={styles.urlLine}>?utm_source=qr-create</span>

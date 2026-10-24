@@ -30,6 +30,12 @@
   text-decoration: underline;
 }
 
+.note {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+  margin-bottom: var(--spacing-sm);
+}
+
 .copyright {
   font-size: var(--font-size-xs);
   color: var(--color-muted);

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useId } from "react";
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import styles from "./Select.module.css";
 
 const CUSTOM_VALUE = "__custom__";
@@ -24,12 +26,14 @@ export function Select({
   onChange,
   options,
   allowCustom = false,
-  customPlaceholder = "自由に入力してください",
+  customPlaceholder,
   helpText,
   error,
   id,
   disabled = false,
 }: SelectProps) {
+  const t = useDict().ui.select;
+  const placeholderText = customPlaceholder ?? t.customPlaceholder;
   const generatedId = useId();
   const selectId = id ?? generatedId;
   const helpId = helpText ? `${selectId}-help` : undefined;
@@ -65,7 +69,7 @@ export function Select({
   };
 
   const allOptions = allowCustom
-    ? [...options, { value: CUSTOM_VALUE, label: "その他（自由入力）" }]
+    ? [...options, { value: CUSTOM_VALUE, label: t.customOption }]
     : options;
 
   return (
@@ -85,7 +89,7 @@ export function Select({
           .join(" ")}
       >
         <option value="" disabled>
-          選択してください
+          {t.placeholder}
         </option>
         {allOptions.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -98,9 +102,9 @@ export function Select({
           type="text"
           value={customValue}
           onChange={handleCustomChange}
-          placeholder={customPlaceholder}
+          placeholder={placeholderText}
           className={styles.customInput}
-          aria-label={`${label}（自由入力）`}
+          aria-label={formatMessage(t.customAria, { label })}
           disabled={disabled}
         />
       )}

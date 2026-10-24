@@ -1,6 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import styles from "./ColorPicker.module.css";
 
 interface ColorPickerProps {
@@ -15,6 +17,7 @@ function isValidHexColor(value: string): boolean {
 }
 
 export function ColorPicker({ label, value, onChange, id }: ColorPickerProps) {
+  const t = useDict().ui.colorPicker;
   const generatedId = useId();
   const pickerId = id ?? generatedId;
   const textId = `${pickerId}-text`;
@@ -63,10 +66,10 @@ export function ColorPicker({ label, value, onChange, id }: ColorPickerProps) {
           value={isValidHexColor(value) ? value : "#000000"}
           onChange={handleColorChange}
           className={styles.colorInput}
-          aria-label={`${label}のカラーピッカー`}
+          aria-label={formatMessage(t.pickerAria, { label })}
         />
         <label htmlFor={textId} className={styles.srOnly}>
-          {label}のカラーコード入力
+          {formatMessage(t.textLabel, { label })}
         </label>
         <input
           id={textId}
@@ -76,7 +79,7 @@ export function ColorPicker({ label, value, onChange, id }: ColorPickerProps) {
           onBlur={handleTextBlur}
           maxLength={7}
           className={styles.textInput}
-          aria-label={`${label}のカラーコード`}
+          aria-label={formatMessage(t.textAria, { label })}
           placeholder="#000000"
           spellCheck={false}
         />

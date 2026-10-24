@@ -1,56 +1,69 @@
-export const UTM_SOURCE_OPTIONS = [
-  { value: "flyer", label: "チラシ・フライヤー" },
-  { value: "poster", label: "ポスター" },
-  { value: "business_card", label: "名刺" },
-  { value: "brochure", label: "パンフレット" },
-  { value: "banner", label: "看板" },
-  { value: "receipt", label: "レシート" },
-  { value: "product_package", label: "製品パッケージ" },
-  { value: "menu", label: "メニュー" },
-  { value: "signage", label: "店内POP" },
-];
+import { jaClient as ja } from "@/i18n/jaClient";
+import type { Dict } from "@/i18n/types";
 
-export const UTM_MEDIUM_OPTIONS = [
-  { value: "qr", label: "QRコード" },
-  { value: "print", label: "印刷物" },
-];
+type UtmDict = Dict["utm"];
 
-export const UTM_FIELD_HELP = {
-  source:
-    "QRコードを掲載する場所を指定します（チラシ、名刺、ポスターなど）",
-  medium:
-    "ユーザーに届ける手段を指定します。QRコードの場合は「QRコード」がおすすめです",
-  campaign:
-    "キャンペーン名を指定します。日付や内容を含めると管理しやすくなります（例: spring_sale_2026）",
-  term: "検索キーワードを指定します。主にリスティング広告向けですが、QRコードでは省略可能です",
-  content:
-    "同一キャンペーン内でA/Bテストを行う場合などに使います。複数のQRコードを使い分ける際に便利です",
-};
+export interface UtmOption {
+  value: string;
+  label: string;
+}
+
+/** 値は言語によらず同じ（F-012）。表示名は辞書の utm.sourceLabels[value] */
+export const UTM_SOURCE_VALUES = [
+  "flyer",
+  "poster",
+  "business_card",
+  "brochure",
+  "banner",
+  "receipt",
+  "product_package",
+  "menu",
+  "signage",
+] as const;
+
+export const UTM_MEDIUM_VALUES = ["qr", "print"] as const;
+
+/** 用途別設定例の値（label は辞書の utm.usageExampleLabels[source]） */
+export const UTM_USAGE_EXAMPLE_VALUES = [
+  { source: "business_card", medium: "qr", campaign: "networking_2026" },
+  { source: "flyer", medium: "qr", campaign: "sale_2026" },
+  { source: "poster", medium: "qr", campaign: "event_2026" },
+  { source: "signage", medium: "qr", campaign: "store_promo_2026" },
+] as const;
+
+export function buildUtmSourceOptions(utm: UtmDict): UtmOption[] {
+  return UTM_SOURCE_VALUES.map((value) => ({
+    value,
+    label: utm.sourceLabels[value],
+  }));
+}
+
+export function buildUtmMediumOptions(utm: UtmDict): UtmOption[] {
+  return UTM_MEDIUM_VALUES.map((value) => ({
+    value,
+    label: utm.mediumLabels[value],
+  }));
+}
+
+export function buildUtmFieldHelp(utm: UtmDict): UtmDict["fieldHelp"] {
+  return { ...utm.fieldHelp };
+}
+
+export function buildUtmUsageExamples(utm: UtmDict) {
+  return UTM_USAGE_EXAMPLE_VALUES.map((example) => ({
+    label: utm.usageExampleLabels[example.source],
+    source: example.source,
+    medium: example.medium,
+    campaign: example.campaign,
+  }));
+}
+
+// 既存 export（名前と形は変えない）。ja 辞書から組み立てる
+export const UTM_SOURCE_OPTIONS = buildUtmSourceOptions(ja.utm);
+
+export const UTM_MEDIUM_OPTIONS = buildUtmMediumOptions(ja.utm);
+
+export const UTM_FIELD_HELP = buildUtmFieldHelp(ja.utm);
 
 // 用途別設定例
-export const UTM_USAGE_EXAMPLES = [
-  {
-    label: "名刺に印刷",
-    source: "business_card",
-    medium: "qr",
-    campaign: "networking_2026",
-  },
-  {
-    label: "チラシに印刷",
-    source: "flyer",
-    medium: "qr",
-    campaign: "sale_2026",
-  },
-  {
-    label: "ポスター掲示",
-    source: "poster",
-    medium: "qr",
-    campaign: "event_2026",
-  },
-  {
-    label: "店内POP",
-    source: "signage",
-    medium: "qr",
-    campaign: "store_promo_2026",
-  },
-];
+export const UTM_USAGE_EXAMPLES = buildUtmUsageExamples(ja.utm);

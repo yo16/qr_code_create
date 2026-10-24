@@ -1,7 +1,9 @@
 "use client";
 
-import { DECORATION_PRESETS, type DecorationPreset } from "@/lib/constants/decorationPresets";
+import { buildDecorationPresets, type DecorationPreset } from "@/lib/constants/decorationPresets";
 import { trackPresetSelected } from "@/lib/analytics/events";
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import styles from "./PresetSelector.module.css";
 
 interface PresetSelectorProps {
@@ -10,6 +12,9 @@ interface PresetSelectorProps {
 }
 
 export function PresetSelector({ currentPresetId, onApplyPreset }: PresetSelectorProps) {
+  const { decoration } = useDict();
+  const presets = buildDecorationPresets(decoration);
+
   const handleClick = (preset: DecorationPreset) => {
     onApplyPreset(preset);
     trackPresetSelected(preset.id);
@@ -17,8 +22,8 @@ export function PresetSelector({ currentPresetId, onApplyPreset }: PresetSelecto
 
   return (
     <div className={styles.container}>
-      <div className={styles.grid} role="group" aria-label="装飾プリセット">
-        {DECORATION_PRESETS.map((preset) => {
+      <div className={styles.grid} role="group" aria-label={decoration.presetGroupLabel}>
+        {presets.map((preset) => {
           const isSelected = currentPresetId === preset.id;
           return (
             <button
@@ -27,7 +32,10 @@ export function PresetSelector({ currentPresetId, onApplyPreset }: PresetSelecto
               className={`${styles.card} ${isSelected ? styles["card--selected"] : ""}`}
               onClick={() => handleClick(preset)}
               aria-pressed={isSelected}
-              aria-label={`プリセット: ${preset.name} - ${preset.description}`}
+              aria-label={formatMessage(decoration.presetItemLabel, {
+                name: preset.name,
+                description: preset.description,
+              })}
             >
               <div className={styles.colorPreview} aria-hidden="true">
                 <span

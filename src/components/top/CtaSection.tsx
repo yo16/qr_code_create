@@ -1,29 +1,35 @@
 import { TrackedLink } from "@/components/analytics/TrackedLink";
 import { Button } from "@/components/ui/Button/Button";
 import { Container } from "@/components/layout/Container/Container";
+import { getDict } from "@/i18n/getDict";
+import type { Locale } from "@/i18n/types";
+import { localePath } from "@/lib/i18n/routes";
 import styles from "./CtaSection.module.css";
 
-export function CtaSection() {
+interface CtaSectionProps {
+  locale?: Locale;
+}
+
+export function CtaSection({ locale = "ja" }: CtaSectionProps = {}) {
+  const { cta } = getDict(locale).home;
   return (
     <section className={styles.cta} aria-labelledby="cta-heading">
       <Container>
         <div className={styles.inner}>
           <div className={styles.text}>
             <h2 id="cta-heading" className={styles.heading}>
-              URLを入れて、4つの手順でダウンロードまで
+              {cta.heading}
             </h2>
-            <p className={styles.description}>
-              URLの入力、UTMパラメータ、見た目の調整、ダウンロードの順に進みます。途中で登録を求められることはありません。
-            </p>
+            <p className={styles.description}>{cta.description}</p>
           </div>
           <TrackedLink
-            href="/create"
+            href={localePath(locale, "/create")}
             className={styles.action}
             location="top_bottom"
-            buttonText="無料でQRコードを作成する"
+            buttonText={cta.button}
           >
             <Button variant="primary" size="lg">
-              無料でQRコードを作成する
+              {cta.button}
             </Button>
           </TrackedLink>
         </div>

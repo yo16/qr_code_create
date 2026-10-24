@@ -3,6 +3,8 @@
 import { ColorPicker } from "@/components/ui/ColorPicker/ColorPicker";
 import { getContrastRatio } from "@/lib/color/contrastChecker";
 import { trackColorCustomized } from "@/lib/analytics/events";
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import styles from "./ColorCustomizer.module.css";
 
 interface ColorCustomizerProps {
@@ -29,6 +31,7 @@ export function ColorCustomizer({
   onFgColorChange,
   onBgColorChange,
 }: ColorCustomizerProps) {
+  const t = useDict().decoration.color;
   const contrastRatio = getContrastRatio(fgColor, bgColor);
   const level = getContrastLevel(contrastRatio);
 
@@ -49,21 +52,21 @@ export function ColorCustomizer({
   };
 
   const contrastMessage = {
-    ok: "読み取りやすいコントラストです",
-    caution: "読み取りにくくなる可能性があります",
-    warning: "QRコードが読み取れない可能性があります",
+    ok: t.ok,
+    caution: t.caution,
+    warning: t.warning,
   }[level];
 
   return (
     <div className={styles.container}>
       <div className={styles.pickers}>
         <ColorPicker
-          label="前景色"
+          label={t.fg}
           value={fgColor}
           onChange={handleFgColorChange}
         />
         <ColorPicker
-          label="背景色"
+          label={t.bg}
           value={bgColor}
           onChange={handleBgColorChange}
         />
@@ -71,7 +74,7 @@ export function ColorCustomizer({
 
       <div className={`${styles.contrastInfo} ${styles[`contrastInfo--${level}`]}`}>
         <span className={styles.contrastRatio}>
-          コントラスト比: {contrastRatio.toFixed(2)}:1
+          {formatMessage(t.contrastRatio, { ratio: contrastRatio.toFixed(2) })}
         </span>
         {level === "warning" ? (
           <span className={styles.contrastMessage} role="alert">
@@ -87,7 +90,7 @@ export function ColorCustomizer({
         className={styles.resetButton}
         onClick={handleReset}
       >
-        デフォルトに戻す
+        {t.reset}
       </button>
     </div>
   );

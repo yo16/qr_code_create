@@ -1,30 +1,26 @@
+import { getDict } from "@/i18n/getDict";
+import type { Locale } from "@/i18n/types";
+
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
-export function buildWebApplicationSchema() {
+export function buildWebApplicationSchema(locale: Locale = "ja") {
+  const schema = getDict(locale).schema;
   return {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     name: "QR Code Create",
-    description:
-      "UTMパラメータガイダンス付きの無料QRコード生成ツール。装飾フレームでQRコードをカスタマイズできます。登録不要。",
-    url: `${SITE_URL}/create`,
+    description: schema.webApplication.description,
+    url: `${SITE_URL}${locale === "en" ? "/en" : ""}/create`,
     applicationCategory: "UtilityApplication",
     operatingSystem: "Any",
     offers: {
       "@type": "Offer",
       price: "0",
-      priceCurrency: "JPY",
+      priceCurrency: locale === "en" ? "USD" : "JPY",
     },
-    featureList: [
-      "QRコード生成",
-      "UTMパラメータガイダンス",
-      "装飾フレーム（エレガント・ポップ・ビジネス）",
-      "ロゴ埋め込み",
-      "色カスタマイズ",
-      "PNG/SVG/PDF出力",
-    ],
-    inLanguage: "ja",
+    featureList: schema.webApplication.featureList,
+    inLanguage: schema.inLanguage,
   };
 }
 
@@ -50,7 +46,8 @@ export function buildHowToSchema(options?: {
   description: string;
   steps: { name: string; text: string; url?: string }[];
   totalTime?: string;
-}) {
+}, locale: Locale = "ja") {
+  const howTo = getDict(locale).schema.howTo;
   if (options) {
     return {
       "@context": "https://schema.org",
@@ -58,6 +55,7 @@ export function buildHowToSchema(options?: {
       name: options.name,
       description: options.description,
       totalTime: options.totalTime ?? "PT3M",
+      ...(locale === "en" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
       tool: {
         "@type": "HowToTool",
         name: "QR Code Create",
@@ -73,10 +71,10 @@ export function buildHowToSchema(options?: {
   return {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    name: "UTMパラメータ付きQRコードの作り方",
-    description:
-      "UTMパラメータを設定したQRコードを無料で作成する手順を解説します。",
+    name: howTo.name,
+    description: howTo.description,
     totalTime: "PT3M",
+    ...(locale === "en" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
     tool: {
       "@type": "HowToTool",
       name: "QR Code Create",
@@ -84,26 +82,26 @@ export function buildHowToSchema(options?: {
     step: [
       {
         "@type": "HowToStep",
-        name: "URLを入力する",
-        text: "QRコードにしたいWebページのURLを入力します。",
+        name: howTo.steps[0].name,
+        text: howTo.steps[0].text,
         url: `${SITE_URL}/create#step1`,
       },
       {
         "@type": "HowToStep",
-        name: "UTMパラメータを設定する",
-        text: "utm_source、utm_medium、utm_campaignを設定します。ガイダンスに従って入力すれば、Google Analyticsでの効果測定が可能になります。",
+        name: howTo.steps[1].name,
+        text: howTo.steps[1].text,
         url: `${SITE_URL}/create#step2`,
       },
       {
         "@type": "HowToStep",
-        name: "装飾をカスタマイズする",
-        text: "装飾フレームの選択、色の変更、ロゴの追加、キャプションの設定など、デザインをカスタマイズします。",
+        name: howTo.steps[2].name,
+        text: howTo.steps[2].text,
         url: `${SITE_URL}/create#step3`,
       },
       {
         "@type": "HowToStep",
-        name: "QRコードを生成・ダウンロードする",
-        text: "プレビューを確認し、PNG・SVG・PDFのいずれかの形式でQRコードをダウンロードします。",
+        name: howTo.steps[3].name,
+        text: howTo.steps[3].text,
         url: `${SITE_URL}/create#step4`,
       },
     ],
@@ -111,11 +109,13 @@ export function buildHowToSchema(options?: {
 }
 
 export function buildBreadcrumbSchema(
-  items: { name: string; url: string }[]
+  items: { name: string; url: string }[],
+  locale: Locale = "ja"
 ) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
+    ...(locale === "en" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
     itemListElement: items.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
@@ -125,13 +125,13 @@ export function buildBreadcrumbSchema(
   };
 }
 
-export function buildOrganizationSchema() {
+export function buildOrganizationSchema(locale: Locale = "ja") {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "QR Code Create",
     url: SITE_URL,
-    description: "UTMパラメータガイダンス付きの無料QRコード生成ツール",
+    description: getDict(locale).schema.organization.description,
   };
 }
 
@@ -142,7 +142,7 @@ export function buildBlogPostingSchema(post: {
   datePublished: string;
   dateModified?: string;
   basePath?: string;
-}) {
+}, locale: Locale = "ja") {
   const path = post.basePath ?? "/guide";
   return {
     "@context": "https://schema.org",
@@ -163,6 +163,6 @@ export function buildBlogPostingSchema(post: {
       "@type": "WebPage",
       "@id": `${SITE_URL}${path}/${post.slug}`,
     },
-    inLanguage: "ja",
+    inLanguage: getDict(locale).schema.inLanguage,
   };
 }

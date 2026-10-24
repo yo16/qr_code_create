@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { exportToPdf } from "@/lib/qr/pdfExporter";
 import { trackQrDownloaded, trackErrorOccurred } from "@/lib/analytics/events";
 import { createCanvasWithCaption } from "@/lib/qr/captionCompositor";
+import { useDict } from "@/i18n/useDict";
 import type { CaptionConfig } from "@/types/qr";
 
 interface PdfDownloadButtonProps {
@@ -22,6 +23,7 @@ export function PdfDownloadButton({
   decorationCount,
   caption,
 }: PdfDownloadButtonProps) {
+  const t = useDict().tool.download;
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
@@ -47,7 +49,7 @@ export function PdfDownloadButton({
       disabled={disabled || isLoading}
       onClick={handleClick}
     >
-      {isLoading ? "PDF生成中..." : "PDF形式でダウンロード"}
+      {isLoading ? t.pdfGenerating : t.pdfButton}
     </Button>
   );
 }

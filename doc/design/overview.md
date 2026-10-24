@@ -133,6 +133,15 @@ TypeScript型定義、MDXフロントマタースキーマ、定数データ、�
 - マイクロインタラクション
 - エラー・警告表示パターン
 
+### 7. [英語版（/en）設計](./i18n-en.md)
+
+Phase 1.5 で追加する英語版の設計（要件定義 9 節、qr_code_create-01z）。
+
+**主な内容**:
+- ルートレイアウトの `(ja)` / `en` 分割と `RootShell`
+- ライブラリなしの型付き辞書（`src/i18n/`）と Server / Client での受け渡し
+- `*PageView` 抽出、英語 MDX、hreflang・sitemap・JSON-LD、言語切り替え、テストとタスク分割（T1〜T5b）
+
 ---
 
 ## 設計上の重要な判断
@@ -158,9 +167,17 @@ TypeScript型定義、MDXフロントマタースキーマ、定数データ、�
 
 マーケティングコンテンツ（ガイド、用途別、業種別、ブログ、比較）は全て MDX ファイルで管理し、ビルド時に静的生成する。これにより CMS 不要でコンテンツ更新が可能となる。
 
+### 英語版（Phase 1.5）
+
+- 英語版は `/en` 配下（`/en`、`/en/create`、`/en/guide/getting-started`）。日本語版の URL・表示・既存テストは変えない
+- `app/(ja)/` と `app/en/` を並置し、それぞれをルートレイアウト（`<html lang>`）にする。共通部分は `RootShell`
+- 文言は `src/i18n/` の型付き辞書（ja / en）。新しい依存は入れない。middleware と自動リダイレクトは使わない
+- hreflang（ja / en / x-default）は両言語が揃うページだけ。詳細は [英語版（/en）設計](./i18n-en.md)
+
 ---
 
 ## 参照ドキュメント
 
 - [要件定義書](../requirements.md)
+- [英語版（/en）設計](./i18n-en.md)
 - [マーケティング戦略](../marketing-strategy.md)

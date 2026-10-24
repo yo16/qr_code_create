@@ -1,8 +1,12 @@
+"use client";
+
+import { useDict } from "@/i18n/useDict";
 import styles from "./QrGeneratorSkeleton.module.css";
 
 export function QrGeneratorSkeleton() {
+  const { common } = useDict();
   return (
-    <div className={styles.container} aria-busy="true" aria-label="読み込み中">
+    <div className={styles.container} aria-busy="true" aria-label={common.loading}>
       {/* 左カラム: ステップブロック */}
       <div className={styles.leftColumn}>
         <div className={styles.skeletonCard}>

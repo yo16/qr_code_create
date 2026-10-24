@@ -7,10 +7,13 @@
 - [データモデル設計](./data-model.md)
 - [UI/UX仕様](./ui-ux-spec.md)
 - [ページ・ルーティング設計](./page-routing.md)
+- [英語版（/en）設計](./i18n-en.md)
 
 ---
 
 ## 1. コンポーネント階層図
+
+> Phase 1.5（英語版）以降、下図の `app/layout.tsx` は `app/(ja)/layout.tsx` / `app/en/layout.tsx` → `RootShell` に置き換わる。追加コンポーネントは [7 節](#7-英語版i18n関連コンポーネントphase-15) を参照。
 
 ```
 app/layout.tsx (Server Component)
@@ -1082,3 +1085,18 @@ export default function CreatePage() {
   );
 }
 ```
+
+---
+
+## 7. 英語版（i18n）関連コンポーネント（Phase 1.5）
+
+詳細は [英語版（/en）設計](./i18n-en.md)。
+
+| コンポーネント | 種別 | 場所 | 責務 |
+|---|---|---|---|
+| `RootShell` | Server | `src/components/layout/RootShell/` | props `{ locale, children }`。`<html lang>`、フォント、`I18nProvider`、Header / Footer、GA4。`(ja)` と `en` の両ルートレイアウトから呼ぶ（[i18n-en 3.2](./i18n-en.md#32-rootshell)） |
+| `I18nProvider` | Client | `src/i18n/I18nProvider.tsx` | props `{ locale, messages?, children }`。Client 用の辞書スライスを配る。`useDict()` / `useLocale()` は Provider が無ければ ja を返す（[i18n-en 4.3](./i18n-en.md#43-server-と-client-での受け渡し)） |
+| `LanguageSwitcher` | Client | `src/components/layout/Header/LanguageSwitcher.tsx` | 「EN」/「日本語」のテキストリンク。`usePathname()` と `getAlternatePath()` で対応ページへ、無ければ相手言語のトップへ（[i18n-en 8 節](./i18n-en.md#8-言語切り替え-ui)） |
+| `HomePageView` / `CreatePageView` / `GuideArticlePageView` | Server | `src/components/pages/` | props に `locale`。ページ本体を ja / en で共用し、`page.tsx` は metadata と View を呼ぶだけにする（[i18n-en 5.1](./i18n-en.md#51-pageview-への抽出)） |
+
+既存の Server Component（`Header`、`Footer`、`src/components/top/*` など）は `locale = "ja"` を既定とする props を足し、`getDict(locale)` で文言を引く。

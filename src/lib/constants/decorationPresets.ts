@@ -1,3 +1,5 @@
+import { jaClient as ja } from "@/i18n/jaClient";
+import type { Dict } from "@/i18n/types";
 import type { FrameType } from "@/lib/qr/frameRenderer";
 import type { CaptionConfig } from "@/types/qr";
 
@@ -12,55 +14,78 @@ export interface DecorationPreset {
   caption: CaptionConfig;
 }
 
-export const DECORATION_PRESETS: DecorationPreset[] = [
+type DecorationDict = Dict["decoration"];
+
+/** 値は言語によらず同じ。name / description / caption.text は辞書の decoration.presets[id] */
+export const DECORATION_PRESET_VALUES = [
   {
     id: "simple",
-    name: "シンプル",
-    description: "白黒でクリーンなデザイン",
     fgColor: "#000000",
     bgColor: "#ffffff",
     frameType: "none",
     frameColor: "#000000",
-    caption: { text: "", fontSize: 14 },
+    captionFontSize: 14,
   },
   {
     id: "business",
-    name: "ビジネス",
-    description: "信頼感のある落ち着いたデザイン",
     fgColor: "#1a365d",
     bgColor: "#ffffff",
     frameType: "business",
     frameColor: "#1a365d",
-    caption: { text: "詳しくはこちら", fontSize: 12 },
+    captionFontSize: 12,
   },
   {
     id: "casual",
-    name: "カジュアル",
-    description: "親しみやすいナチュラルデザイン",
     fgColor: "#2d7d46",
     bgColor: "#f0fff4",
     frameType: "rounded",
     frameColor: "#2d7d46",
-    caption: { text: "スキャンしてチェック", fontSize: 14 },
+    captionFontSize: 14,
   },
   {
     id: "elegant",
-    name: "エレガント",
-    description: "上品で洗練されたデザイン",
     fgColor: "#44337a",
     bgColor: "#faf5ff",
     frameType: "elegant",
     frameColor: "#44337a",
-    caption: { text: "QRコードを読み取る", fontSize: 12 },
+    captionFontSize: 12,
   },
   {
     id: "pop",
-    name: "ポップ",
-    description: "目を引くカラフルなデザイン",
     fgColor: "#c53030",
     bgColor: "#fff5f5",
     frameType: "pop",
     frameColor: "#c53030",
-    caption: { text: "今すぐアクセス!", fontSize: 16 },
+    captionFontSize: 16,
   },
-];
+] as const satisfies ReadonlyArray<{
+  id: keyof DecorationDict["presets"];
+  fgColor: string;
+  bgColor: string;
+  frameType: FrameType;
+  frameColor: string;
+  captionFontSize: number;
+}>;
+
+export function buildDecorationPresets(
+  decoration: DecorationDict
+): DecorationPreset[] {
+  return DECORATION_PRESET_VALUES.map((value) => {
+    const text = decoration.presets[value.id];
+    return {
+      id: value.id,
+      name: text.name,
+      description: text.description,
+      fgColor: value.fgColor,
+      bgColor: value.bgColor,
+      frameType: value.frameType,
+      frameColor: value.frameColor,
+      caption: { text: text.caption, fontSize: value.captionFontSize },
+    };
+  });
+}
+
+// 既存 export（名前と形は変えない）。ja 辞書から組み立てる
+export const DECORATION_PRESETS: DecorationPreset[] = buildDecorationPresets(
+  ja.decoration
+);

@@ -18,6 +18,39 @@ const eslintConfig = defineConfig([
     "test-results/**",
     "playwright-report/**",
   ]),
+  // Client に ja / en の辞書を直接 import させない（en を Client バンドルに入れないため）。
+  // 辞書は useDict()（Client）か getDict()（Server）経由で受け取る。
+  // useDict.ts と getDict.ts は src/i18n 配下なので、この制限の対象外。
+  {
+    files: ["src/components/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@/i18n/ja",
+                "@/i18n/ja.*",
+                "@/i18n/jaClient",
+                "@/i18n/en",
+                "@/i18n/en.*",
+                "@/i18n/enClient",
+                "**/i18n/ja",
+                "**/i18n/ja.*",
+                "**/i18n/jaClient",
+                "**/i18n/en",
+                "**/i18n/en.*",
+                "**/i18n/enClient",
+              ],
+              message:
+                "コンポーネントから辞書を直接 import しない。useDict()（Client）または getDict()（Server）を使う。",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

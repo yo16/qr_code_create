@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import { ja } from "@/i18n/ja";
+import { getDict } from "@/i18n/getDict";
+import type { Locale } from "@/i18n/types";
+import { hasEnVersion } from "@/lib/i18n/routes";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 const SITE_NAME = "QR Code Create";
@@ -9,24 +13,55 @@ interface BuildMetadataOptions {
   path: string;       // 例: "/", "/faq", "/guide/utm-parameters"
   ogImagePath?: string; // public/images/og/ 配下のパス
   noIndex?: boolean;
+  alternatePaths?: { ja: string; en: string }; // 両言語が揃うページだけ指定
 }
 
-export function buildMetadata(options: BuildMetadataOptions): Metadata {
-  const { title, description, path, ogImagePath = "/images/og/default.png", noIndex = false } = options;
+/** 3 ページ（home / create / getting-started）の ja/en 対応パス */
+export const ALTERNATE_PATHS = {
+  home: { ja: "/", en: "/en" },
+  create: { ja: "/create", en: "/en/create" },
+} as const;
+
+/** ガイド記事の alternatePaths。英語版がある slug だけ返す */
+export function getGuideAlternatePaths(slug: string): { ja: string; en: string } | undefined {
+  return hasEnVersion(`/guide/${slug}`)
+    ? { ja: `/guide/${slug}`, en: `/en/guide/${slug}` }
+    : undefined;
+}
+
+const OG_LOCALES: Record<Locale, string> = { ja: "ja_JP", en: "en_US" };
+
+export function buildMetadata(
+  options: BuildMetadataOptions,
+  locale: Locale = "ja"
+): Metadata {
+  const { title, description, path, ogImagePath = "/images/og/default.png", noIndex = false, alternatePaths } = options;
   const url = `${SITE_URL}${path}`;
   const imageUrl = `${SITE_URL}${ogImagePath}`;
 
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      ...(alternatePaths
+        ? {
+            languages: {
+              ja: `${SITE_URL}${alternatePaths.ja}`,
+              en: `${SITE_URL}${alternatePaths.en}`,
+              "x-default": `${SITE_URL}${alternatePaths.ja}`,
+            },
+          }
+        : {}),
+    },
     openGraph: {
       title,
       description,
       url,
       siteName: SITE_NAME,
       images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
-      locale: "ja_JP",
+      locale: OG_LOCALES[locale],
+      ...(alternatePaths ? { alternateLocale: [OG_LOCALES[locale === "ja" ? "en" : "ja"]] } : {}),
       type: "website",
     },
     twitter: {
@@ -39,48 +74,24 @@ export function buildMetadata(options: BuildMetadataOptions): Metadata {
   };
 }
 
-// プリセットメタデータ
+// プリセットメタデータ（title / description は ja 辞書から。形と export 名は不変）
+const pages = ja.meta.pages;
+
 export const PAGE_METADATA = {
-  home: {
-    title: "QR Code Create - UTMパラメータ付きQRコード生成ツール",
-    description: "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
-    path: "/",
-  },
-  create: {
-    title: "QRコード生成 - QR Code Create",
-    description: "URLを入力するだけ。UTMパラメータと装飾フレームでマーケティング効果を最大化するQRコードを無料で作成できます。",
-    path: "/create",
-  },
-  faq: {
-    title: "よくある質問",
-    description: "QR Code Createの使い方やUTMパラメータの設定方法など、よくある質問にお答えします。",
-    path: "/faq",
-  },
-  privacy: {
-    title: "プライバシーポリシー",
-    description: "QR Code Createのプライバシーポリシーです。",
-    path: "/privacy",
-    noIndex: true,
-  },
-  terms: {
-    title: "利用規約",
-    description: "QR Code Createの利用規約です。",
-    path: "/terms",
-    noIndex: true,
-  },
-  guide: {
-    title: "使い方ガイド",
-    description: "QR Code Createの使い方やQRコードの活用方法を初心者にもわかりやすく解説するガイド集です。",
-    path: "/guide",
-  },
-  useCases: {
-    title: "用途別QRコード",
-    description: "名刺・チラシ・ポスター・イベントなど、用途別にQRコードの作り方と推奨UTM設定を解説します。",
-    path: "/use-cases",
-  },
-  blog: {
-    title: "ブログ",
-    description: "QRコードマーケティングやUTMパラメータの活用方法について、実践的な情報をお届けします。",
-    path: "/blog",
-  },
+  home: { ...pages.home, path: "/", alternatePaths: ALTERNATE_PATHS.home },
+  create: { ...pages.create, path: "/create", alternatePaths: ALTERNATE_PATHS.create },
+  faq: { ...pages.faq, path: "/faq" },
+  privacy: { ...pages.privacy, path: "/privacy", noIndex: true },
+  terms: { ...pages.terms, path: "/terms", noIndex: true },
+  guide: { ...pages.guide, path: "/guide" },
+  useCases: { ...pages.useCases, path: "/use-cases" },
+  blog: { ...pages.blog, path: "/blog" },
+} as const;
+
+// 英語版（home と create だけ）。使うときは buildMetadata(PAGE_METADATA_EN.home, "en")
+const pagesEn = getDict("en").meta.pages;
+
+export const PAGE_METADATA_EN = {
+  home: { ...pagesEn.home, path: "/en", alternatePaths: ALTERNATE_PATHS.home },
+  create: { ...pagesEn.create, path: "/en/create", alternatePaths: ALTERNATE_PATHS.create },
 } as const;

@@ -8,6 +8,7 @@ import { ResolutionSelector, type Resolution } from "./ResolutionSelector";
 import type { CaptionConfig, UtmParams, DecorationConfig } from "@/types/qr";
 import { savePosterHandoff } from "@/lib/handoff/posterHandoff";
 import { FEATURE_FLAGS } from "@/lib/constants/features";
+import { useDict, useLocale } from "@/i18n/useDict";
 import styles from "./DownloadPanel.module.css";
 
 interface DownloadPanelProps {
@@ -36,6 +37,9 @@ export function DownloadPanel({
   utmEnabled = true,
   decoration,
 }: DownloadPanelProps) {
+  const t = useDict().tool.download;
+  // /poster に英語版は無いので、en では導線を出さない
+  const locale = useLocale();
   const [resolution, setResolution] = useState<Resolution>(1);
   const router = useRouter();
 
@@ -61,9 +65,7 @@ export function DownloadPanel({
   return (
     <div className={styles.panel}>
       {disabled ? (
-        <p className={styles.disabledMessage}>
-          QRコードを生成するとダウンロードできます
-        </p>
+        <p className={styles.disabledMessage}>{t.disabledMessage}</p>
       ) : (
         <>
           <ResolutionSelector value={resolution} onChange={setResolution} />
@@ -93,16 +95,16 @@ export function DownloadPanel({
               caption={caption}
             />
           </div>
-          {FEATURE_FLAGS.posterPage && (
+          {FEATURE_FLAGS.posterPage && locale === "ja" && (
             <div className={styles.ctaSection}>
               <button
                 type="button"
                 className={styles.ctaButton}
                 onClick={handlePosterCta}
                 disabled={!isUrlValid}
-                aria-label="印刷用ポスターを作る（/posterページへ移動）"
+                aria-label={t.posterCtaAria}
               >
-                印刷用ポスターを作る →
+                {t.posterCta}
               </button>
             </div>
           )}

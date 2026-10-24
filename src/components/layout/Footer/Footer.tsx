@@ -1,18 +1,44 @@
 import Link from "next/link";
+import { getDict } from "@/i18n/getDict";
+import type { Locale } from "@/i18n/types";
 import { Container } from "../Container/Container";
 import styles from "./Footer.module.css";
 
-export function Footer() {
+interface FooterProps {
+  locale?: Locale;
+}
+
+export function Footer({ locale = "ja" }: FooterProps = {}) {
+  const { footer } = getDict(locale);
+  const isEn = locale === "en";
   return (
     <footer className={styles.footer}>
       <Container>
         <div className={styles.inner}>
-          <div className={styles.links}>
-            <Link href="/privacy">プライバシーポリシー</Link>
-            <Link href="/terms">利用規約</Link>
-            <Link href="/faq">よくある質問</Link>
-            <Link href="/contact">お問い合わせ</Link>
-          </div>
+          {isEn ? (
+            // 英語版の無い規約系は日本語ページへリンクし、リンク名と注記で日本語だと伝える
+            <>
+              <div className={styles.links}>
+                <Link href="/privacy" hrefLang="ja">
+                  {footer.privacy}
+                </Link>
+                <Link href="/terms" hrefLang="ja">
+                  {footer.terms}
+                </Link>
+                <Link href="/contact" hrefLang="ja">
+                  {footer.contact}
+                </Link>
+              </div>
+              <p className={styles.note}>{footer.japaneseOnlyNote}</p>
+            </>
+          ) : (
+            <div className={styles.links}>
+              <Link href="/privacy">{footer.privacy}</Link>
+              <Link href="/terms">{footer.terms}</Link>
+              <Link href="/faq">{footer.faq}</Link>
+              <Link href="/contact">{footer.contact}</Link>
+            </div>
+          )}
           <p className={styles.copyright}>
             &copy; {new Date().getFullYear()} QR Code Create
           </p>

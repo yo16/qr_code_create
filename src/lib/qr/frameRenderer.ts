@@ -1,3 +1,6 @@
+import { jaClient as ja } from "@/i18n/jaClient";
+import type { Dict } from "@/i18n/types";
+
 export type FrameType =
   | "none"
   | "simple"
@@ -28,23 +31,58 @@ export interface FrameOption {
   imageSrc?: string;
 }
 
-export const FRAME_OPTIONS: FrameOption[] = [
-  { type: "none", label: "なし", category: "基本" },
-  { type: "simple", label: "シンプル", category: "基本" },
-  { type: "rounded", label: "角丸", category: "基本" },
-  { type: "ornate", label: "装飾", category: "装飾" },
-  { type: "elegant", label: "エレガント", category: "ターゲット別" },
-  { type: "pop", label: "ポップ", category: "ターゲット別" },
-  { type: "business", label: "ビジネス", category: "ターゲット別" },
-  { type: "festive", label: "フェスティブ", category: "ターゲット別" },
-  { type: "img-simple-black", label: "ブラック", category: "画像：シンプル", imageSrc: "/images/frames/simple/black-frame.png" },
-  { type: "img-simple-blue", label: "ブルー", category: "画像：シンプル", imageSrc: "/images/frames/simple/blue-frame.png" },
-  { type: "img-simple-gray", label: "グレー", category: "画像：シンプル", imageSrc: "/images/frames/simple/gray-frame.png" },
-  { type: "img-simple-red", label: "レッド", category: "画像：シンプル", imageSrc: "/images/frames/simple/red-frame.png" },
-  { type: "img-elaborated-japanese", label: "和風", category: "画像：装飾", imageSrc: "/images/frames/elaborated/japanese.png" },
-  { type: "img-elaborated-gothic", label: "ゴシック", category: "画像：装飾", imageSrc: "/images/frames/elaborated/gothic.png" },
-  { type: "img-elaborated-baroque", label: "バロック", category: "画像：装飾", imageSrc: "/images/frames/elaborated/luxurious-baroque-style-gold.png" },
+/** フレームのカテゴリ id（表示名は辞書の decoration.frame.categories[key]）。表示順 */
+export const FRAME_CATEGORY_KEYS = [
+  "basic",
+  "ornate",
+  "target",
+  "imageSimple",
+  "imageOrnate",
+] as const;
+
+export type FrameCategoryKey = (typeof FRAME_CATEGORY_KEYS)[number];
+
+export interface FrameDefinition {
+  type: FrameType;
+  categoryKey: FrameCategoryKey;
+  /** 画像フレームの場合、画像パス */
+  imageSrc?: string;
+}
+
+/** 言語によらない定義（表示名は辞書の decoration.frame.labels[type]） */
+export const FRAME_DEFINITIONS: FrameDefinition[] = [
+  { type: "none", categoryKey: "basic" },
+  { type: "simple", categoryKey: "basic" },
+  { type: "rounded", categoryKey: "basic" },
+  { type: "ornate", categoryKey: "ornate" },
+  { type: "elegant", categoryKey: "target" },
+  { type: "pop", categoryKey: "target" },
+  { type: "business", categoryKey: "target" },
+  { type: "festive", categoryKey: "target" },
+  { type: "img-simple-black", categoryKey: "imageSimple", imageSrc: "/images/frames/simple/black-frame.png" },
+  { type: "img-simple-blue", categoryKey: "imageSimple", imageSrc: "/images/frames/simple/blue-frame.png" },
+  { type: "img-simple-gray", categoryKey: "imageSimple", imageSrc: "/images/frames/simple/gray-frame.png" },
+  { type: "img-simple-red", categoryKey: "imageSimple", imageSrc: "/images/frames/simple/red-frame.png" },
+  { type: "img-elaborated-japanese", categoryKey: "imageOrnate", imageSrc: "/images/frames/elaborated/japanese.png" },
+  { type: "img-elaborated-gothic", categoryKey: "imageOrnate", imageSrc: "/images/frames/elaborated/gothic.png" },
+  { type: "img-elaborated-baroque", categoryKey: "imageOrnate", imageSrc: "/images/frames/elaborated/luxurious-baroque-style-gold.png" },
 ];
+
+export function buildFrameOptions(decoration: Dict["decoration"]): FrameOption[] {
+  return FRAME_DEFINITIONS.map((def) => {
+    const option: FrameOption = {
+      type: def.type,
+      label: decoration.frame.labels[def.type],
+      category: decoration.frame.categories[def.categoryKey],
+    };
+    if (def.imageSrc !== undefined) option.imageSrc = def.imageSrc;
+    return option;
+  });
+}
+
+// 既存 export（名前と形は変えない）。ja 辞書から組み立てる。
+// category は GA イベント（frame_selected）の値にも使うため、言語によらず ja の値を保つ
+export const FRAME_OPTIONS: FrameOption[] = buildFrameOptions(ja.decoration);
 
 /** 画像フレームかどうかを判定する */
 export function isImageFrame(type: FrameType): boolean {

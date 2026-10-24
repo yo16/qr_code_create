@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { trackUrlEntered } from "@/lib/analytics/events";
 import { Input } from "@/components/ui/Input/Input";
 import { validateUrl } from "@/lib/url/validateUrl";
+import { useDict } from "@/i18n/useDict";
 import styles from "./UrlInput.module.css";
 
 interface UrlInputProps {
@@ -13,6 +14,7 @@ interface UrlInputProps {
 }
 
 export function UrlInput({ value, onChange, onValidationChange }: UrlInputProps) {
+  const { tool } = useDict();
   const [error, setError] = useState<string | undefined>(undefined);
   const lastTrackedRef = useRef<string>("");
 
@@ -20,7 +22,7 @@ export function UrlInput({ value, onChange, onValidationChange }: UrlInputProps)
     (url: string) => {
       onChange(url);
 
-      const result = validateUrl(url);
+      const result = validateUrl(url, tool.validation);
 
       // 未入力時はエラーを表示しない
       if (!url) {
@@ -32,7 +34,7 @@ export function UrlInput({ value, onChange, onValidationChange }: UrlInputProps)
       setError(result.error);
       onValidationChange?.(result.isValid);
     },
-    [onChange, onValidationChange]
+    [onChange, onValidationChange, tool.validation]
   );
 
   const handleBlur = useCallback(() => {
@@ -46,11 +48,11 @@ export function UrlInput({ value, onChange, onValidationChange }: UrlInputProps)
   return (
     <div className={styles.container} onBlur={handleBlur}>
       <Input
-        label="URL"
+        label={tool.urlInput.label}
         value={value}
         onChange={handleChange}
         type="url"
-        placeholder="https://example.com"
+        placeholder={tool.urlInput.placeholder}
         error={error}
         required
       />

@@ -7,6 +7,7 @@
 - [ページ・ルーティング設計](./page-routing.md)
 - [データモデル設計](./data-model.md)
 - [UI/UX仕様](./ui-ux-spec.md)
+- [英語版（/en）設計](./i18n-en.md)
 
 ---
 
@@ -276,6 +277,37 @@ src/
     └── analytics.ts                # GA4イベント関連の型
 ```
 
+### 2.1 英語版（Phase 1.5）で加わるディレクトリ
+
+詳細は [英語版（/en）設計](./i18n-en.md)。上の木の `src/app/layout.tsx`、`page.tsx`、`(marketing)/`、`(tool)/` は `src/app/(ja)/` の下へ移る（URL 不変）。
+
+```
+src/
+├── app/
+│   ├── (ja)/                       # Route Group: 日本語版。ルートレイアウト（<html lang="ja">）を持つ
+│   │   ├── layout.tsx              # <RootShell locale="ja">
+│   │   ├── not-found.tsx
+│   │   ├── page.tsx                # /
+│   │   ├── (marketing)/            # 既存をそのまま移動
+│   │   └── (tool)/                 # 既存をそのまま移動
+│   └── en/                         # 英語版。ルートレイアウト（<html lang="en">）を持つ
+│       ├── layout.tsx              # <RootShell locale="en">
+│       ├── not-found.tsx
+│       ├── page.tsx                # /en
+│       ├── (tool)/create/page.tsx  # /en/create
+│       └── (marketing)/guide/[slug]/page.tsx  # /en/guide/[slug]
+├── components/
+│   ├── layout/RootShell/           # html・フォント・Header・Footer・GA4・I18nProvider
+│   ├── layout/Header/LanguageSwitcher.tsx  # 'use client'
+│   └── pages/                      # HomePageView、CreatePageView、GuideArticlePageView（ja / en 共用の本体）
+├── content/
+│   └── en/guide/                   # 英語の MDX（getting-started.mdx）。日本語の content/guide は動かさない
+├── i18n/                           # 文言辞書: types.ts、ja.ts、en.ts、getDict.ts、format.ts、I18nProvider.tsx、useDict.ts
+└── lib/
+    ├── i18n/routes.ts              # localePath、getAlternatePath、EN_AVAILABLE_PATHS
+    └── metadata/rootMetadata.ts    # buildRootMetadata(locale)
+```
+
 ---
 
 ## 3. 命名規則
@@ -337,6 +369,10 @@ src/
 - ツール用のシンプルなレイアウト（サイドバーなし）
 - ツール画面に特化したヘッダー
 - フッターの最小化
+
+### 4.3 (ja) グループと en（Phase 1.5）
+
+`(ja)` は日本語版のルートレイアウトを置くための Route Group で、URL には影響しない。`en` は URL の `/en` に対応する通常のセグメントで、こちらもルートレイアウトを持つ。`en` の下にも `(tool)`（wide）と `(marketing)`（narrow）を置き、Container の違いを日本語版と揃える。2 つのルートレイアウトをまたぐ遷移は full page reload になる。詳細は [英語版（/en）設計 3 節](./i18n-en.md#3-ルーティングとレイアウト)。
 
 ---
 

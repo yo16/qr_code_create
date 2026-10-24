@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import TermsPage from "@/app/(marketing)/terms/page";
+import TermsPage from "@/app/(ja)/(marketing)/terms/page";
 
 describe("TermsPage", () => {
   describe("見出し・日付", () => {

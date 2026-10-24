@@ -10,13 +10,10 @@ import {
   trackFrameSelected,
   trackCaptionSet,
   trackPresetSelected,
-  trackUtmParamsCount,
   trackGuideTooltipOpened,
-  trackHelpArticleClicked,
   trackCtaClicked,
   trackFaqOpened,
   trackErrorOccurred,
-  trackFormatSelected,
   flushPendingEvents,
   EVENT_DEBOUNCE_MS,
 } from "@/lib/analytics/events";
@@ -337,16 +334,6 @@ describe("analytics/events", () => {
     });
   });
 
-  describe("trackUtmParamsCount", () => {
-    it("正しいイベント名とcountパラメータで呼ばれること", () => {
-      trackUtmParamsCount(3);
-
-      expect(window.gtag).toHaveBeenCalledWith("event", "utm_params_count", {
-        count: 3,
-      });
-    });
-  });
-
   describe("trackGuideTooltipOpened", () => {
     it("正しいイベント名とパラメータで呼ばれること", () => {
       trackGuideTooltipOpened("tooltip_source", "utm_source");
@@ -357,20 +344,6 @@ describe("analytics/events", () => {
         {
           tooltip_id: "tooltip_source",
           field_name: "utm_source",
-        }
-      );
-    });
-  });
-
-  describe("trackHelpArticleClicked", () => {
-    it("正しいイベント名とarticle_slugで呼ばれること", () => {
-      trackHelpArticleClicked("how-to-use-utm");
-
-      expect(window.gtag).toHaveBeenCalledWith(
-        "event",
-        "help_article_clicked",
-        {
-          article_slug: "how-to-use-utm",
         }
       );
     });
@@ -405,23 +378,6 @@ describe("analytics/events", () => {
         error_type: "network_error",
         error_message: "Failed to fetch",
       });
-    });
-  });
-
-  describe("trackFormatSelected", () => {
-    it("format=svgが正しく送信されること", () => {
-      trackFormatSelected("svg");
-      expect(window.gtag).toHaveBeenCalledWith("event", "format_selected", { format: "svg" });
-    });
-
-    it("format=pngが正しく送信されること", () => {
-      trackFormatSelected("png");
-      expect(window.gtag).toHaveBeenCalledWith("event", "format_selected", { format: "png" });
-    });
-
-    it("format=pdfが正しく送信されること", () => {
-      trackFormatSelected("pdf");
-      expect(window.gtag).toHaveBeenCalledWith("event", "format_selected", { format: "pdf" });
     });
   });
 

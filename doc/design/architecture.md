@@ -205,7 +205,7 @@ Google Analytics 4 へ送信
 ```
 
 - GA4スクリプトは `app/layout.tsx` で `next/script` (`strategy="afterInteractive"`) を使って読み込む
-- 全16種のカスタムイベントを `lib/analytics/events.ts` に定義する（[マーケティング戦略 セクション10](../marketing-strategy.md) 参照）
+- カスタムイベントを `lib/analytics/events.ts` に定義する（一覧はマーケティング戦略のイベント表が正）（[マーケティング戦略 セクション10](../marketing-strategy.md) 参照）
 
 ---
 

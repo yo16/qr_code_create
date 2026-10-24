@@ -1,15 +1,35 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { Header } from "@/components/layout/Header/Header";
 import { BrandMark } from "@/components/layout/Header/BrandMark";
 
+// TrackedLink も next/link を import するためこのモックが効く。計測の onClick が <a> に届くよう onClick を透過させる
 jest.mock("next/link", () => {
-  const MockLink = ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
-    <a href={href} className={className}>{children}</a>
+  const MockLink = ({
+    href,
+    children,
+    className,
+    onClick,
+  }: {
+    href: string;
+    children: React.ReactNode;
+    className?: string;
+    onClick?: React.MouseEventHandler<HTMLAnchorElement>;
+  }) => (
+    <a href={href} className={className} onClick={onClick}>{children}</a>
   );
   MockLink.displayName = "MockLink";
   return MockLink;
 });
+
+// CTA クリック計測（qr_code_create-pa6）: TrackedLink が呼ぶ trackCtaClicked をモックする
+jest.mock("@/lib/analytics/events", () => ({
+  trackCtaClicked: jest.fn(),
+}));
+
+const { trackCtaClicked } = jest.requireMock("@/lib/analytics/events") as {
+  trackCtaClicked: jest.Mock;
+};
 
 jest.mock("@/components/layout/Header/MobileNav", () => ({
   MobileNav: ({ items }: { items: Array<{ href: string; label: string }> }) => (
@@ -86,6 +106,30 @@ describe("Header", () => {
     it("「QRコード生成」CTAリンクが /create を指していること", () => {
       render(<Header />);
       expect(screen.getByRole("link", { name: "QRコード生成" })).toHaveAttribute("href", "/create");
+    });
+  });
+
+  // CTA クリック計測（qr_code_create-pa6）: デスクトップナビの「QRコード生成」は TrackedLink 経由で location="header" を送る
+  // （MobileNav はこのファイルではモックしているため、モバイルメニュー側は MobileNav.test.tsx で検証する）
+  describe("CTA クリック計測", () => {
+    beforeEach(() => {
+      trackCtaClicked.mockClear();
+    });
+
+    it("「QRコード生成」をクリックすると trackCtaClicked(\"QRコード生成\", \"header\") が 1 回呼ばれること", () => {
+      // 意図: Header は Server Component のままで、client の TrackedLink だけが計測を担う。children の文言が button_text になること
+      render(<Header />);
+      fireEvent.click(screen.getByRole("link", { name: "QRコード生成" }));
+      expect(trackCtaClicked).toHaveBeenCalledTimes(1);
+      expect(trackCtaClicked).toHaveBeenCalledWith("QRコード生成", "header");
+    });
+
+    it("ロゴや通常のナビゲーションリンクをクリックしても trackCtaClicked が呼ばれないこと", () => {
+      // 意図: CTA 以外のリンク（素の Link）のクリックが cta_clicked に混ざらないこと
+      render(<Header />);
+      fireEvent.click(screen.getByRole("link", { name: "QR Code Create" }));
+      fireEvent.click(screen.getAllByRole("link", { name: "使い方" })[0]);
+      expect(trackCtaClicked).not.toHaveBeenCalled();
     });
   });
 

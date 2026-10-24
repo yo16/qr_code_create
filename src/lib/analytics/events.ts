@@ -154,11 +154,6 @@ export function trackPresetSelected(presetName: string): void {
   trackEvent("preset_selected", { preset_name: presetName });
 }
 
-// UTMパラメータ設定数
-export function trackUtmParamsCount(count: number): void {
-  trackEvent("utm_params_count", { count });
-}
-
 // ガイドツールチップ表示
 export function trackGuideTooltipOpened(
   tooltipId: string,
@@ -168,11 +163,6 @@ export function trackGuideTooltipOpened(
     tooltip_id: tooltipId,
     field_name: fieldName,
   });
-}
-
-// ヘルプ記事クリック
-export function trackHelpArticleClicked(articleSlug: string): void {
-  trackEvent("help_article_clicked", { article_slug: articleSlug });
 }
 
 // CTAクリック
@@ -197,9 +187,4 @@ export function trackErrorOccurred(
     error_type: errorType,
     error_message: errorMessage,
   });
-}
-
-// フォーマット選択
-export function trackFormatSelected(format: "png" | "svg" | "pdf"): void {
-  trackEvent("format_selected", { format });
 }

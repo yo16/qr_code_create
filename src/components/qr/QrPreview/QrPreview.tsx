@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { isContrastSufficient } from "@/lib/color/contrastChecker";
-import { trackQrGenerated } from "@/lib/analytics/events";
+import { trackQrGenerated, trackErrorOccurred } from "@/lib/analytics/events";
 import {
   drawFrame,
   isImageFrame,
@@ -157,7 +157,8 @@ export function QrPreview({
         hasFrame: hasFrame,
         hasCaption: !!(caption && caption.text.trim() !== ""),
       });
-    } catch {
+    } catch (error) {
+      trackErrorOccurred("qr_render", error instanceof Error ? error.name : "unknown");
       setHasError(true);
     } finally {
       setIsLoading(false);

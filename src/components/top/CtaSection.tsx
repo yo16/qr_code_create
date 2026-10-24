@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TrackedLink } from "@/components/analytics/TrackedLink";
 import { Button } from "@/components/ui/Button/Button";
 import { Container } from "@/components/layout/Container/Container";
 import styles from "./CtaSection.module.css";
@@ -16,11 +16,16 @@ export function CtaSection() {
               URLの入力、UTMパラメータ、見た目の調整、ダウンロードの順に進みます。途中で登録を求められることはありません。
             </p>
           </div>
-          <Link href="/create" className={styles.action}>
+          <TrackedLink
+            href="/create"
+            className={styles.action}
+            location="top_bottom"
+            buttonText="無料でQRコードを作成する"
+          >
             <Button variant="primary" size="lg">
               無料でQRコードを作成する
             </Button>
-          </Link>
+          </TrackedLink>
         </div>
       </Container>
     </section>

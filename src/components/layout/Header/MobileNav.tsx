@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { TrackedLink } from "@/components/analytics/TrackedLink";
 import styles from "./MobileNav.module.css";
 
 interface NavItem {
@@ -40,13 +41,14 @@ export function MobileNav({ items }: MobileNavProps) {
               {item.label}
             </Link>
           ))}
-          <Link
+          <TrackedLink
             href="/create"
             className={styles.ctaLink}
+            location="mobile_nav"
             onClick={() => setIsOpen(false)}
           >
             QRコード生成
-          </Link>
+          </TrackedLink>
         </nav>
       )}
     </div>

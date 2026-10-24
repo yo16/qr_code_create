@@ -70,19 +70,21 @@ describe("PrivacyPage", () => {
       expect(within(section).getByText(/当サービスのサーバーに送信も保存もされません/)).toBeInTheDocument();
     });
 
-    it("「アクセス解析ツール」節の一覧が 7 項目で、ドメイン・UTM・ロゴ種類・ダウンロード形式を含むこと", () => {
-      // 意図: events.ts が送っている値の種類（ドメイン、UTM 値、装飾、キャプション長、ロゴ種類、生成・DL、UI 操作）が
+    it("「アクセス解析ツール」節の一覧が 8 項目で、ドメイン・UTM・ロゴ種類・ダウンロード形式・エラー種類を含むこと", () => {
+      // 意図: events.ts が送っている値の種類（ドメイン、UTM 値、装飾、キャプション長、ロゴ種類、生成・DL、UI 操作、エラー種類）が
       //       漏れなく列挙されていること。項目数の変化で送信項目と説明のズレに気づく
       render(<PrivacyPage />);
       const section = getSectionByHeading(/アクセス解析ツール/);
       const items = within(section).getAllByRole("listitem");
-      expect(items).toHaveLength(7);
+      expect(items).toHaveLength(8);
 
       const texts = items.map((li) => li.textContent ?? "");
       expect(texts.some((t) => t.includes("入力したURLのドメイン部分"))).toBe(true);
       expect(texts.some((t) => t.includes("UTMパラメータの値"))).toBe(true);
       expect(texts.some((t) => t.includes("ロゴ画像の種類"))).toBe(true);
       expect(texts.some((t) => t.includes("ダウンロード形式"))).toBe(true);
+      // qr_code_create-pa6 で error_occurred（種類だけ）を配線したため、その旨の項目が加わっていること
+      expect(texts.some((t) => t.includes("エラーの発生とその種類"))).toBe(true);
     });
 
     it("送らない情報（URL 全体・QR 画像・ロゴ画像そのもの・キャプション本文）を明記していること", () => {
@@ -141,6 +143,8 @@ describe("PrivacyPage", () => {
       // "format" は語として一般的すぎるため、qr_downloaded のパラメータキーとして現れることを確認する
       expect(source).toContain("qr_downloaded");
       expect(source).toMatch(/\bformat:/);
+      // 「エラーの発生とその種類」の根拠（qr_code_create-pa6 で配線した error_occurred）
+      expect(source).toContain("error_type");
 
       // utm_source_value はソース上では `utm_${paramName}_value` と組み立てられ文字どおりには現れないため、
       // 実際に送信されるキー名を gtag のモックで確認する（debounce は flushPendingEvents で即時送信）

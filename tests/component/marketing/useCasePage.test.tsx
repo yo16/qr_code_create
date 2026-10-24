@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import UseCasePage from "@/app/(marketing)/use-cases/[slug]/page";
+import UseCasePage from "@/app/(ja)/(marketing)/use-cases/[slug]/page";
 
 /**
  * UseCasePage（/use-cases/[slug]）のテスト

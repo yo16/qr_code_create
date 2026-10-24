@@ -1,9 +1,8 @@
-import type { Metadata } from "next";
 import { Noto_Sans_JP } from "next/font/google";
 import Script from "next/script";
 import { Header } from "@/components/layout/Header/Header";
 import { Footer } from "@/components/layout/Footer/Footer";
-import "./globals.css";
+import "@/app/globals.css";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
@@ -14,25 +13,16 @@ const notoSansJP = Noto_Sans_JP({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "QR Code Create - UTMパラメータ付きQRコード生成ツール",
-    template: "%s | QR Code Create",
-  },
-  description:
-    "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp"
-  ),
-};
+export type RootShellLocale = "ja" | "en";
 
-export default function RootLayout({
-  children,
-}: Readonly<{
+interface RootShellProps {
+  locale: RootShellLocale;
   children: React.ReactNode;
-}>) {
+}
+
+export function RootShell({ locale, children }: RootShellProps) {
   return (
-    <html lang="ja" className={notoSansJP.variable}>
+    <html lang={locale} className={notoSansJP.variable}>
       <body>
         <Header />
         {children}

@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import ContactPage from "@/app/(marketing)/contact/page";
+import ContactPage from "@/app/(ja)/(marketing)/contact/page";
 
 jest.mock("next/link", () => {
   const MockLink = ({ href, children }: { href: string; children: React.ReactNode }) => (

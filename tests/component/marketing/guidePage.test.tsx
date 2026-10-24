@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import GuidePage, {
   generateStaticParams,
   generateMetadata,
-} from "@/app/(marketing)/guide/[slug]/page";
+} from "@/app/(ja)/(marketing)/guide/[slug]/page";
 import { getGuide, getGuideSlugList } from "@/lib/content/getGuide";
 
 jest.mock("next-mdx-remote/rsc", () => ({

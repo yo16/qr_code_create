@@ -2,7 +2,7 @@ import React from "react";
 import fs from "fs";
 import path from "path";
 import { render, screen, within } from "@testing-library/react";
-import PrivacyPage from "@/app/(marketing)/privacy/page";
+import PrivacyPage from "@/app/(ja)/(marketing)/privacy/page";
 import { trackUtmSet, flushPendingEvents } from "@/lib/analytics/events";
 
 describe("PrivacyPage", () => {

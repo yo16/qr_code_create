@@ -12,9 +12,31 @@ export function hasEnVersion(path: string): boolean {
 }
 
 /**
+ * 現在のパスに対応する、相手言語のパスを返す（言語切り替え用）。
+ * 対応ページが無ければ相手言語のトップ。末尾スラッシュは除いて判定する。
+ * to=en でも /en 配下のパスが来うる: global-not-found が ja のシェルで /en 配下の未定義 URL を描くため、
+ * その場合は /en を外した ja 側のパスとして判定し、自分自身を指さないようにする。
+ */
+export function getAlternatePath(pathname: string, to: Locale): string {
+  let p = pathname.split(/[?#]/)[0] || "/";
+  if (p.length > 1) p = p.replace(/\/+$/, "") || "/";
+  if (to === "en") {
+    // /en 配下は先頭の /en を外して ja 側のパスにしてから判定する
+    if (p === "/en") p = "/";
+    else if (p.startsWith("/en/")) p = p.slice(3);
+    return hasEnVersion(p) ? localePath("en", p) : "/en";
+  }
+  if (p === "/en") return "/";
+  if (p.startsWith("/en/")) {
+    const jaPath = p.slice(3);
+    return hasEnVersion(jaPath) ? jaPath : "/";
+  }
+  return p;
+}
+
+/**
  * ロケールに応じたパスを返す。
  * ja は日本語版のパスそのまま、en は `/en` を前置する（`/` は `/en`）。
- * getAlternatePath は T5a で追加する。
  */
 export function localePath(locale: Locale, path: string): string {
   if (locale === "ja") return path;

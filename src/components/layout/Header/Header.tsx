@@ -5,6 +5,7 @@ import type { Locale } from "@/i18n/types";
 import { hasEnVersion, localePath } from "@/lib/i18n/routes";
 import { Container } from "../Container/Container";
 import { BrandMark } from "./BrandMark";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { MobileNav } from "./MobileNav";
 import styles from "./Header.module.css";
 
@@ -46,17 +47,20 @@ export function Header({ locale = "ja" }: HeaderProps = {}) {
               QR Code Create
             </Link>
           </div>
-          <nav className={styles.desktopNav}>
-            {navItems.map((item) => (
-              <Link key={item.href} href={item.href} className={styles.navLink}>
-                {item.label}
-              </Link>
-            ))}
-            <TrackedLink href={localePath(locale, "/create")} className={styles.ctaLink} location="header">
-              {header.cta}
-            </TrackedLink>
-          </nav>
-          <MobileNav items={navItems} />
+          <div className={styles.actions}>
+            <nav className={styles.desktopNav}>
+              {navItems.map((item) => (
+                <Link key={item.href} href={item.href} className={styles.navLink}>
+                  {item.label}
+                </Link>
+              ))}
+              <TrackedLink href={localePath(locale, "/create")} className={styles.ctaLink} location="header">
+                {header.cta}
+              </TrackedLink>
+            </nav>
+            <LanguageSwitcher />
+            <MobileNav items={navItems} />
+          </div>
         </div>
       </Container>
     </header>

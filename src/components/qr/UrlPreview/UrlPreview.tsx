@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { buildUtmUrl } from "@/lib/url/buildUtmUrl";
+import { useDict } from "@/i18n/useDict";
 import styles from "./UrlPreview.module.css";
 
 interface UrlPreviewProps {
@@ -24,6 +25,7 @@ export function UrlPreview({
   utmContent,
   utmEnabled = true,
 }: UrlPreviewProps) {
+  const t = useDict().tool.urlPreview;
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,15 +62,15 @@ export function UrlPreview({
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <span className={styles.label}>生成URLプレビュー</span>
+        <span className={styles.label}>{t.label}</span>
         {builtUrl && (
           <button
             type="button"
             className={styles.copyButton}
             onClick={handleCopy}
-            aria-label="URLをクリップボードにコピー"
+            aria-label={t.copyAria}
           >
-            {copied ? "コピーしました" : "コピー"}
+            {copied ? t.copied : t.copy}
           </button>
         )}
       </div>
@@ -77,9 +79,7 @@ export function UrlPreview({
         {builtUrl ? (
           <code className={styles.urlCode}>{builtUrl}</code>
         ) : (
-          <span className={styles.placeholder}>
-            URLを入力するとプレビューが表示されます
-          </span>
+          <span className={styles.placeholder}>{t.placeholder}</span>
         )}
       </div>
 
@@ -89,7 +89,7 @@ export function UrlPreview({
         aria-atomic="true"
         className={styles.srOnly}
       >
-        {copied ? "URLをコピーしました" : ""}
+        {copied ? t.copiedStatus : ""}
       </div>
     </div>
   );

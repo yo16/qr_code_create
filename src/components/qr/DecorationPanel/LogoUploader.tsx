@@ -3,6 +3,8 @@
 import { useCallback } from "react";
 import { FileUpload } from "@/components/ui/FileUpload/FileUpload";
 import { trackLogoUploaded } from "@/lib/analytics/events";
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import type { LogoConfig } from "@/types/qr";
 import styles from "./LogoUploader.module.css";
 
@@ -23,6 +25,7 @@ function clampSizePercent(value: number): number {
 }
 
 export function LogoUploader({ logo, onChange }: LogoUploaderProps) {
+  const t = useDict().decoration.logo;
   const handleFileSelect = useCallback(
     (file: File | null) => {
       if (!file) {
@@ -69,12 +72,12 @@ export function LogoUploader({ logo, onChange }: LogoUploaderProps) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logo.dataUrl}
-            alt={`ロゴ: ${logo.fileName}`}
+            alt={formatMessage(t.alt, { fileName: logo.fileName })}
             className={styles.thumbnail}
           />
           <div className={styles.controls}>
             <label htmlFor="logo-size-slider" className={styles.sizeLabel}>
-              ロゴサイズ: {displaySizePercent}%
+              {formatMessage(t.sizeLabel, { percent: displaySizePercent })}
             </label>
             <input
               id="logo-size-slider"
@@ -85,15 +88,15 @@ export function LogoUploader({ logo, onChange }: LogoUploaderProps) {
               value={displaySizePercent}
               onChange={handleSizeChange}
               className={styles.slider}
-              aria-label="ロゴサイズを調整"
+              aria-label={t.sizeAria}
             />
             <button
               type="button"
               onClick={handleRemove}
               className={styles.removeButton}
-              aria-label="ロゴを削除"
+              aria-label={t.removeAria}
             >
-              ロゴを削除
+              {t.remove}
             </button>
           </div>
         </div>
@@ -104,7 +107,7 @@ export function LogoUploader({ logo, onChange }: LogoUploaderProps) {
   return (
     <div className={styles.wrapper}>
       <FileUpload
-        label="ロゴ画像をアップロード"
+        label={t.upload}
         accept="image/png,image/jpeg,image/svg+xml"
         maxSizeKB={500}
         onFileSelect={handleFileSelect}

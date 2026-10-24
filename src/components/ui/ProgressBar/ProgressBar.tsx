@@ -1,3 +1,7 @@
+"use client";
+
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import styles from "./ProgressBar.module.css";
 
 interface ProgressBarProps {
@@ -11,7 +15,11 @@ export function ProgressBar({ current, total, label, message }: ProgressBarProps
   const completionPercent =
     total > 0 ? Math.min(100, Math.max(0, (current / total) * 100)) : 0;
 
-  const defaultLabel = `ステップ ${current}/${total}`;
+  const t = useDict().ui.progressBar;
+  const defaultLabel = formatMessage(t.defaultLabel, {
+    current,
+    total,
+  });
   const displayLabel = label ?? defaultLabel;
 
   return (

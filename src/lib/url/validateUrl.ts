@@ -1,4 +1,10 @@
-export function validateUrl(url: string): { isValid: boolean; error?: string } {
+import { ja } from "@/i18n/ja";
+import type { Dict } from "@/i18n/types";
+
+export function validateUrl(
+  url: string,
+  messages: Dict["tool"]["validation"] = ja.tool.validation
+): { isValid: boolean; error?: string } {
   // 空文字は未入力としてエラーなし
   if (!url) {
     return { isValid: false };
@@ -6,14 +12,14 @@ export function validateUrl(url: string): { isValid: boolean; error?: string } {
 
   // http:// または https:// で始まること
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    return { isValid: false, error: "有効なURLを入力してください" };
+    return { isValid: false, error: messages.invalidUrl };
   }
 
   // URL形式チェック
   try {
     new URL(url);
   } catch {
-    return { isValid: false, error: "有効なURLを入力してください" };
+    return { isValid: false, error: messages.invalidUrl };
   }
 
   return { isValid: true };

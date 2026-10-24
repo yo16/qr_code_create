@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useId, useRef, KeyboardEvent } from "react";
+import { useDict } from "@/i18n/useDict";
 import styles from "./Tabs.module.css";
 
 interface TabItem {
@@ -18,6 +19,7 @@ export function Tabs({ tabs, defaultTab }: TabsProps) {
   const [activeTab, setActiveTab] = useState(
     defaultTab ?? tabs[0]?.id ?? ""
   );
+  const t = useDict().ui.tabs;
   const instanceId = useId();
   const tablistRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +55,7 @@ export function Tabs({ tabs, defaultTab }: TabsProps) {
       <div
         ref={tablistRef}
         role="tablist"
-        aria-label="タブ"
+        aria-label={t.listAria}
         className={styles.tabList}
       >
         {tabs.map((tab, index) => {

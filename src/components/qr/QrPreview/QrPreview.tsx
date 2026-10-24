@@ -11,6 +11,7 @@ import {
   DEFAULT_FRAME_CONFIG,
 } from "@/lib/qr/frameRenderer";
 import { drawLogoOnCanvas } from "@/lib/qr/drawLogo";
+import { useDict } from "@/i18n/useDict";
 import type { CaptionConfig, LogoConfig } from "@/types/qr";
 import styles from "./QrPreview.module.css";
 
@@ -65,6 +66,7 @@ export function QrPreview({
   isUrlValid = false,
   canvasRef: externalCanvasRef,
 }: QrPreviewProps) {
+  const t = useDict().tool.qrPreview;
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = externalCanvasRef ?? internalCanvasRef;
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -196,13 +198,13 @@ export function QrPreview({
 
   return (
     <div className={styles.container}>
-      <div className={styles.label}>QRコードプレビュー</div>
+      <div className={styles.label}>{t.label}</div>
 
       <div
         className={styles.previewArea}
         style={{ width: size, height: size }}
         role="img"
-        aria-label={shouldRender ? "生成されたQRコード" : "QRコードプレースホルダー"}
+        aria-label={shouldRender ? t.ariaGenerated : t.ariaPlaceholder}
       >
         {/* QRコード canvas（常にDOMに存在させてrefを維持） */}
         <canvas
@@ -230,16 +232,14 @@ export function QrPreview({
             <span className={styles.placeholderIcon} aria-hidden="true">
               □
             </span>
-            <p className={styles.placeholderText}>
-              URLを入力してQRコードを生成
-            </p>
+            <p className={styles.placeholderText}>{t.placeholder}</p>
           </div>
         )}
 
         {/* エラー */}
         {hasError && !isLoading && (
           <div className={styles.errorOverlay}>
-            <p className={styles.errorText}>QRコードの生成に失敗しました</p>
+            <p className={styles.errorText}>{t.error}</p>
           </div>
         )}
       </div>
@@ -260,10 +260,7 @@ export function QrPreview({
           <span className={styles.warningIcon} aria-hidden="true">
             ⚠
           </span>
-          <span className={styles.warningText}>
-            前景色と背景色のコントラスト比が不足しています（WCAG AA 基準: 4.5:1
-            以上）。QRコードが読み取りにくい場合があります。
-          </span>
+          <span className={styles.warningText}>{t.contrastWarning}</span>
         </div>
       )}
     </div>

@@ -1,6 +1,8 @@
 "use client";
 
 import { trackCaptionSet } from "@/lib/analytics/events";
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import type { CaptionConfig } from "@/types/qr";
 import styles from "./CaptionEditor.module.css";
 
@@ -15,15 +17,12 @@ const MAX_LENGTH = 15;
 const MIN_FONT_SIZE = 10;
 const MAX_FONT_SIZE = 24;
 
-const TEMPLATE_OPTIONS = [
-  "スキャンして詳細を見る",
-  "こちらからアクセス",
-  "QRコードを読み取る",
-  "詳しくはWebで",
-  "今すぐチェック",
-];
+const TEMPLATE_KEYS = ["scan", "access", "read", "web", "check"] as const;
 
 export function CaptionEditor({ caption, onChange }: CaptionEditorProps) {
+  const t = useDict().decoration.caption;
+  const templateOptions = TEMPLATE_KEYS.map((key) => t.templates[key]);
+
   const handleTextChange = (text: string) => {
     onChange({ ...caption, text });
     trackCaptionSet(text.length, false);
@@ -47,7 +46,7 @@ export function CaptionEditor({ caption, onChange }: CaptionEditorProps) {
     <div className={styles.container}>
       <div className={styles.field}>
         <label htmlFor="caption-template" className={styles.label}>
-          テンプレートから選ぶ
+          {t.templateLabel}
         </label>
         <select
           id="caption-template"
@@ -55,8 +54,8 @@ export function CaptionEditor({ caption, onChange }: CaptionEditorProps) {
           value=""
           onChange={handleTemplateChange}
         >
-          <option value="">-- テンプレートを選択 --</option>
-          {TEMPLATE_OPTIONS.map((option) => (
+          <option value="">{t.templatePlaceholder}</option>
+          {templateOptions.map((option) => (
             <option key={option} value={option}>
               {option}
             </option>
@@ -66,7 +65,7 @@ export function CaptionEditor({ caption, onChange }: CaptionEditorProps) {
 
       <div className={styles.field}>
         <label htmlFor="caption-text" className={styles.label}>
-          キャプションテキスト
+          {t.textLabel}
         </label>
         <div className={styles.inputWrapper}>
           <input
@@ -75,7 +74,7 @@ export function CaptionEditor({ caption, onChange }: CaptionEditorProps) {
             className={`${styles.input} ${isOverLimit ? styles["input--warning"] : ""}`}
             value={caption.text}
             onChange={(e) => handleTextChange(e.target.value)}
-            placeholder="キャプションを入力"
+            placeholder={t.textPlaceholder}
             aria-describedby={isOverLimit ? "caption-warning" : "caption-count"}
           />
           <span
@@ -83,7 +82,10 @@ export function CaptionEditor({ caption, onChange }: CaptionEditorProps) {
             className={`${styles.charCount} ${isOverLimit ? styles["charCount--warning"] : ""}`}
             aria-live="polite"
           >
-            {caption.text.length}/{MAX_LENGTH}文字
+            {formatMessage(t.count, {
+              length: caption.text.length,
+              max: MAX_LENGTH,
+            })}
           </span>
         </div>
         {isOverLimit && (
@@ -92,14 +94,14 @@ export function CaptionEditor({ caption, onChange }: CaptionEditorProps) {
             className={styles.warningMessage}
             role="status"
           >
-            キャプションが長すぎると印刷時に見にくくなります
+            {t.tooLong}
           </p>
         )}
       </div>
 
       <div className={styles.field}>
         <label htmlFor="caption-font-size" className={styles.label}>
-          フォントサイズ: {caption.fontSize}px
+          {formatMessage(t.fontSizeLabel, { size: caption.fontSize })}
         </label>
         <input
           id="caption-font-size"
@@ -110,7 +112,7 @@ export function CaptionEditor({ caption, onChange }: CaptionEditorProps) {
           step={1}
           value={caption.fontSize}
           onChange={handleFontSizeChange}
-          aria-label={`フォントサイズ ${caption.fontSize}px`}
+          aria-label={formatMessage(t.fontSizeAria, { size: caption.fontSize })}
         />
         <div className={styles.sliderTicks}>
           <span className={styles.sliderTick}>{MIN_FONT_SIZE}px</span>

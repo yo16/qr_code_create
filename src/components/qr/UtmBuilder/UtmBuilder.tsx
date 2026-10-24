@@ -5,10 +5,10 @@ import { UtmField } from "./UtmField";
 import { UtmGuide } from "./UtmGuide";
 import { EffectivenessIndicator } from "./EffectivenessIndicator";
 import {
-  UTM_SOURCE_OPTIONS,
-  UTM_MEDIUM_OPTIONS,
-  UTM_FIELD_HELP,
+  buildUtmSourceOptions,
+  buildUtmMediumOptions,
 } from "@/lib/constants/utmPresets";
+import { useDict } from "@/i18n/useDict";
 import {
   trackUtmSet,
   trackUtmToggled,
@@ -34,7 +34,10 @@ interface UtmBuilderProps {
 }
 
 export function UtmBuilder({ values, onChange, enabled, onEnabledChange }: UtmBuilderProps) {
+  const { utm: t } = useDict();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const sourceOptions = buildUtmSourceOptions(t);
+  const mediumOptions = buildUtmMediumOptions(t);
 
   const filledCount = [
     values.source,
@@ -84,15 +87,15 @@ export function UtmBuilder({ values, onChange, enabled, onEnabledChange }: UtmBu
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3 className={styles.title}>UTMパラメータ設定</h3>
+        <h3 className={styles.title}>{t.title}</h3>
         <div className={styles.headerRight}>
           <label className={styles.toggleLabel}>
-            <span className={styles.toggleLabelText}>UTMを設定する</span>
+            <span className={styles.toggleLabelText}>{t.toggleLabel}</span>
             <button
               type="button"
               role="switch"
               aria-checked={enabled}
-              aria-label="UTMパラメータを設定する"
+              aria-label={t.toggleAria}
               className={`${styles.toggleSwitch}${enabled ? ` ${styles.toggleSwitchOn}` : ""}`}
               onClick={handleToggle}
             >
@@ -110,10 +113,7 @@ export function UtmBuilder({ values, onChange, enabled, onEnabledChange }: UtmBu
           <span className={styles.warningIcon} aria-hidden="true">
             ⚠
           </span>
-          <p className={styles.warningText}>
-            UTMパラメータなしでは、このQRコードからのアクセスをGoogle
-            Analyticsで追跡できません
-          </p>
+          <p className={styles.warningText}>{t.noUtmWarning}</p>
         </div>
       )}
 
@@ -127,33 +127,33 @@ export function UtmBuilder({ values, onChange, enabled, onEnabledChange }: UtmBu
       <div className={styles.fields}>
         <UtmField
           name="source"
-          label="utm_source（掲載場所）"
+          label={t.fieldLabels.source}
           value={values.source}
           onChange={handleChange("source")}
-          helpText={UTM_FIELD_HELP.source}
-          options={UTM_SOURCE_OPTIONS}
+          helpText={t.fieldHelp.source}
+          options={sourceOptions}
           onTooltipOpen={makeTooltipOpenHandler("source")}
           disabled={!enabled}
         />
 
         <UtmField
           name="medium"
-          label="utm_medium（配布手段）"
+          label={t.fieldLabels.medium}
           value={values.medium}
           onChange={handleChange("medium")}
-          helpText={UTM_FIELD_HELP.medium}
-          options={UTM_MEDIUM_OPTIONS}
+          helpText={t.fieldHelp.medium}
+          options={mediumOptions}
           onTooltipOpen={makeTooltipOpenHandler("medium")}
           disabled={!enabled}
         />
 
         <UtmField
           name="campaign"
-          label="utm_campaign（キャンペーン名）"
+          label={t.fieldLabels.campaign}
           value={values.campaign}
           onChange={handleChange("campaign")}
-          helpText={UTM_FIELD_HELP.campaign}
-          placeholder="例: spring_sale_2026"
+          helpText={t.fieldHelp.campaign}
+          placeholder={t.fieldPlaceholders.campaign}
           onTooltipOpen={makeTooltipOpenHandler("campaign")}
           disabled={!enabled}
         />
@@ -165,7 +165,7 @@ export function UtmBuilder({ values, onChange, enabled, onEnabledChange }: UtmBu
             onClick={() => setShowAdvanced((prev) => !prev)}
             aria-expanded={showAdvanced}
           >
-            {showAdvanced ? "詳細設定を非表示" : "詳細設定を表示"}
+            {showAdvanced ? t.advancedHide : t.advancedShow}
             <span className={styles.toggleIcon} aria-hidden="true">
               {showAdvanced ? "▲" : "▼"}
             </span>
@@ -176,22 +176,22 @@ export function UtmBuilder({ values, onChange, enabled, onEnabledChange }: UtmBu
           <div className={styles.advancedFields}>
             <UtmField
               name="term"
-              label="utm_term（検索キーワード）"
+              label={t.fieldLabels.term}
               value={values.term}
               onChange={handleChange("term")}
-              helpText={UTM_FIELD_HELP.term}
-              placeholder="例: QRコード 作成"
+              helpText={t.fieldHelp.term}
+              placeholder={t.fieldPlaceholders.term}
               onTooltipOpen={makeTooltipOpenHandler("term")}
               disabled={!enabled}
             />
 
             <UtmField
               name="content"
-              label="utm_content（コンテンツ識別子）"
+              label={t.fieldLabels.content}
               value={values.content}
               onChange={handleChange("content")}
-              helpText={UTM_FIELD_HELP.content}
-              placeholder="例: banner_top"
+              helpText={t.fieldHelp.content}
+              placeholder={t.fieldPlaceholders.content}
               onTooltipOpen={makeTooltipOpenHandler("content")}
               disabled={!enabled}
             />

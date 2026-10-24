@@ -4,11 +4,11 @@ import path from "path";
 describe("remark-gfm プラグイン設定", () => {
   const guidePagePath = path.join(
     process.cwd(),
-    "src/app/(marketing)/guide/[slug]/page.tsx"
+    "src/app/(ja)/(marketing)/guide/[slug]/page.tsx"
   );
   const useCasesPagePath = path.join(
     process.cwd(),
-    "src/app/(marketing)/use-cases/[slug]/page.tsx"
+    "src/app/(ja)/(marketing)/use-cases/[slug]/page.tsx"
   );
 
   it("remark-gfm パッケージがインストールされていること", () => {

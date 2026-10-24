@@ -15,12 +15,12 @@ jest.mock("next/navigation", () => ({
 }));
 
 // PosterEditorLoader モック（next/dynamic を含むため軽量な要素に差し替える）
-jest.mock("@/app/(tool)/poster/PosterEditorLoader", () => ({
+jest.mock("@/app/(ja)/(tool)/poster/PosterEditorLoader", () => ({
   PosterEditorLoader: () => <div data-testid="poster-editor" />,
 }));
 
 // PosterPage は依存モックセットアップ後にインポート
-import PosterPage from "@/app/(tool)/poster/page";
+import PosterPage from "@/app/(ja)/(tool)/poster/page";
 
 const { notFound } = jest.requireMock("next/navigation") as { notFound: jest.Mock };
 

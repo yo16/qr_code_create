@@ -147,7 +147,7 @@ describe("デザインガード: 一覧カードのホバー挙動", () => {
   // （色変化・下線などの静かなフィードバックに置き換える）
   it("src/app/(marketing)/**/*.module.css の :hover ブロック内に translateY( がないこと", () => {
     const files = listFiles(
-      path.join(SRC, "app", "(marketing)"),
+      path.join(SRC, "app", "(ja)", "(marketing)"),
       isModuleCss,
       true
     );

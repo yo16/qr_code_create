@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import GuideIndexPage from "@/app/(marketing)/guide/page";
+import GuideIndexPage from "@/app/(ja)/(marketing)/guide/page";
 
 jest.mock("@/lib/content/getAllGuides", () => ({
   getAllGuides: jest.fn(),

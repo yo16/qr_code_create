@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // エージェントの worktree 複製と一時出力・テスト成果物は lint 対象から外す
+    ".claude/**",
+    "tmp/**",
+    "test-results/**",
+    "playwright-report/**",
   ]),
 ]);
 

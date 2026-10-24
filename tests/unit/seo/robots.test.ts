@@ -1,7 +1,5 @@
 import robots from "@/app/robots";
 
-const DEFAULT_SITE_URL = "https://qr-create.jp";
-
 describe("robots", () => {
   describe("sitemapの検証", () => {
     it("返り値にsitemap URLが含まれること", () => {

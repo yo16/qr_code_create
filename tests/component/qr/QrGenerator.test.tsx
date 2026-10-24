@@ -1,7 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QrGenerator } from "@/components/qr/QrGenerator/QrGenerator";
-import type { LogoConfig } from "@/types/qr";
+import type { CaptionConfig, LogoConfig } from "@/types/qr";
+import type { DecorationPreset } from "@/lib/constants/decorationPresets";
 import { trackPresetSelected, trackUtmSet } from "@/lib/analytics/events";
 
 // GA イベント送信をモック（URL 由来の初期適用でイベントが飛ばないことを検証するため）
@@ -9,12 +10,20 @@ jest.mock("@/lib/analytics/events");
 
 // 子コンポーネントをモック
 jest.mock("@/components/qr/UrlInput/UrlInput", () => ({
-  UrlInput: ({ value, onChange, onValidationChange }: any) => (
+  UrlInput: ({
+    value,
+    onChange,
+    onValidationChange,
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+    onValidationChange?: (isValid: boolean) => void;
+  }) => (
     <div data-testid="url-input">
       <input
         data-testid="url-field"
         value={value}
-        onChange={(e: any) => onChange(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
       />
       <button
         data-testid="validate-btn"
@@ -33,7 +42,17 @@ jest.mock("@/components/qr/UrlInput/UrlInput", () => ({
 }));
 
 jest.mock("@/components/qr/UtmBuilder/UtmBuilder", () => ({
-  UtmBuilder: ({ values, onChange, enabled, onEnabledChange }: any) => (
+  UtmBuilder: ({
+    values,
+    onChange,
+    enabled,
+    onEnabledChange,
+  }: {
+    values: Record<string, string>;
+    onChange: (values: Record<string, string>) => void;
+    enabled: boolean;
+    onEnabledChange: (enabled: boolean) => void;
+  }) => (
     <div
       data-testid="utm-builder"
       data-enabled={enabled ? "true" : "false"}
@@ -63,7 +82,7 @@ jest.mock("@/components/qr/UtmBuilder/UtmBuilder", () => ({
 }));
 
 jest.mock("@/components/qr/UrlPreview/UrlPreview", () => ({
-  UrlPreview: (props: any) => (
+  UrlPreview: (props: { url: string; utmEnabled?: boolean }) => (
     <div
       data-testid="url-preview"
       data-utm-enabled={props.utmEnabled !== undefined ? String(props.utmEnabled) : "undefined"}
@@ -74,7 +93,7 @@ jest.mock("@/components/qr/UrlPreview/UrlPreview", () => ({
 }));
 
 jest.mock("@/components/qr/QrPreview/QrPreview", () => ({
-  QrPreview: (props: any) => (
+  QrPreview: (props: { url: string; logo?: LogoConfig | null }) => (
     <div
       data-testid="qr-preview"
       data-logo={props.logo ? JSON.stringify(props.logo) : "null"}
@@ -85,7 +104,7 @@ jest.mock("@/components/qr/QrPreview/QrPreview", () => ({
 }));
 
 jest.mock("@/components/ui/ProgressBar/ProgressBar", () => ({
-  ProgressBar: ({ current, message }: any) => (
+  ProgressBar: ({ current, message }: { current: number; message?: string }) => (
     <div data-testid="progress-bar" data-current={current}>
       {message}
     </div>
@@ -93,13 +112,13 @@ jest.mock("@/components/ui/ProgressBar/ProgressBar", () => ({
 }));
 
 jest.mock("@/components/qr/DecorationPanel/ColorCustomizer", () => ({
-  ColorCustomizer: ({ fgColor, bgColor }: any) => (
+  ColorCustomizer: ({ fgColor, bgColor }: { fgColor: string; bgColor: string }) => (
     <div data-testid="color-customizer" data-fg-color={fgColor} data-bg-color={bgColor} />
   ),
 }));
 
 jest.mock("@/components/qr/DecorationPanel/FrameSelector", () => ({
-  FrameSelector: ({ frame }: any) => (
+  FrameSelector: ({ frame }: { frame?: { type?: string; color?: string } }) => (
     <div data-testid="frame-selector" data-frame-type={frame?.type || "none"} data-frame-color={frame?.color || "#000000"} />
   ),
 }));
@@ -115,7 +134,13 @@ jest.mock("@/components/qr/DownloadPanel/DownloadPanel", () => ({
 }));
 
 jest.mock("@/components/qr/DecorationPanel/PresetSelector", () => ({
-  PresetSelector: ({ currentPresetId, onApplyPreset }: any) => (
+  PresetSelector: ({
+    currentPresetId,
+    onApplyPreset,
+  }: {
+    currentPresetId?: string | null;
+    onApplyPreset: (preset: DecorationPreset) => void;
+  }) => (
     <div data-testid="preset-selector" data-current-preset={currentPresetId || "none"}>
       <button
         data-testid="apply-preset-business"
@@ -152,7 +177,13 @@ jest.mock("@/components/qr/DecorationPanel/PresetSelector", () => ({
 }));
 
 jest.mock("@/components/qr/DecorationPanel/CaptionEditor", () => ({
-  CaptionEditor: ({ caption, onChange }: any) => (
+  CaptionEditor: ({
+    caption,
+    onChange,
+  }: {
+    caption: CaptionConfig;
+    onChange: (caption: CaptionConfig) => void;
+  }) => (
     <div data-testid="caption-editor" data-caption-text={caption.text} data-caption-fontsize={caption.fontSize}>
       <button
         data-testid="set-caption"

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { isContrastSufficient } from "@/lib/color/contrastChecker";
-import { trackQrGenerated } from "@/lib/analytics/events";
+import { trackQrGenerated, trackErrorOccurred } from "@/lib/analytics/events";
 import {
   drawFrame,
   isImageFrame,
@@ -157,11 +157,13 @@ export function QrPreview({
         hasFrame: hasFrame,
         hasCaption: !!(caption && caption.text.trim() !== ""),
       });
-    } catch {
+    } catch (error) {
+      trackErrorOccurred("qr_render", error instanceof Error ? error.name : "unknown");
       setHasError(true);
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- canvasRef は ref で安定、caption は計測にのみ使い再描画に不要（入れると文言入力のたびに再生成される）
   }, [url, fgColor, bgColor, size, shouldRender, logo, frameConfig, hasFrame, hasImageFrame]);
 
   // URL・色・サイズ・フレームが変わったら 500ms デバウンスして再生成
@@ -189,6 +191,7 @@ export function QrPreview({
         clearTimeout(debounceTimerRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- canvasRef は ref で参照が安定しており再実行のトリガーに不要
   }, [generateQr, shouldRender]);
 
   return (

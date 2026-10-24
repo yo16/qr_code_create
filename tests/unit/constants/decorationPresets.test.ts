@@ -1,4 +1,4 @@
-import { DECORATION_PRESETS, type DecorationPreset } from "@/lib/constants/decorationPresets";
+import { DECORATION_PRESETS } from "@/lib/constants/decorationPresets";
 
 describe("decorationPresets", () => {
   describe("DECORATION_PRESETS", () => {

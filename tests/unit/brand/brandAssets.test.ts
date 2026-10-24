@@ -151,3 +151,55 @@ describe("src/app/favicon.ico（旧ブラウザ向け）", () => {
     expect(readPngSize(buf.subarray(ICO_FIRST_IMAGE_OFFSET))).toEqual({ width: 32, height: 32 });
   });
 });
+
+describe("OG 画像（qr_code_create-1ge）", () => {
+  /** buildMetadata.ts が全ページの og:image / twitter:image の既定値として参照する画像 */
+  const OG_PNG = path.join(ROOT, "public", "images", "og", "default.png");
+  /** `npm run build:og` が Chromium でレンダリングして PNG 化する元の HTML */
+  const OG_TEMPLATE_HTML = path.join(ROOT, "scripts", "og-template.html");
+  /** OGP の推奨サイズ。buildMetadata.ts の openGraph.images の width / height と同じ値 */
+  const OG_SIZE = { width: 1200, height: 630 };
+
+  it("public/images/og/default.png が存在し、PNG シグネチャで始まること", () => {
+    // 以前は .gitkeep しかなく 404 だった（タスクの発端）。SNS や ChatGPT のリンクプレビューで
+    // 画像が出ない状態に戻らないよう、ファイルの存在と PNG であることを固定する
+    expect(fs.existsSync(OG_PNG)).toBe(true);
+    expectPngSignature(fs.readFileSync(OG_PNG));
+  });
+
+  it("default.png が 1200×630 であること", () => {
+    // buildMetadata.ts は width: 1200, height: 630 と宣言して配信する。実ファイルと食い違うと
+    // プレビューの切り抜きや縮尺が崩れるため、IHDR の幅・高さを宣言値と一致させる
+    expect(readPngSize(fs.readFileSync(OG_PNG))).toEqual(OG_SIZE);
+  });
+
+  it("scripts/og-template.html が存在し、マークの path の d が public/brand/mark.svg と一致すること", () => {
+    // テンプレートは mark.svg を読み込まず、同じ path を inline SVG として持つ（外部依存をなくすため）。
+    // マークの形を変えたときにテンプレートだけ古いまま残り、再生成した OG 画像が
+    // ヘッダや favicon と別の形になるのを防ぐ手動同期ガード
+    expect(fs.existsSync(OG_TEMPLATE_HTML)).toBe(true);
+    const svgPaths = extractPathData(fs.readFileSync(MARK_SVG, "utf8"));
+    const templatePaths = extractPathData(fs.readFileSync(OG_TEMPLATE_HTML, "utf8"));
+    expect(svgPaths.length).toBeGreaterThanOrEqual(1);
+    expect(templatePaths).toEqual(svgPaths);
+  });
+
+  it("og-template.html が外部リソースを参照しないこと（link / script / http(s) URL / url()）", () => {
+    // 生成をネットワークや CDN に依存させない。オフラインでも同じ PNG を再生成できることの保証。
+    // inline SVG の xmlns 属性は名前空間の識別子であり通信は発生しないので、判定前に取り除く
+    const html = fs
+      .readFileSync(OG_TEMPLATE_HTML, "utf8")
+      .replace(/\sxmlns="http:\/\/www\.w3\.org\/2000\/svg"/g, "");
+    expect(html).not.toMatch(/<link\b/i);
+    expect(html).not.toMatch(/<script\b/i);
+    expect(html).not.toContain("http://");
+    expect(html).not.toContain("https://");
+    expect(html).not.toContain("url(");
+  });
+
+  it('og-template.html に id="og" の要素があること', () => {
+    // 生成スクリプトは page.locator("#og").screenshot() でこの要素だけを撮る。
+    // id を変えると生成が失敗する（またはページ全体が撮られる）ので固定する
+    expect(fs.readFileSync(OG_TEMPLATE_HTML, "utf8")).toContain('id="og"');
+  });
+});

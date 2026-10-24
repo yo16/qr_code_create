@@ -1,32 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { INITIAL_POSTER_STATE, type PosterState } from "@/types/poster";
 import { loadPosterHandoff } from "@/lib/handoff/posterHandoff";
 import { generatePosterPdf } from "@/lib/pdf/generatePosterPdf";
 import { validateUrl } from "@/lib/url/validateUrl";
 import styles from "./PosterEditor.module.css";
 
-export function PosterEditor() {
-  const [state, setState] = useState<PosterState>(INITIAL_POSTER_STATE);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [handoffLoaded, setHandoffLoaded] = useState(false);
+const subscribeNoop = () => () => {};
 
-  // マウント時に sessionStorage から引き継ぎ state を読み込む
-  useEffect(() => {
-    const payload = loadPosterHandoff();
-    if (payload) {
-      setState((prev) => ({
-        ...prev,
-        url: payload.url,
-        isUrlValid: payload.isUrlValid,
-        utm: payload.utm,
-        utmEnabled: payload.utmEnabled,
-        decoration: payload.decoration,
-      }));
-    }
-    setHandoffLoaded(true);
-  }, []);
+/** sessionStorage から引き継ぎ state を読み込んで初期 state を作る */
+function createInitialState(): PosterState {
+  const payload = loadPosterHandoff();
+  if (!payload) return INITIAL_POSTER_STATE;
+  return {
+    ...INITIAL_POSTER_STATE,
+    url: payload.url,
+    isUrlValid: payload.isUrlValid,
+    utm: payload.utm,
+    utmEnabled: payload.utmEnabled,
+    decoration: payload.decoration,
+  };
+}
+
+export function PosterEditor() {
+  // サーバー/ハイドレーション時は false、クライアントで確定後に true（sessionStorage はクライアントでのみ読める）
+  const isClient = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false
+  );
+
+  // handoff 読み込み前は何も表示しない（ちらつき防止）
+  if (!isClient) {
+    return <div className={styles.loading} aria-live="polite">読み込み中...</div>;
+  }
+
+  return <PosterEditorContent />;
+}
+
+function PosterEditorContent() {
+  const [state, setState] = useState<PosterState>(createInitialState);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const url = e.target.value;
@@ -47,11 +62,6 @@ export function PosterEditor() {
       setIsGenerating(false);
     }
   };
-
-  // handoff 読み込み前は何も表示しない（ちらつき防止）
-  if (!handoffLoaded) {
-    return <div className={styles.loading} aria-live="polite">読み込み中...</div>;
-  }
 
   return (
     <div className={styles.container}>

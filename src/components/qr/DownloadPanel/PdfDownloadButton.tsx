@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button/Button";
 import { exportToPdf } from "@/lib/qr/pdfExporter";
-import { trackQrDownloaded } from "@/lib/analytics/events";
+import { trackQrDownloaded, trackErrorOccurred } from "@/lib/analytics/events";
 import { createCanvasWithCaption } from "@/lib/qr/captionCompositor";
 import type { CaptionConfig } from "@/types/qr";
 
@@ -33,6 +33,9 @@ export function PdfDownloadButton({
       const exportCanvas = createCanvasWithCaption(canvas, caption);
       await exportToPdf(exportCanvas, "qrcode.pdf");
       trackQrDownloaded({ format: "pdf", hasUtm, decorationCount });
+    } catch (error) {
+      trackErrorOccurred("pdf_export", error instanceof Error ? error.name : "unknown");
+      console.error("PDF export failed", error);
     } finally {
       setIsLoading(false);
     }

@@ -794,7 +794,7 @@ export interface ContentListItem<T extends ContentType> {
 
 ### 4.1 イベント定義
 
-[マーケティング戦略 セクション10](../marketing-strategy.md) に基づく全16種のカスタムイベント。
+[マーケティング戦略 セクション10](../marketing-strategy.md) に基づくカスタムイベント（種類と一覧はマーケティング戦略のイベント表が正。qr_code_create-pa6 で件数表記を外した）。
 
 ```typescript
 /**
@@ -808,7 +808,6 @@ export type AnalyticsEventName =
   | 'utm_campaign_set'
   | 'utm_term_set'
   | 'utm_content_set'
-  | 'utm_params_count'
   | 'logo_uploaded'
   | 'color_customized'
   | 'frame_selected'
@@ -818,7 +817,8 @@ export type AnalyticsEventName =
   | 'qr_downloaded'
   | 'poster_generated'
   | 'guide_tooltip_opened'
-  | 'help_article_clicked';
+  | 'cta_clicked'
+  | 'error_occurred';
 
 /**
  * 各イベントのプロパティ型
@@ -844,9 +844,6 @@ export interface AnalyticsEventParams {
   };
   utm_term_set: Record<string, never>;
   utm_content_set: Record<string, never>;
-  utm_params_count: {
-    count: number;
-  };
   logo_uploaded: {
     file_type: string;
     file_size_kb: number;
@@ -890,8 +887,16 @@ export interface AnalyticsEventParams {
     tooltip_id: string;
     field_name: string;
   };
-  help_article_clicked: {
-    article_slug: string;
+  cta_clicked: {
+    button_text: string;
+    /** hero / top_bottom / header / mobile_nav / article_bottom */
+    location: string;
+  };
+  error_occurred: {
+    /** qr_render / pdf_export */
+    error_type: string;
+    /** エラーの種類（Error.name）のみ。メッセージ本文やURLは含めない */
+    error_message: string;
   };
 }
 ```

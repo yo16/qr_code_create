@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { renderToString } from "react-dom/server";
 import type { PosterHandoffPayload } from "@/types/poster";
 
 // posterHandoff モック
@@ -52,18 +52,25 @@ beforeEach(() => {
 
 describe("PosterEditor", () => {
   describe("初期表示", () => {
-    it("handoff 読み込み前にローディング表示が出ること", () => {
-      // loadPosterHandoff が解決しない状態をシミュレートするため
-      // コンポーネントは useEffect でロードするので、レンダリング直後に確認
-      mockLoadPosterHandoff.mockReturnValue(null);
+    it("サーバー描画（getServerSnapshot 経路）ではローディング表示のみで、フォームも handoff 読み込みも行われないこと", () => {
+      // PosterEditor は useSyncExternalStore でクライアント判定している。
+      // サーバー描画・ハイドレーション時は getServerSnapshot（false）が使われ
+      // 「読み込み中...」だけを返し、sessionStorage を読む createInitialState は呼ばれない。
+      // RTL の render() はクライアント経路（getSnapshot=true）で即フォームになるため、
+      // サーバー経路は react-dom/server の renderToString で検証する。
+      mockLoadPosterHandoff.mockReturnValue(testPayload);
 
-      // useEffect は非同期なのでレンダリング直後を確認する
-      // jsdom では同期的に useEffect が動くが、handoffLoaded の初期値は false
-      const { container } = render(<PosterEditor />);
-      // 最初は「読み込み中...」が表示される（jsdom では useEffect 実行前）
-      // ただし React Testing Library ではレンダリング後に useEffect が実行されるため
-      // waitFor で handoffLoaded=true になった後を確認する
-      expect(container).toBeDefined();
+      const html = renderToString(<PosterEditor />);
+
+      // ローディング表示が出ること（aria-live で読み上げ対象）
+      expect(html).toContain("読み込み中...");
+      expect(html).toContain('aria-live="polite"');
+      // フォーム（URL 入力・ダウンロードボタン）はサーバー描画に含まれないこと
+      expect(html).not.toContain("QRコードに埋め込むURL");
+      expect(html).not.toContain('id="poster-url"');
+      expect(html).not.toContain("PDFをダウンロード");
+      // サーバー経路では sessionStorage を読む loadPosterHandoff が呼ばれないこと
+      expect(mockLoadPosterHandoff).not.toHaveBeenCalled();
     });
 
     it("handoff 読み込み後にフォームが表示されること", async () => {

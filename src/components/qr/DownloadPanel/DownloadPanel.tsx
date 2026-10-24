@@ -8,7 +8,7 @@ import { ResolutionSelector, type Resolution } from "./ResolutionSelector";
 import type { CaptionConfig, UtmParams, DecorationConfig } from "@/types/qr";
 import { savePosterHandoff } from "@/lib/handoff/posterHandoff";
 import { FEATURE_FLAGS } from "@/lib/constants/features";
-import { useDict } from "@/i18n/useDict";
+import { useDict, useLocale } from "@/i18n/useDict";
 import styles from "./DownloadPanel.module.css";
 
 interface DownloadPanelProps {
@@ -38,6 +38,8 @@ export function DownloadPanel({
   decoration,
 }: DownloadPanelProps) {
   const t = useDict().tool.download;
+  // /poster に英語版は無いので、en では導線を出さない
+  const locale = useLocale();
   const [resolution, setResolution] = useState<Resolution>(1);
   const router = useRouter();
 
@@ -93,7 +95,7 @@ export function DownloadPanel({
               caption={caption}
             />
           </div>
-          {FEATURE_FLAGS.posterPage && (
+          {FEATURE_FLAGS.posterPage && locale === "ja" && (
             <div className={styles.ctaSection}>
               <button
                 type="button"

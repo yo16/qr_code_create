@@ -82,8 +82,10 @@ interface QrGeneratorProps {
 }
 
 export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
-  const { tool } = useDict();
-  const [initial] = useState(() => buildInitialQrState(initialParams));
+  const { tool, decoration } = useDict();
+  const [initial] = useState(() =>
+    buildInitialQrState(initialParams, decoration)
+  );
   const [state, setState] = useState<QrState>(initial.state);
   const [frameConfig, setFrameConfig] = useState<FrameConfig>(initial.frameConfig);
   const canvasRef = useRef<HTMLCanvasElement>(null);

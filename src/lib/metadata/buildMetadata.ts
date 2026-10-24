@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { ja } from "@/i18n/ja";
+import { getDict } from "@/i18n/getDict";
+import type { Locale } from "@/i18n/types";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 const SITE_NAME = "QR Code Create";
@@ -12,7 +14,12 @@ interface BuildMetadataOptions {
   noIndex?: boolean;
 }
 
-export function buildMetadata(options: BuildMetadataOptions): Metadata {
+const OG_LOCALES: Record<Locale, string> = { ja: "ja_JP", en: "en_US" };
+
+export function buildMetadata(
+  options: BuildMetadataOptions,
+  locale: Locale = "ja"
+): Metadata {
   const { title, description, path, ogImagePath = "/images/og/default.png", noIndex = false } = options;
   const url = `${SITE_URL}${path}`;
   const imageUrl = `${SITE_URL}${ogImagePath}`;
@@ -27,7 +34,7 @@ export function buildMetadata(options: BuildMetadataOptions): Metadata {
       url,
       siteName: SITE_NAME,
       images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
-      locale: "ja_JP",
+      locale: OG_LOCALES[locale],
       type: "website",
     },
     twitter: {
@@ -52,4 +59,12 @@ export const PAGE_METADATA = {
   guide: { ...pages.guide, path: "/guide" },
   useCases: { ...pages.useCases, path: "/use-cases" },
   blog: { ...pages.blog, path: "/blog" },
+} as const;
+
+// 英語版（home と create だけ）。使うときは buildMetadata(PAGE_METADATA_EN.home, "en")
+const pagesEn = getDict("en").meta.pages;
+
+export const PAGE_METADATA_EN = {
+  home: { ...pagesEn.home, path: "/en" },
+  create: { ...pagesEn.create, path: "/en/create" },
 } as const;

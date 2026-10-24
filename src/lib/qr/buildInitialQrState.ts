@@ -1,4 +1,8 @@
-import { DECORATION_PRESETS } from "@/lib/constants/decorationPresets";
+import {
+  DECORATION_PRESETS,
+  buildDecorationPresets,
+} from "@/lib/constants/decorationPresets";
+import type { ClientDict } from "@/i18n/types";
 import { DEFAULT_FRAME_CONFIG, type FrameConfig } from "@/lib/qr/frameRenderer";
 import type { CreateInitialParams } from "@/lib/url/parseCreateSearchParams";
 import { INITIAL_QR_STATE, type QrState } from "@/types/qr";
@@ -8,7 +12,9 @@ import { INITIAL_QR_STATE, type QrState } from "@/types/qr";
  * 既定値はコピーして返し、共有定数は変更しない。
  */
 export function buildInitialQrState(
-  initial?: CreateInitialParams
+  initial?: CreateInitialParams,
+  /** 省略時は ja。en の `?preset=` でキャプションを英語にするため、辞書の decoration スライスを渡す */
+  decorationDict?: ClientDict["decoration"]
 ): { state: QrState; frameConfig: FrameConfig } {
   const state: QrState = {
     ...INITIAL_QR_STATE,
@@ -23,7 +29,10 @@ export function buildInitialQrState(
   if (!initial) return { state, frameConfig };
 
   if (initial.preset) {
-    const preset = DECORATION_PRESETS.find((p) => p.id === initial.preset);
+    const presets = decorationDict
+      ? buildDecorationPresets(decorationDict)
+      : DECORATION_PRESETS;
+    const preset = presets.find((p) => p.id === initial.preset);
     if (preset) {
       state.decoration.fgColor = preset.fgColor;
       state.decoration.bgColor = preset.bgColor;

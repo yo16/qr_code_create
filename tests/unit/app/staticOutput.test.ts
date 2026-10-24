@@ -6,6 +6,8 @@
 // ビルド成果物のブロックは .next/server/app が無ければ skip（REQUIRE_BUILD_OUTPUT=1 なら fail）。
 import fs from "fs";
 import path from "path";
+import { en } from "@/i18n/en";
+import { enClient } from "@/i18n/enClient";
 
 const ROOT = process.cwd();
 const APP = path.join(ROOT, "src", "app");
@@ -33,6 +35,47 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
       expect(fs.existsSync(full)).toBe(true);
     }
   );
+
+  // 意図（qr_code_create-01z.4）: en の文言が Client バンドル（.next/static）に入っていない。
+  // en は getDict 経由で Server からだけ読まれ、Client へは RSC ペイロード（HTML 内）で渡る想定。
+  // needle は辞書から導出し、Server スライス（hero の説明文）と Client スライス（ボタン・aria-label・ラベル）の両方を含める。
+  const SERVER_NEEDLES = [en.home.hero.description];
+  const CLIENT_NEEDLES = [
+    enClient.tool.download.pngButton,
+    enClient.tool.qrPreview.ariaGenerated,
+    enClient.decoration.caption.textLabel,
+  ];
+
+  // 意図: 対照。同じ文字列がサーバー出力の HTML には入っている（needle が正しく、空振りでない）
+  it("対照: needle が .next/server/app の en.html / en/create.html に含まれること", () => {
+    const enHtml = fs.readFileSync(path.join(BUILD_APP, "en.html"), "utf8");
+    const createHtml = fs.readFileSync(path.join(BUILD_APP, "en", "create.html"), "utf8");
+    for (const n of SERVER_NEEDLES) expect(enHtml).toContain(n);
+    for (const n of CLIENT_NEEDLES) expect(createHtml).toContain(n);
+  });
+
+  it(".next/static に en 固有の文字列（Server / Client スライスの代表）が無いこと", () => {
+    const STATIC = path.join(ROOT, ".next", "static");
+    if (!fs.existsSync(STATIC)) {
+      throw new Error(`${STATIC} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const walk = (dir: string): string[] =>
+      fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) return walk(full);
+        return /\.(js|html|json|txt)$/.test(entry.name) ? [full] : [];
+      });
+    const files = walk(STATIC);
+    expect(files.length).toBeGreaterThan(0);
+    const needles = [...SERVER_NEEDLES, ...CLIENT_NEEDLES];
+    const hits = files.flatMap((file) => {
+      const text = fs.readFileSync(file, "utf8");
+      return needles
+        .filter((n) => text.includes(n))
+        .map((n) => `${path.relative(ROOT, file)}: ${n}`);
+    });
+    expect(hits).toEqual([]);
+  });
 });
 
 describe("動的レンダリングを招く API を使っていないこと", () => {

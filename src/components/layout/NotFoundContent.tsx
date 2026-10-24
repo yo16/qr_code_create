@@ -1,29 +1,20 @@
 import Link from "next/link";
 import { getDict } from "@/i18n/getDict";
+import { localePath } from "@/lib/i18n/routes";
+import type { Locale } from "@/i18n/types";
 
 interface NotFoundContentProps {
-  locale: "ja" | "en";
+  locale: Locale;
 }
 
-// en は T3 で en.ts の common.notFound に移すまで、ここに残す
-const EN_COPY = {
-  title: "Page not found",
-  body: "The page you are looking for does not exist or may have been moved.",
-  link: "Back to the home page",
-  href: "/en",
-} as const;
-
 export function NotFoundContent({ locale }: NotFoundContentProps) {
-  const copy =
-    locale === "en"
-      ? EN_COPY
-      : { ...getDict("ja").common.notFound, href: "/" };
+  const copy = getDict(locale).common.notFound;
   return (
     <main>
       <h1>{copy.title}</h1>
       <p>{copy.body}</p>
       <p>
-        <Link href={copy.href}>{copy.link}</Link>
+        <Link href={localePath(locale, "/")}>{copy.link}</Link>
       </p>
     </main>
   );

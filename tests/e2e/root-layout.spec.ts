@@ -37,12 +37,7 @@ test.describe("html[lang] の切り替え", () => {
       await expect(page.locator("html")).toHaveAttribute("lang", lang);
     });
   }
-
-  test("/en の meta robots に noindex が含まれること", async ({ page }) => {
-    await page.goto("/en", { timeout: NAV_TIMEOUT });
-    const robots = await page.locator('meta[name="robots"]').getAttribute("content");
-    expect(robots ?? "").toContain("noindex");
-  });
+  // /en の robots と canonical の検査は tests/e2e/en-pages.spec.ts に移した（qr_code_create-01z.4）
 });
 
 test.describe("ルートメタデータの ja / en 取り違え", () => {
@@ -53,7 +48,7 @@ test.describe("ルートメタデータの ja / en 取り違え", () => {
 
   test("/en の title に英語の既定タイトルが含まれ、日本語を含まないこと", async ({ page }) => {
     await page.goto("/en", { timeout: NAV_TIMEOUT });
-    // rootMetadataEn.title.default の一部
+    // PAGE_METADATA_EN.home.title の一部
     await expect(page).toHaveTitle(/Free QR code generator with UTM parameters/);
     await expect(page).not.toHaveTitle(/UTMパラメータ付き/);
   });

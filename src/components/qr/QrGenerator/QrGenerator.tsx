@@ -17,6 +17,8 @@ import { buildUtmUrl } from "@/lib/url/buildUtmUrl";
 import type { FrameConfig } from "@/lib/qr/frameRenderer";
 import { buildInitialQrState } from "@/lib/qr/buildInitialQrState";
 import type { CreateInitialParams } from "@/lib/url/parseCreateSearchParams";
+import { useDict } from "@/i18n/useDict";
+import type { ClientDict } from "@/i18n/types";
 import type { CaptionConfig, LogoConfig, QrState } from "@/types/qr";
 import styles from "./QrGenerator.module.css";
 
@@ -45,11 +47,14 @@ function getCompletionPercent(state: QrState): number {
   return Math.round((steps / 3) * 100);
 }
 
-function getProgressMessage(percent: number): string {
-  if (percent === 0) return "URLを入力してQRコードを作成しましょう";
-  if (percent <= 33) return "UTMパラメータを設定するとマーケティング効果UP！";
-  if (percent <= 66) return "装飾でQRコードをもっと魅力的に";
-  return "QRコードが完成しました！";
+function getProgressMessage(
+  percent: number,
+  messages: ClientDict["tool"]["progress"]
+): string {
+  if (percent === 0) return messages.start;
+  if (percent <= 33) return messages.utm;
+  if (percent <= 66) return messages.decoration;
+  return messages.done;
 }
 
 function getStepState(
@@ -77,6 +82,7 @@ interface QrGeneratorProps {
 }
 
 export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
+  const { tool } = useDict();
   const [initial] = useState(() => buildInitialQrState(initialParams));
   const [state, setState] = useState<QrState>(initial.state);
   const [frameConfig, setFrameConfig] = useState<FrameConfig>(initial.frameConfig);
@@ -167,7 +173,7 @@ export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
   ].filter(Boolean).length;
 
   const completionPercent = getCompletionPercent(state);
-  const progressMessage = getProgressMessage(completionPercent);
+  const progressMessage = getProgressMessage(completionPercent, tool.progress);
 
   const builtUrl = buildUtmUrl(state.url, state.utm, state.utmEnabled);
 
@@ -183,13 +189,13 @@ export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
         {/* ステップ1: URL入力 */}
         <section
           className={stepCardClassName(step1State, styles)}
-          aria-label="ステップ1: URL入力"
+          aria-label={tool.steps.url.label}
         >
           <div className={styles.stepHeader}>
             <span className={styles.stepBadge} aria-hidden="true">
               1
             </span>
-            <h2 className={styles.stepTitle}>URLを入力</h2>
+            <h2 className={styles.stepTitle}>{tool.steps.url.title}</h2>
           </div>
           <UrlInput
             value={state.url}
@@ -201,13 +207,13 @@ export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
         {/* ステップ2: UTMパラメータ設定 */}
         <section
           className={stepCardClassName(step2State, styles)}
-          aria-label="ステップ2: UTMパラメータ設定"
+          aria-label={tool.steps.utm.label}
         >
           <div className={styles.stepHeader}>
             <span className={styles.stepBadge} aria-hidden="true">
               2
             </span>
-            <h2 className={styles.stepTitle}>UTMパラメータ設定</h2>
+            <h2 className={styles.stepTitle}>{tool.steps.utm.title}</h2>
           </div>
           <UtmBuilder
             values={state.utm}
@@ -220,13 +226,13 @@ export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
         {/* ステップ3: 装飾設定 */}
         <section
           className={stepCardClassName(step3State, styles)}
-          aria-label="ステップ3: 装飾設定"
+          aria-label={tool.steps.decoration.label}
         >
           <div className={styles.stepHeader}>
             <span className={styles.stepBadge} aria-hidden="true">
               3
             </span>
-            <h2 className={styles.stepTitle}>装飾設定</h2>
+            <h2 className={styles.stepTitle}>{tool.steps.decoration.title}</h2>
           </div>
           <PresetSelector
             currentPresetId={state.decoration.preset}
@@ -255,13 +261,13 @@ export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
         {/* ステップ4: ダウンロード */}
         <section
           className={stepCardClassName(step4State, styles)}
-          aria-label="ステップ4: ダウンロード"
+          aria-label={tool.steps.download.label}
         >
           <div className={styles.stepHeader}>
             <span className={styles.stepBadge} aria-hidden="true">
               4
             </span>
-            <h2 className={styles.stepTitle}>ダウンロード</h2>
+            <h2 className={styles.stepTitle}>{tool.steps.download.title}</h2>
           </div>
           <DownloadPanel
             canvasRef={canvasRef}
@@ -285,7 +291,7 @@ export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
             <ProgressBar
               current={completionPercent}
               total={100}
-              label="完成度"
+              label={tool.progress.label}
               message={progressMessage}
             />
             <UrlPreview

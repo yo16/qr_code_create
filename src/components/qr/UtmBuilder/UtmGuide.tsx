@@ -1,4 +1,7 @@
-import { UTM_USAGE_EXAMPLES } from "@/lib/constants/utmPresets";
+"use client";
+
+import { buildUtmUsageExamples } from "@/lib/constants/utmPresets";
+import { useDict } from "@/i18n/useDict";
 import styles from "./UtmBuilder.module.css";
 
 interface UtmGuideProps {
@@ -11,13 +14,15 @@ interface UtmGuideProps {
 }
 
 export function UtmGuide({ currentSource, onApplyExample }: UtmGuideProps) {
+  const { utm } = useDict();
+  const examples = buildUtmUsageExamples(utm);
   return (
     <div className={styles.usageExamples}>
-      <p className={styles.usageExamplesLabel}>用途別設定例:</p>
+      <p className={styles.usageExamplesLabel}>{utm.usageExamplesLabel}</p>
       <div className={styles.usageExampleButtons}>
-        {UTM_USAGE_EXAMPLES.map((example) => (
+        {examples.map((example) => (
           <button
-            key={example.label}
+            key={example.source}
             type="button"
             className={[
               styles.exampleButton,

@@ -9,6 +9,7 @@ import {
 } from "@/lib/qr/canvasExporter";
 import { trackQrDownloaded } from "@/lib/analytics/events";
 import { createCanvasWithCaption } from "@/lib/qr/captionCompositor";
+import { useDict } from "@/i18n/useDict";
 import type { CaptionConfig } from "@/types/qr";
 import type { Resolution } from "./ResolutionSelector";
 
@@ -31,8 +32,8 @@ export function DownloadButton({
   resolution = 1,
   caption,
 }: DownloadButtonProps) {
-  const label =
-    format === "png" ? "PNG形式でダウンロード" : "SVG形式でダウンロード";
+  const t = useDict().tool.download;
+  const label = format === "png" ? t.pngButton : t.svgButton;
 
   const handleClick = () => {
     const canvas = canvasRef.current;

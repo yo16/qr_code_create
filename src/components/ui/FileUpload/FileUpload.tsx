@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState, useId } from "react";
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import styles from "./FileUpload.module.css";
 
 interface FileUploadProps {
@@ -20,6 +22,7 @@ export function FileUpload({
   preview,
   error,
 }: FileUploadProps) {
+  const t = useDict().ui.fileUpload;
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -31,9 +34,7 @@ export function FileUpload({
 
   const processFile = (file: File) => {
     if (maxSizeKB && file.size > maxSizeKB * 1024) {
-      setInternalError(
-        `ファイルサイズが上限（${maxSizeKB}KB）を超えています。`
-      );
+      setInternalError(formatMessage(t.sizeExceeded, { max: maxSizeKB }));
       setSelectedFileName(null);
       onFileSelect(null);
       return;
@@ -114,14 +115,14 @@ export function FileUpload({
         ]
           .filter(Boolean)
           .join(" ")}
-        aria-label={`${label}。クリックまたはドラッグ&ドロップでファイルを選択`}
+        aria-label={formatMessage(t.dropZoneAria, { label })}
         aria-describedby={displayError ? errorId : undefined}
       >
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={preview}
-            alt="プレビュー"
+            alt={t.previewAlt}
             className={styles.preview}
           />
         ) : (
@@ -129,17 +130,15 @@ export function FileUpload({
             <span className={styles.icon} aria-hidden="true">
               &#128193;
             </span>
-            <span className={styles.placeholderText}>
-              クリックまたはドラッグ&ドロップ
-            </span>
+            <span className={styles.placeholderText}>{t.dropText}</span>
             {accept && (
               <span className={styles.acceptText}>
-                対応形式: {accept}
+                {formatMessage(t.accept, { accept })}
               </span>
             )}
             {maxSizeKB && (
               <span className={styles.acceptText}>
-                最大サイズ: {maxSizeKB}KB
+                {formatMessage(t.maxSize, { max: maxSizeKB })}
               </span>
             )}
           </div>
@@ -152,7 +151,7 @@ export function FileUpload({
             type="button"
             onClick={handleRemove}
             className={styles.removeButton}
-            aria-label="選択したファイルを削除"
+            aria-label={t.removeAria}
           >
             &#x2715;
           </button>

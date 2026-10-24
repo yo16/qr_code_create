@@ -1,6 +1,10 @@
+"use client";
+
 import { Select } from "@/components/ui/Select/Select";
 import { Input } from "@/components/ui/Input/Input";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import styles from "./UtmBuilder.module.css";
 
 interface UtmFieldProps {
@@ -27,6 +31,7 @@ export function UtmField({
   onTooltipOpen,
   disabled = false,
 }: UtmFieldProps) {
+  const { utm: t } = useDict();
   return (
     <div
       className={`${styles.fieldRow}${disabled ? ` ${styles.fieldRowDisabled}` : ""}`}
@@ -49,7 +54,7 @@ export function UtmField({
             onChange={onChange}
             type="text"
             placeholder={placeholder}
-            helpText={name === "campaign" ? "日付や内容を含めると管理しやすくなります" : undefined}
+            helpText={name === "campaign" ? t.campaignHint : undefined}
             disabled={disabled}
           />
         )}
@@ -57,7 +62,7 @@ export function UtmField({
           <button
             type="button"
             className={styles.helpButton}
-            aria-label={`${label}のヘルプ`}
+            aria-label={formatMessage(t.helpButtonAria, { label })}
             disabled={disabled}
           >
             ?

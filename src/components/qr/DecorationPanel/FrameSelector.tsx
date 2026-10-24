@@ -2,8 +2,19 @@
 
 import Image from "next/image";
 import { ColorPicker } from "@/components/ui/ColorPicker/ColorPicker";
-import { FRAME_OPTIONS, isImageFrame, type FrameConfig, type FrameOption, type FrameType } from "@/lib/qr/frameRenderer";
+import {
+  FRAME_CATEGORY_KEYS,
+  FRAME_DEFINITIONS,
+  FRAME_OPTIONS,
+  isImageFrame,
+  type FrameCategoryKey,
+  type FrameConfig,
+  type FrameDefinition,
+  type FrameType,
+} from "@/lib/qr/frameRenderer";
 import { trackFrameSelected } from "@/lib/analytics/events";
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import styles from "./FrameSelector.module.css";
 
 interface FrameSelectorProps {
@@ -11,31 +22,22 @@ interface FrameSelectorProps {
   onChange: (frame: FrameConfig) => void;
 }
 
-// カテゴリの表示順
-const CATEGORY_ORDER = [
-  "基本",
-  "装飾",
-  "ターゲット別",
-  "画像：シンプル",
-  "画像：装飾",
-] as const;
-
-type Category = (typeof CATEGORY_ORDER)[number];
-
 function groupByCategory(
-  options: FrameOption[]
-): Record<Category, FrameOption[]> {
-  const result = {} as Record<Category, FrameOption[]>;
-  for (const cat of CATEGORY_ORDER) {
-    result[cat] = options.filter((o) => o.category === cat);
+  definitions: FrameDefinition[]
+): Record<FrameCategoryKey, FrameDefinition[]> {
+  const result = {} as Record<FrameCategoryKey, FrameDefinition[]>;
+  for (const key of FRAME_CATEGORY_KEYS) {
+    result[key] = definitions.filter((d) => d.categoryKey === key);
   }
   return result;
 }
 
 export function FrameSelector({ frame, onChange }: FrameSelectorProps) {
-  const grouped = groupByCategory(FRAME_OPTIONS);
+  const t = useDict().decoration.frame;
+  const grouped = groupByCategory(FRAME_DEFINITIONS);
 
   const handleTypeChange = (type: FrameType) => {
+    // GA の category 値は言語によらず ja の値で送る（FRAME_OPTIONS は ja 辞書から組み立てた既存 export）
     const option = FRAME_OPTIONS.find((o) => o.type === type);
     const category = option?.category ?? "";
     onChange({ ...frame, type });
@@ -50,15 +52,21 @@ export function FrameSelector({ frame, onChange }: FrameSelectorProps) {
 
   return (
     <div className={styles.container}>
-      {CATEGORY_ORDER.map((category) => {
-        const options = grouped[category];
+      {FRAME_CATEGORY_KEYS.map((categoryKey) => {
+        const options = grouped[categoryKey];
         if (!options || options.length === 0) return null;
+        const category = t.categories[categoryKey];
         return (
-          <div key={category} className={styles.category}>
+          <div key={categoryKey} className={styles.category}>
             <p className={styles.categoryLabel}>{category}</p>
-            <div className={styles.grid} role="group" aria-label={`${category}フレーム`}>
+            <div
+              className={styles.grid}
+              role="group"
+              aria-label={formatMessage(t.groupLabel, { category })}
+            >
               {options.map((option) => {
                 const isSelected = frame.type === option.type;
+                const label = t.labels[option.type];
                 return (
                   <button
                     key={option.type}
@@ -66,7 +74,7 @@ export function FrameSelector({ frame, onChange }: FrameSelectorProps) {
                     className={`${styles.frameButton} ${isSelected ? styles["frameButton--selected"] : ""}`}
                     onClick={() => handleTypeChange(option.type)}
                     aria-pressed={isSelected}
-                    aria-label={`フレーム: ${option.label}`}
+                    aria-label={formatMessage(t.itemLabel, { label })}
                   >
                     <span className={styles.framePreview} aria-hidden="true">
                       {option.imageSrc ? (
@@ -81,7 +89,7 @@ export function FrameSelector({ frame, onChange }: FrameSelectorProps) {
                         <FramePreviewIcon type={option.type} />
                       )}
                     </span>
-                    <span className={styles.frameLabel}>{option.label}</span>
+                    <span className={styles.frameLabel}>{label}</span>
                   </button>
                 );
               })}
@@ -93,7 +101,7 @@ export function FrameSelector({ frame, onChange }: FrameSelectorProps) {
       {showColorPicker && (
         <div className={styles.colorSection}>
           <ColorPicker
-            label="フレームの色"
+            label={t.colorLabel}
             value={frame.color}
             onChange={handleColorChange}
           />

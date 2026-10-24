@@ -1,17 +1,20 @@
 "use client";
 
+import { formatMessage } from "@/i18n/format";
+import { useDict } from "@/i18n/useDict";
 import styles from "./ResolutionSelector.module.css";
 
 export type Resolution = 1 | 2 | 4;
 
 interface ResolutionOption {
   value: Resolution;
-  label: string;
+  /** 固定ラベル。null のときは辞書の resolutionNormal を使う */
+  label: string | null;
   sizeKb: number;
 }
 
 const RESOLUTION_OPTIONS: ResolutionOption[] = [
-  { value: 1, label: "通常", sizeKb: 20 },
+  { value: 1, label: null, sizeKb: 20 },
   { value: 2, label: "2x", sizeKb: 80 },
   { value: 4, label: "4x", sizeKb: 300 },
 ];
@@ -22,13 +25,14 @@ interface ResolutionSelectorProps {
 }
 
 export function ResolutionSelector({ value, onChange }: ResolutionSelectorProps) {
+  const t = useDict().tool.download;
   const selectedOption = RESOLUTION_OPTIONS.find((opt) => opt.value === value);
 
   return (
     <div className={styles.container}>
       <div
         role="radiogroup"
-        aria-label="出力解像度"
+        aria-label={t.resolutionLabel}
         className={styles.radioGroup}
       >
         {RESOLUTION_OPTIONS.map((option) => {
@@ -42,20 +46,18 @@ export function ResolutionSelector({ value, onChange }: ResolutionSelectorProps)
               onClick={() => onChange(option.value)}
               type="button"
             >
-              {option.label}
+              {option.label ?? t.resolutionNormal}
             </button>
           );
         })}
       </div>
       <div className={styles.meta}>
-        {value === 2 && (
-          <p className={styles.hint}>印刷向け（推奨）</p>
-        )}
-        {value === 4 && (
-          <p className={styles.warning}>高品質。ファイルサイズが大きくなります</p>
-        )}
+        {value === 2 && <p className={styles.hint}>{t.hint2x}</p>}
+        {value === 4 && <p className={styles.warning}>{t.warning4x}</p>}
         {selectedOption && (
-          <p className={styles.fileSize}>約{selectedOption.sizeKb}KB</p>
+          <p className={styles.fileSize}>
+            {formatMessage(t.fileSize, { n: selectedOption.sizeKb })}
+          </p>
         )}
       </div>
     </div>

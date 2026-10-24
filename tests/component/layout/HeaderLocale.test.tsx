@@ -62,21 +62,25 @@ describe("Header locale=en", () => {
     expect(screen.getByRole("link", { name: /QR Code Create/ })).toHaveAttribute("href", "/en");
   });
 
-  // 意図: ナビは英語版のある /en だけで、英語版の無いページへのリンクが無い
-  it("ナビは /en だけで /guide /use-cases /blog /faq が無い", () => {
+  // 意図: ナビは英語版のある /en と英語ガイド（T4 で追加）だけで、英語版の無いページへのリンクが無い
+  it("ナビは /en と /en/guide/getting-started だけで /guide /use-cases /blog /faq が無い", () => {
     const { container } = render(<Header locale="en" />);
     const nav = container.querySelector("nav")!;
     const navHrefs = Array.from(nav.querySelectorAll("a"), (a) => a.getAttribute("href"));
-    expect(navHrefs).toEqual(["/en", "/en/create"]);
+    expect(navHrefs).toEqual(["/en", "/en/guide/getting-started", "/en/create"]);
     const mobileHrefs = Array.from(
       within(screen.getByTestId("mobile-nav")).getAllByRole("link"),
       (a) => a.getAttribute("href")
     );
-    expect(mobileHrefs).toEqual(["/en"]);
-    for (const href of ["/guide", "/use-cases", "/blog", "/faq"]) {
+    expect(mobileHrefs).toEqual(["/en", "/en/guide/getting-started"]);
+    for (const href of ["/guide", "/guide/getting-started", "/use-cases", "/blog", "/faq"]) {
       expect(container.querySelector(`a[href="${href}"]`)).toBeNull();
     }
     expect(within(nav).getByRole("link", { name: en.header.nav.home })).toHaveAttribute("href", "/en");
+    expect(within(nav).getByRole("link", { name: en.header.nav.guide })).toHaveAttribute(
+      "href",
+      "/en/guide/getting-started"
+    );
   });
 
   // 意図: CTA が英語の文言で /en/create を指し、クリック計測に英語と "header" が渡る

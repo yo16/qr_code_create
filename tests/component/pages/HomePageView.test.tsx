@@ -35,10 +35,17 @@ describe("HomePageView locale=en", () => {
     expect(hrefs).not.toContain("/create");
   });
 
-  // 意図: 英語版の無いガイドへの導線を出さない
-  it("/guide への導線が無い", () => {
+  // 意図: ガイドへの導線は英語版のある /en/guide/getting-started だけ（T4 で追加）。
+  //       ja のガイド一覧 /guide や英語版の無い ja ページへの導線は出さない
+  it("ガイドへの導線は /en/guide/getting-started だけで、ja のみのページへのリンクが無い", () => {
     const hrefs = hrefsOf(html);
-    expect(hrefs.filter((h) => /^(\/en)?\/guide/.test(h))).toEqual([]);
+    expect(hrefs).toContain("/en/guide/getting-started");
+    expect(hrefs.filter((h) => /^(\/en)?\/guide/.test(h))).toEqual(
+      hrefs.filter((h) => h === "/en/guide/getting-started")
+    );
+    for (const jaOnly of ["/guide", "/guide/getting-started", "/use-cases", "/blog", "/faq", "/poster"]) {
+      expect(hrefs).not.toContain(jaOnly);
+    }
   });
 
   // 意図: ページ本文（JSON-LD 以外）に日本語が無い

@@ -2,11 +2,17 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import type { GuideContent, GuideFrontmatter } from "@/types/content";
+import type { Locale } from "@/i18n/types";
 
-const CONTENT_DIR = path.join(process.cwd(), "src/content/guide");
+/** ja → src/content/guide、en → src/content/en/guide */
+function contentDir(locale: Locale): string {
+  return locale === "en"
+    ? path.join(process.cwd(), "src/content/en/guide")
+    : path.join(process.cwd(), "src/content/guide");
+}
 
-export function getGuide(slug: string): GuideContent | null {
-  const filePath = path.join(CONTENT_DIR, `${slug}.mdx`);
+export function getGuide(slug: string, locale: Locale = "ja"): GuideContent | null {
+  const filePath = path.join(contentDir(locale), `${slug}.mdx`);
   if (!fs.existsSync(filePath)) {
     return null;
   }
@@ -24,10 +30,11 @@ export function getGuide(slug: string): GuideContent | null {
   };
 }
 
-export function getGuideSlugList(): string[] {
-  if (!fs.existsSync(CONTENT_DIR)) return [];
+export function getGuideSlugList(locale: Locale = "ja"): string[] {
+  const dir = contentDir(locale);
+  if (!fs.existsSync(dir)) return [];
   return fs
-    .readdirSync(CONTENT_DIR)
+    .readdirSync(dir)
     .filter((file) => file.endsWith(".mdx"))
     .map((file) => file.replace(/\.mdx$/, ""));
 }

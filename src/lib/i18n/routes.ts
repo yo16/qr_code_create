@@ -2,9 +2,9 @@ import type { Locale } from "@/i18n/types";
 
 /**
  * 英語版があるページ（ja 側のパスで持つ）。
- * T4（英語ガイド）、T5a で拡張する。英語版の無いページへの導線は、これに含まれるかで出し分ける。
+ * 英語版のページを追加したら、ここにも追加する。英語版の無いページへの導線は、これに含まれるかで出し分ける。
  */
-export const EN_AVAILABLE_PATHS: readonly string[] = ["/", "/create"];
+export const EN_AVAILABLE_PATHS: readonly string[] = ["/", "/create", "/guide/getting-started"];
 
 /** ja 側のパスに英語版があるか */
 export function hasEnVersion(path: string): boolean {

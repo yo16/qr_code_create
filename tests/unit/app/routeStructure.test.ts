@@ -123,3 +123,37 @@ describe("英語版トップ（T3 で本実装）", () => {
     expect(src).not.toMatch(/index:\s*false/);
   });
 });
+
+describe("英語ガイド（T4）", () => {
+  // 意図（qr_code_create-01z.5）: 英語ガイドのルートと、ja / en 共通のページ本体の配置
+  it.each([
+    [["en", "(marketing)", "layout.tsx"]],
+    [["en", "(marketing)", "guide", "[slug]", "page.tsx"]],
+  ])("src/app/%j が存在すること", (segments) => {
+    expect(exists(...segments)).toBe(true);
+  });
+
+  it("src/app/en/(marketing)/guide/[slug]/page.tsx が GuideArticlePageView を locale=\"en\" で使い、dynamicParams = false", () => {
+    const src = read("en", "(marketing)", "guide", "[slug]", "page.tsx");
+    expect(src).toMatch(/<GuideArticlePageView\s+locale="en"/);
+    expect(src).toMatch(/export\s+const\s+dynamicParams\s*=\s*false/);
+  });
+
+  it("src/app/(ja)/(marketing)/guide/[slug]/page.tsx が GuideArticlePageView を locale=\"ja\" で使うこと", () => {
+    expect(read("(ja)", "(marketing)", "guide", "[slug]", "page.tsx")).toMatch(
+      /<GuideArticlePageView\s+locale="ja"/
+    );
+  });
+
+  // 意図: guide.module.css はページ本体と一緒に components/pages へ移った
+  it("guide.module.css が GuideArticlePageView の隣にあり、旧位置に無いこと", () => {
+    expect(
+      fs.existsSync(path.join(ROOT, "src", "components", "pages", "GuideArticlePageView", "guide.module.css"))
+    ).toBe(true);
+    expect(exists("(ja)", "(marketing)", "guide", "[slug]", "guide.module.css")).toBe(false);
+  });
+
+  it("英語の MDX src/content/en/guide/getting-started.mdx が存在すること", () => {
+    expect(fs.existsSync(path.join(ROOT, "src", "content", "en", "guide", "getting-started.mdx"))).toBe(true);
+  });
+});

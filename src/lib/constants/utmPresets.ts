@@ -1,4 +1,4 @@
-import { ja } from "@/i18n/ja";
+import { jaClient as ja } from "@/i18n/jaClient";
 import type { Dict } from "@/i18n/types";
 
 type UtmDict = Dict["utm"];

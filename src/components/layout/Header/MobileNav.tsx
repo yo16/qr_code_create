@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { TrackedLink } from "@/components/analytics/TrackedLink";
+import { useDict } from "@/i18n/useDict";
 import styles from "./MobileNav.module.css";
 
 interface NavItem {
@@ -16,13 +17,14 @@ interface MobileNavProps {
 
 export function MobileNav({ items }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { mobileMenu } = useDict().common;
 
   return (
     <div className={styles.mobileNav}>
       <button
         className={styles.hamburger}
         onClick={() => setIsOpen(!isOpen)}
-        aria-label={isOpen ? "メニューを閉じる" : "メニューを開く"}
+        aria-label={isOpen ? mobileMenu.close : mobileMenu.open}
         aria-expanded={isOpen}
       >
         <span className={`${styles.bar} ${isOpen ? styles.open : ""}`} />
@@ -47,7 +49,7 @@ export function MobileNav({ items }: MobileNavProps) {
             location="mobile_nav"
             onClick={() => setIsOpen(false)}
           >
-            QRコード生成
+            {mobileMenu.cta}
           </TrackedLink>
         </nav>
       )}

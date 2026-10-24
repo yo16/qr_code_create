@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ja } from "@/i18n/ja";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 const SITE_NAME = "QR Code Create";
@@ -39,48 +40,16 @@ export function buildMetadata(options: BuildMetadataOptions): Metadata {
   };
 }
 
-// プリセットメタデータ
+// プリセットメタデータ（title / description は ja 辞書から。形と export 名は不変）
+const pages = ja.meta.pages;
+
 export const PAGE_METADATA = {
-  home: {
-    title: "QR Code Create - UTMパラメータ付きQRコード生成ツール",
-    description: "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
-    path: "/",
-  },
-  create: {
-    title: "QRコード生成 - QR Code Create",
-    description: "URLを入力するだけ。UTMパラメータと装飾フレームでマーケティング効果を最大化するQRコードを無料で作成できます。",
-    path: "/create",
-  },
-  faq: {
-    title: "よくある質問",
-    description: "QR Code Createの使い方やUTMパラメータの設定方法など、よくある質問にお答えします。",
-    path: "/faq",
-  },
-  privacy: {
-    title: "プライバシーポリシー",
-    description: "QR Code Createのプライバシーポリシーです。",
-    path: "/privacy",
-    noIndex: true,
-  },
-  terms: {
-    title: "利用規約",
-    description: "QR Code Createの利用規約です。",
-    path: "/terms",
-    noIndex: true,
-  },
-  guide: {
-    title: "使い方ガイド",
-    description: "QR Code Createの使い方やQRコードの活用方法を初心者にもわかりやすく解説するガイド集です。",
-    path: "/guide",
-  },
-  useCases: {
-    title: "用途別QRコード",
-    description: "名刺・チラシ・ポスター・イベントなど、用途別にQRコードの作り方と推奨UTM設定を解説します。",
-    path: "/use-cases",
-  },
-  blog: {
-    title: "ブログ",
-    description: "QRコードマーケティングやUTMパラメータの活用方法について、実践的な情報をお届けします。",
-    path: "/blog",
-  },
+  home: { ...pages.home, path: "/" },
+  create: { ...pages.create, path: "/create" },
+  faq: { ...pages.faq, path: "/faq" },
+  privacy: { ...pages.privacy, path: "/privacy", noIndex: true },
+  terms: { ...pages.terms, path: "/terms", noIndex: true },
+  guide: { ...pages.guide, path: "/guide" },
+  useCases: { ...pages.useCases, path: "/use-cases" },
+  blog: { ...pages.blog, path: "/blog" },
 } as const;

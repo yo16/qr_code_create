@@ -32,10 +32,12 @@ const eslintConfig = defineConfig([
               group: [
                 "@/i18n/ja",
                 "@/i18n/ja.*",
+                "@/i18n/jaClient",
                 "@/i18n/en",
                 "@/i18n/en.*",
                 "**/i18n/ja",
                 "**/i18n/ja.*",
+                "**/i18n/jaClient",
                 "**/i18n/en",
                 "**/i18n/en.*",
               ],

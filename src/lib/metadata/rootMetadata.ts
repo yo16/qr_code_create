@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ja } from "@/i18n/ja";
 
 const metadataBase = new URL(
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp"
@@ -6,11 +7,10 @@ const metadataBase = new URL(
 
 export const rootMetadataJa: Metadata = {
   title: {
-    default: "QR Code Create - UTMパラメータ付きQRコード生成ツール",
+    default: ja.meta.root.title,
     template: "%s | QR Code Create",
   },
-  description:
-    "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
+  description: ja.meta.root.description,
   metadataBase,
 };
 

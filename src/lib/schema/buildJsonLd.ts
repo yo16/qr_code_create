@@ -138,7 +138,7 @@ export function buildBlogPostingSchema(post: {
   datePublished: string;
   dateModified?: string;
   basePath?: string;
-}) {
+}, locale: Locale = "ja") {
   const path = post.basePath ?? "/guide";
   return {
     "@context": "https://schema.org",
@@ -159,6 +159,6 @@ export function buildBlogPostingSchema(post: {
       "@type": "WebPage",
       "@id": `${SITE_URL}${path}/${post.slug}`,
     },
-    inLanguage: "ja",
+    inLanguage: getDict(locale).schema.inLanguage,
   };
 }

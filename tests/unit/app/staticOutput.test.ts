@@ -36,6 +36,37 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     }
   );
 
+  // 意図（qr_code_create-01z.5）: 英語ガイドが lang="en" の静的 HTML として出力され、
+  // 英語の MDX が無い slug（utm-setup）は dynamicParams = false で生成されない
+  it("en/guide/getting-started.html が lang=\"en\" で生成されていること", () => {
+    const full = path.join(BUILD_APP, "en", "guide", "getting-started.html");
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const html = fs.readFileSync(full, "utf8");
+    expect(html).toMatch(/<html[^>]*\slang="en"/);
+    expect(html).toContain("Getting started");
+  });
+
+  // 意図: MDX 本文が実際に描画されている（タイトルや CTA など MDX 外の部品だけで素通りしない）。
+  // 本文の h2 と、本文中のリンク（ヘッダーや ArticleCta の /en/create はクラス付きなので、
+  // クラスなし・本文の文言付きのアンカーで本文由来に限定する）を確かめる
+  it("en/guide/getting-started.html に MDX 本文の h2 と本文中の /en/create リンクがあること", () => {
+    const full = path.join(BUILD_APP, "en", "guide", "getting-started.html");
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const html = fs.readFileSync(full, "utf8");
+    expect(html).toMatch(/<h2[^>]*>What QR Code Create does<\/h2>/);
+    expect(html).toContain('<a href="/en/create">Open the QR code generator</a>');
+  });
+
+  it("en/guide/utm-setup.html が生成されていないこと", () => {
+    // 対照: ja 側の utm-setup は生成されている（パスの組み立て違いで素通りしない）
+    expect(fs.existsSync(path.join(BUILD_APP, "guide", "utm-setup.html"))).toBe(true);
+    expect(fs.existsSync(path.join(BUILD_APP, "en", "guide", "utm-setup.html"))).toBe(false);
+  });
+
   // 意図（qr_code_create-01z.4）: en の文言が Client バンドル（.next/static）に入っていない。
   // en は getDict 経由で Server からだけ読まれ、Client へは RSC ペイロード（HTML 内）で渡る想定。
   // needle は辞書から導出し、Server スライス（hero の説明文）と Client スライス（ボタン・aria-label・ラベル）の両方を含める。

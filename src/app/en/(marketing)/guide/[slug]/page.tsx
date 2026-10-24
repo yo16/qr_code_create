@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getGuide, getGuideSlugList } from "@/lib/content/getGuide";
-import { buildMetadata } from "@/lib/metadata/buildMetadata";
+import { buildMetadata, getGuideAlternatePaths } from "@/lib/metadata/buildMetadata";
 import { GuideArticlePageView } from "@/components/pages/GuideArticlePageView/GuideArticlePageView";
 
 export const dynamicParams = false;
@@ -23,6 +23,7 @@ export async function generateMetadata({ params }: EnGuidePageProps): Promise<Me
       title: guide.title,
       description: guide.description,
       path: `/en/guide/${slug}`,
+      alternatePaths: getGuideAlternatePaths(slug),
     },
     "en"
   );

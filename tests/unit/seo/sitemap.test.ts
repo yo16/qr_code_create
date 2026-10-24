@@ -10,11 +10,14 @@ const STATIC_PAGE_COUNT = FEATURE_FLAGS.posterPage ? 10 : 9;
 
 describe("sitemap", () => {
   describe("エントリ数の検証", () => {
-    it("合計エントリ数が静的ページ + ガイド + use-cases + blog であること", () => {
+    it("合計エントリ数が静的ページ + ガイド + use-cases + blog + 英語版であること", () => {
       const guideCount = getGuideSlugList().length;
       const useCaseCount = getUseCaseSlugList().length;
       const blogCount = getBlogSlugList().length;
-      const expectedTotal = STATIC_PAGE_COUNT + guideCount + useCaseCount + blogCount;
+      // qr_code_create-01z.7: 英語版 /en、/en/create、/en/guide/{slug}（現状 3 件）
+      const enCount = 2 + getGuideSlugList("en").length;
+      expect(enCount).toBe(3);
+      const expectedTotal = STATIC_PAGE_COUNT + guideCount + useCaseCount + blogCount + enCount;
       const result = sitemap();
       expect(result).toHaveLength(expectedTotal);
     });

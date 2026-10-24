@@ -1,0 +1,87 @@
+<!doctype html>
+<!--
+  OG 画像（public/images/og/default.png、1200x630）のテンプレート。
+  生成スクリプトは page.setContent(この HTML) -> page.locator("#og").screenshot() で PNG 化する。
+  設計: tmp/og-plan-1ge.md（qr_code_create-1ge）
+
+  - 外部 CSS / JS / 画像 / Web フォントは読まない。生成をネットワークに依存させないため。
+    書体は OS にある Noto Sans JP（サイト本体と同じ書体）を先頭に置き、無い環境では
+    Hiragino Sans（macOS）、Yu Gothic / Meiryo（Windows）に落ちる。
+  - マークは public/brand/mark.svg と同じ path。形を変えたらここも合わせる。
+  - 余白はマークの 1 モジュール（96px / 8 = 12px）の倍数を基準にしている（四辺 96px、マークとサイト名の間 36px）。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>OG image template</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+  }
+  #og {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: #ffffff;
+    color: #1e2a33;
+    font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* 上段: マークとサイト名を組んだロックアップ */
+  .lockup {
+    position: absolute;
+    left: 96px;
+    top: 96px;
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    height: 96px;
+  }
+  .mark {
+    display: block;
+    width: 96px;
+    height: 96px;
+    flex: none;
+  }
+  .name {
+    margin: 0;
+    /* マークの「回」の部分（96px のうち上 84px）の中心に字面を合わせるため、6px 持ち上げる */
+    padding-bottom: 12px;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  /* 下段: 何ができるかを 2 行で */
+  .lead {
+    position: absolute;
+    left: 96px;
+    /* 行送りの半行分（10px）を差し引き、字面の下端を上段と同じ約 96px の余白に揃える */
+    bottom: 86px;
+    margin: 0;
+    font-size: 80px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: 0;
+    font-feature-settings: "palt";
+    white-space: nowrap;
+  }
+  .lead span {
+    display: block;
+  }
+</style>
+</head>
+<body>
+<div id="og">
+  <div class="lockup">
+    <svg class="mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="96" height="96" shape-rendering="crispEdges" aria-hidden="true"><path fill="#1f5fbf" d="M0 0h28v4H0zM0 4h4v24H0zM24 4h4v20h-4zM4 24h20v4H4zM8 8h12v12H8zM28 28h4v4h-4z"/></svg>
+    <p class="name">QR Code Create</p>
+  </div>
+  <p class="lead"><span>UTMパラメータ付き</span><span>QRコードを無料で作成</span></p>
+</div>
+</body>
+</html>

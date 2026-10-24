@@ -190,6 +190,15 @@
 - **使う場所**: ヘッダーのロゴ横（24px、`src/components/layout/Header/BrandMark.tsx`）、favicon（`src/app/icon.svg`、`icon.png` 48px、`favicon.ico` 32px）、apple-icon（`src/app/apple-icon.png` 180px）。いずれも Next.js のメタデータファイル規約で `<head>` に出力される
 - **再生成**: `npm run build:icons`（`scripts/build-icons.cjs`。playwright の Chromium で PNG と ICO を `src/app` に書き出す）
 
+#### OG 画像（qr_code_create-1ge）
+
+- **ファイル**: `public/images/og/default.png`（1200×630）。`src/lib/metadata/buildMetadata.ts` が `og:image` の既定値として参照する
+- **構成**: 白地・左寄せ。マーク 96px + サイト名 + 見出し 2 行。四辺のセーフエリアは 96px（SNS 側のトリミングに備える）
+- **テンプレート**: `scripts/og-template.html`。デザイン（座標・文言・色）を変えるときはここだけを直す
+- **再生成**: `npm run build:og`（`scripts/build-og.cjs`。playwright の Chromium で `#og` を撮影して PNG を書き出す）
+- **書体**: 実行環境にあるローカルの Noto Sans JP。無ければ Hiragino Sans / Yu Gothic / Meiryo に落ちる。Web フォントは読まない。コミット済みの PNG は Noto Sans JP のある環境で生成したもの。CI など Noto Sans JP が無い環境で再生成すると字形と字幅が変わるので、通常は再生成せず、デザイン変更時だけローカルで `npm run build:og` を実行してコミットする
+- **注意**: マークの形を変えたら、テンプレート内の path も `public/brand/mark.svg` に合わせる
+
 ---
 
 ## 2. QRコード生成ページ（`/create`）のUI仕様

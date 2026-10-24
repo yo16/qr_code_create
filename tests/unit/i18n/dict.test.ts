@@ -57,6 +57,16 @@ describe("getDict / getClientMessages", () => {
     }
   });
 
+  // 意図: T2b で ja に実在するようになった Server スライスが、ja には有り Client には無いこと
+  it.each(["header", "footer", "home", "guide", "meta", "schema"])(
+    "Server スライス %s は ja に実在し、Client には含めない",
+    (key) => {
+      expect(ja).toHaveProperty(key);
+      expect((CLIENT_SLICE_KEYS as readonly string[]).includes(key)).toBe(false);
+      expect(getClientMessages("ja")).not.toHaveProperty(key);
+    }
+  );
+
   // 意図: Server スライスに関数値を足しても pickClientDict が落とすこと
   it("pickClientDict は Client スライス以外のキーを落とす", () => {
     const extended = {
@@ -80,6 +90,23 @@ describe("Client スライスの値", () => {
   it("全葉が string である", () => {
     const invalid = leaves.filter(([, v]) => typeof v !== "string");
     expect(invalid.map(([p, v]) => `${p}: ${typeof v}`)).toEqual([]);
+  });
+
+  // 意図: T2b で Client スライス（common）に追加した文言が存在し、全葉 string であること
+  it.each([
+    ["common.mobileMenu", ["open", "close", "cta"]],
+    ["common.notFound", ["title", "body", "link"]],
+    ["common.comingSoon", ["badge", "noteLine1", "noteLine2", "create", "backToTop"]],
+    ["common.articleCta", ["ariaLabel", "heading", "defaultText", "note"]],
+  ] as const)("%s の葉が揃っていて全て空でない string", (prefix, keys) => {
+    const sub = leaves
+      .filter(([p]) => p.startsWith(`${prefix}.`))
+      .map(([p, v]) => [p.slice(prefix.length + 1), v] as const);
+    expect(sub.map(([k]) => k).sort()).toEqual([...keys].sort());
+    for (const [, v] of sub) {
+      expect(typeof v).toBe("string");
+      expect(v).not.toBe("");
+    }
   });
 
   // 意図: ja に空文字の文言が無い（移し忘れの検出）。プリセット simple の caption は

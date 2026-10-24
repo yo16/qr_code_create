@@ -1,19 +1,26 @@
 import Link from "next/link";
 import { TrackedLink } from "@/components/analytics/TrackedLink";
+import { getDict } from "@/i18n/getDict";
+import type { Locale } from "@/i18n/types";
 import { Container } from "../Container/Container";
 import { BrandMark } from "./BrandMark";
 import { MobileNav } from "./MobileNav";
 import styles from "./Header.module.css";
 
-const NAV_ITEMS = [
-  { href: "/", label: "ホーム" },
-  { href: "/guide", label: "使い方" },
-  { href: "/use-cases", label: "用途別" },
-  { href: "/blog", label: "ブログ" },
-  { href: "/faq", label: "FAQ" },
-];
+interface HeaderProps {
+  locale?: Locale;
+}
 
-export function Header() {
+export function Header({ locale = "ja" }: HeaderProps = {}) {
+  const { header } = getDict(locale);
+  const navItems = [
+    { href: "/", label: header.nav.home },
+    { href: "/guide", label: header.nav.guide },
+    { href: "/use-cases", label: header.nav.useCases },
+    { href: "/blog", label: header.nav.blog },
+    { href: "/faq", label: header.nav.faq },
+  ];
+
   return (
     <header className={styles.header}>
       <Container>
@@ -25,16 +32,16 @@ export function Header() {
             </Link>
           </div>
           <nav className={styles.desktopNav}>
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <Link key={item.href} href={item.href} className={styles.navLink}>
                 {item.label}
               </Link>
             ))}
             <TrackedLink href="/create" className={styles.ctaLink} location="header">
-              QRコード生成
+              {header.cta}
             </TrackedLink>
           </nav>
-          <MobileNav items={NAV_ITEMS} />
+          <MobileNav items={navItems} />
         </div>
       </Container>
     </header>

@@ -2,7 +2,15 @@ import fs from "fs";
 import path from "path";
 
 const ROOT = process.cwd();
-const TARGET_DIRS = ["src/components/qr", "src/components/ui"];
+const TARGET_DIRS = [
+  "src/components/qr",
+  "src/components/ui",
+  // T2b: トップ / 共通系
+  "src/components/layout",
+  "src/components/top",
+  "src/components/marketing",
+  "src/components/analytics",
+];
 
 /**
  * ひらがな・カタカナ・漢字（CJK 統合漢字）と、全角の記号・句読点
@@ -95,12 +103,17 @@ describe("stripComments（検査用ヘルパーの確認）", () => {
   });
 });
 
-describe("components/qr・components/ui に日本語の直書きが無い", () => {
+describe("辞書化済みコンポーネントに日本語の直書きが無い", () => {
   const files = TARGET_DIRS.flatMap(listTsx);
 
   // 意図: 走査対象が空でない（パスの誤りで空振りしない）
   it("対象の .tsx を走査している", () => {
     expect(files.length).toBeGreaterThan(10);
+  });
+
+  // 意図: 追加したディレクトリそれぞれが実際に走査されている（1 つでもパス誤りなら落ちる）
+  it.each(TARGET_DIRS)("%s 配下の .tsx を 1 つ以上走査している", (dir) => {
+    expect(files.some((f) => f.startsWith(`${dir}/`))).toBe(true);
   });
 
   // 意図: 文言は辞書（useDict）から引く。コメント以外に日本語が残っていたらファイルと行を出す

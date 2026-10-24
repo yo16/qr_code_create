@@ -1,257 +1,166 @@
 /**
  * 日本語辞書。既存の UI 文言を一字一句そのまま移したもの。
- * キーは camelCase で「画面の場所 → 要素」の順に入れ子にする。
- * 補間が要る文言は `{n}` 形式のプレースホルダ（formatMessage で埋める）。
- * header / footer / home / guide / meta / schema スライスは T2b で追加する。
+ * Client スライスは jaClient.ts、Server スライス（header / footer / home / guide / meta / schema）はここ。
  */
+import { jaClient } from "./jaClient";
+
 export const ja = {
-  common: {
-    loading: "読み込み中",
+  ...jaClient,
+  // Server スライス（Client には渡さない）
+  header: {
+    nav: {
+      home: "ホーム",
+      guide: "使い方",
+      useCases: "用途別",
+      blog: "ブログ",
+      faq: "FAQ",
+    },
+    // common.mobileMenu.cta（jaClient.ts）と同じ文言にする。MobileNav は Client なので別スライスに置いている
+    cta: "QRコード生成",
   },
-  ui: {
-    select: {
-      placeholder: "選択してください",
-      customOption: "その他（自由入力）",
-      customPlaceholder: "自由に入力してください",
-      customAria: "{label}（自由入力）",
-    },
-    fileUpload: {
-      sizeExceeded: "ファイルサイズが上限（{max}KB）を超えています。",
-      dropZoneAria: "{label}。クリックまたはドラッグ&ドロップでファイルを選択",
-      previewAlt: "プレビュー",
-      dropText: "クリックまたはドラッグ&ドロップ",
-      accept: "対応形式: {accept}",
-      maxSize: "最大サイズ: {max}KB",
-      removeAria: "選択したファイルを削除",
-    },
-    colorPicker: {
-      pickerAria: "{label}のカラーピッカー",
-      textLabel: "{label}のカラーコード入力",
-      textAria: "{label}のカラーコード",
-    },
-    progressBar: {
-      defaultLabel: "ステップ {current}/{total}",
-    },
-    tabs: {
-      listAria: "タブ",
-    },
+  footer: {
+    privacy: "プライバシーポリシー",
+    terms: "利用規約",
+    faq: "よくある質問",
+    contact: "お問い合わせ",
   },
-  tool: {
-    steps: {
-      url: { label: "ステップ1: URL入力", title: "URLを入力" },
-      utm: { label: "ステップ2: UTMパラメータ設定", title: "UTMパラメータ設定" },
-      decoration: { label: "ステップ3: 装飾設定", title: "装飾設定" },
-      download: { label: "ステップ4: ダウンロード", title: "ダウンロード" },
+  home: {
+    hero: {
+      headingLine1: "UTMパラメータ付きQRコードを",
+      headingLine2: "無料で作成",
+      description:
+        "URLを入れるだけで、Google Analyticsで読み取りを計測できるQRコードができます。チラシ、ポスター、名刺と、置き場所ごとに分けて数えられます。",
+      primaryCta: "無料でQRコードを作成",
+      secondaryCta: "使い方を見る",
+      note: "完全無料・登録不要。PNG、SVG、PDFでダウンロードできます。",
+      qrAlt: "qr-create.jp のトップページを指すQRコード",
+      captionLead: "このQRコードは、次のURLを指しています。",
     },
-    progress: {
-      label: "完成度",
-      start: "URLを入力してQRコードを作成しましょう",
-      utm: "UTMパラメータを設定するとマーケティング効果UP！",
-      decoration: "装飾でQRコードをもっと魅力的に",
-      done: "QRコードが完成しました！",
+    features: {
+      heading: "できること",
+      items: [
+        {
+          title: "UTMパラメータガイダンス",
+          description:
+            "utm_source や utm_medium に何を書けばよいか、入力欄ごとに例が出ます。用途別の設定例を見ながら、Google Analyticsで集計できる形のURLを組み立てられます。",
+        },
+        {
+          title: "装飾フレーム",
+          description:
+            "シンプル、ビジネス、エレガント、ポップなどのフレームに、色、ロゴ、キャプションを組み合わせられます。チラシやポスターにそのまま置ける形で書き出せます。",
+        },
+        {
+          title: "完全無料・登録不要",
+          description:
+            "アカウントもメールアドレスも要りません。QRコードはお使いのブラウザの中で作られ、画像やURLがこのサイトに保存されることはありません。",
+        },
+        {
+          title: "PNG/SVG/PDF対応",
+          description:
+            "WebやスライドにはPNG、拡大しても粗くならない印刷用にはSVGかPDF。PNGは用途に合わせて解像度を選べます。",
+        },
+      ],
     },
-    urlInput: {
-      label: "URL",
-      placeholder: "https://example.com",
-    },
-    validation: {
-      invalidUrl: "有効なURLを入力してください",
-    },
-    urlPreview: {
-      label: "生成URLプレビュー",
-      copyAria: "URLをクリップボードにコピー",
-      copy: "コピー",
-      copied: "コピーしました",
-      placeholder: "URLを入力するとプレビューが表示されます",
-      copiedStatus: "URLをコピーしました",
-    },
-    qrPreview: {
-      label: "QRコードプレビュー",
-      ariaGenerated: "生成されたQRコード",
-      ariaPlaceholder: "QRコードプレースホルダー",
-      placeholder: "URLを入力してQRコードを生成",
-      error: "QRコードの生成に失敗しました",
-      contrastWarning:
-        "前景色と背景色のコントラスト比が不足しています（WCAG AA 基準: 4.5:1 以上）。QRコードが読み取りにくい場合があります。",
-    },
-    download: {
-      disabledMessage: "QRコードを生成するとダウンロードできます",
-      resolutionLabel: "出力解像度",
-      resolutionNormal: "通常",
-      hint2x: "印刷向け（推奨）",
-      warning4x: "高品質。ファイルサイズが大きくなります",
-      fileSize: "約{n}KB",
-      pngButton: "PNG形式でダウンロード",
-      svgButton: "SVG形式でダウンロード",
-      pdfButton: "PDF形式でダウンロード",
-      pdfGenerating: "PDF生成中...",
-      posterCta: "印刷用ポスターを作る →",
-      posterCtaAria: "印刷用ポスターを作る（/posterページへ移動）",
+    cta: {
+      heading: "URLを入れて、4つの手順でダウンロードまで",
+      description:
+        "URLの入力、UTMパラメータ、見た目の調整、ダウンロードの順に進みます。途中で登録を求められることはありません。",
+      button: "無料でQRコードを作成する",
     },
   },
-  utm: {
-    title: "UTMパラメータ設定",
-    toggleLabel: "UTMを設定する",
-    toggleAria: "UTMパラメータを設定する",
-    noUtmWarning:
-      "UTMパラメータなしでは、このQRコードからのアクセスをGoogle Analyticsで追跡できません",
-    advancedShow: "詳細設定を表示",
-    advancedHide: "詳細設定を非表示",
-    helpButtonAria: "{label}のヘルプ",
-    fieldLabels: {
-      source: "utm_source（掲載場所）",
-      medium: "utm_medium（配布手段）",
-      campaign: "utm_campaign（キャンペーン名）",
-      term: "utm_term（検索キーワード）",
-      content: "utm_content（コンテンツ識別子）",
+  guide: {
+    breadcrumb: {
+      ariaLabel: "パンくずリスト",
+      home: "ホーム",
+      guide: "使い方ガイド",
     },
-    fieldPlaceholders: {
-      campaign: "例: spring_sale_2026",
-      term: "例: QRコード 作成",
-      content: "例: banner_top",
+  },
+  meta: {
+    root: {
+      title: "QR Code Create - UTMパラメータ付きQRコード生成ツール",
+      description:
+        "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
     },
-    campaignHint: "日付や内容を含めると管理しやすくなります",
-    fieldHelp: {
-      source: "QRコードを掲載する場所を指定します（チラシ、名刺、ポスターなど）",
-      medium:
-        "ユーザーに届ける手段を指定します。QRコードの場合は「QRコード」がおすすめです",
-      campaign:
-        "キャンペーン名を指定します。日付や内容を含めると管理しやすくなります（例: spring_sale_2026）",
-      term: "検索キーワードを指定します。主にリスティング広告向けですが、QRコードでは省略可能です",
-      content:
-        "同一キャンペーン内でA/Bテストを行う場合などに使います。複数のQRコードを使い分ける際に便利です",
-    },
-    sourceLabels: {
-      flyer: "チラシ・フライヤー",
-      poster: "ポスター",
-      business_card: "名刺",
-      brochure: "パンフレット",
-      banner: "看板",
-      receipt: "レシート",
-      product_package: "製品パッケージ",
-      menu: "メニュー",
-      signage: "店内POP",
-    },
-    mediumLabels: {
-      qr: "QRコード",
-      print: "印刷物",
-    },
-    usageExamplesLabel: "用途別設定例:",
-    usageExampleLabels: {
-      business_card: "名刺に印刷",
-      flyer: "チラシに印刷",
-      poster: "ポスター掲示",
-      signage: "店内POP",
-    },
-    effectiveness: {
-      label: "マーケティング効果度: {level}",
-      levels: {
-        low: "低",
-        normal: "普通",
-        high: "高",
-        highest: "最高",
+    pages: {
+      home: {
+        title: "QR Code Create - UTMパラメータ付きQRコード生成ツール",
+        description:
+          "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
       },
-      messages: {
-        none: "マーケティング効果の測定ができません",
-        basic: "基本的なトラッキングが可能です",
-        better: "効果測定の精度が上がります",
-        detailed: "Google Analyticsで詳細な分析が可能です",
-        perfect: "完璧なトラッキング設定です！",
+      create: {
+        title: "QRコード生成 - QR Code Create",
+        description:
+          "URLを入力するだけ。UTMパラメータと装飾フレームでマーケティング効果を最大化するQRコードを無料で作成できます。",
+      },
+      faq: {
+        title: "よくある質問",
+        description:
+          "QR Code Createの使い方やUTMパラメータの設定方法など、よくある質問にお答えします。",
+      },
+      privacy: {
+        title: "プライバシーポリシー",
+        description: "QR Code Createのプライバシーポリシーです。",
+      },
+      terms: {
+        title: "利用規約",
+        description: "QR Code Createの利用規約です。",
+      },
+      guide: {
+        title: "使い方ガイド",
+        description:
+          "QR Code Createの使い方やQRコードの活用方法を初心者にもわかりやすく解説するガイド集です。",
+      },
+      useCases: {
+        title: "用途別QRコード",
+        description:
+          "名刺・チラシ・ポスター・イベントなど、用途別にQRコードの作り方と推奨UTM設定を解説します。",
+      },
+      blog: {
+        title: "ブログ",
+        description:
+          "QRコードマーケティングやUTMパラメータの活用方法について、実践的な情報をお届けします。",
       },
     },
   },
-  decoration: {
-    presetGroupLabel: "装飾プリセット",
-    presetItemLabel: "プリセット: {name} - {description}",
-    presets: {
-      simple: {
-        name: "シンプル",
-        description: "白黒でクリーンなデザイン",
-        caption: "",
-      },
-      business: {
-        name: "ビジネス",
-        description: "信頼感のある落ち着いたデザイン",
-        caption: "詳しくはこちら",
-      },
-      casual: {
-        name: "カジュアル",
-        description: "親しみやすいナチュラルデザイン",
-        caption: "スキャンしてチェック",
-      },
-      elegant: {
-        name: "エレガント",
-        description: "上品で洗練されたデザイン",
-        caption: "QRコードを読み取る",
-      },
-      pop: {
-        name: "ポップ",
-        description: "目を引くカラフルなデザイン",
-        caption: "今すぐアクセス!",
-      },
+  schema: {
+    inLanguage: "ja",
+    webApplication: {
+      description:
+        "UTMパラメータガイダンス付きの無料QRコード生成ツール。装飾フレームでQRコードをカスタマイズできます。登録不要。",
+      featureList: [
+        "QRコード生成",
+        "UTMパラメータガイダンス",
+        "装飾フレーム（エレガント・ポップ・ビジネス）",
+        "ロゴ埋め込み",
+        "色カスタマイズ",
+        "PNG/SVG/PDF出力",
+      ],
     },
-    color: {
-      fg: "前景色",
-      bg: "背景色",
-      contrastRatio: "コントラスト比: {ratio}:1",
-      ok: "読み取りやすいコントラストです",
-      caution: "読み取りにくくなる可能性があります",
-      warning: "QRコードが読み取れない可能性があります",
-      reset: "デフォルトに戻す",
+    organization: {
+      description: "UTMパラメータガイダンス付きの無料QRコード生成ツール",
     },
-    logo: {
-      upload: "ロゴ画像をアップロード",
-      alt: "ロゴ: {fileName}",
-      sizeLabel: "ロゴサイズ: {percent}%",
-      sizeAria: "ロゴサイズを調整",
-      remove: "ロゴを削除",
-      removeAria: "ロゴを削除",
-    },
-    frame: {
-      groupLabel: "{category}フレーム",
-      itemLabel: "フレーム: {label}",
-      colorLabel: "フレームの色",
-      categories: {
-        basic: "基本",
-        ornate: "装飾",
-        target: "ターゲット別",
-        imageSimple: "画像：シンプル",
-        imageOrnate: "画像：装飾",
-      },
-      labels: {
-        none: "なし",
-        simple: "シンプル",
-        rounded: "角丸",
-        ornate: "装飾",
-        elegant: "エレガント",
-        pop: "ポップ",
-        business: "ビジネス",
-        festive: "フェスティブ",
-        "img-simple-black": "ブラック",
-        "img-simple-blue": "ブルー",
-        "img-simple-gray": "グレー",
-        "img-simple-red": "レッド",
-        "img-elaborated-japanese": "和風",
-        "img-elaborated-gothic": "ゴシック",
-        "img-elaborated-baroque": "バロック",
-      },
-    },
-    caption: {
-      templateLabel: "テンプレートから選ぶ",
-      templatePlaceholder: "-- テンプレートを選択 --",
-      templates: {
-        scan: "スキャンして詳細を見る",
-        access: "こちらからアクセス",
-        read: "QRコードを読み取る",
-        web: "詳しくはWebで",
-        check: "今すぐチェック",
-      },
-      textLabel: "キャプションテキスト",
-      textPlaceholder: "キャプションを入力",
-      count: "{length}/{max}文字",
-      tooLong: "キャプションが長すぎると印刷時に見にくくなります",
-      fontSizeLabel: "フォントサイズ: {size}px",
-      fontSizeAria: "フォントサイズ {size}px",
+    howTo: {
+      name: "UTMパラメータ付きQRコードの作り方",
+      description:
+        "UTMパラメータを設定したQRコードを無料で作成する手順を解説します。",
+      steps: [
+        {
+          name: "URLを入力する",
+          text: "QRコードにしたいWebページのURLを入力します。",
+        },
+        {
+          name: "UTMパラメータを設定する",
+          text: "utm_source、utm_medium、utm_campaignを設定します。ガイダンスに従って入力すれば、Google Analyticsでの効果測定が可能になります。",
+        },
+        {
+          name: "装飾をカスタマイズする",
+          text: "装飾フレームの選択、色の変更、ロゴの追加、キャプションの設定など、デザインをカスタマイズします。",
+        },
+        {
+          name: "QRコードを生成・ダウンロードする",
+          text: "プレビューを確認し、PNG・SVG・PDFのいずれかの形式でQRコードをダウンロードします。",
+        },
+      ],
     },
   },
 };

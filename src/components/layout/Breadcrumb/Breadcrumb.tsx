@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getDict } from "@/i18n/getDict";
+import type { Locale } from "@/i18n/types";
 import styles from "./Breadcrumb.module.css";
 
 export interface BreadcrumbItem {
@@ -8,14 +10,16 @@ export interface BreadcrumbItem {
 
 interface BreadcrumbProps {
   items: BreadcrumbItem[];
+  locale?: Locale;
 }
 
-export function Breadcrumb({ items }: BreadcrumbProps) {
+export function Breadcrumb({ items, locale = "ja" }: BreadcrumbProps) {
+  const { breadcrumb } = getDict(locale).guide;
   return (
-    <nav className={styles.breadcrumb} aria-label="パンくずリスト">
+    <nav className={styles.breadcrumb} aria-label={breadcrumb.ariaLabel}>
       <ol className={styles.list}>
         <li className={styles.item}>
-          <Link href="/">ホーム</Link>
+          <Link href="/">{breadcrumb.home}</Link>
         </li>
         {items.map((item, index) => (
           <li key={index} className={styles.item}>

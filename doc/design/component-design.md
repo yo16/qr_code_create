@@ -749,7 +749,7 @@ interface PdfDownloadButtonProps {
 - generatePosterPdf は `({ previewElement })` から Blob を返す。html2canvas の `onclone` で複製側の枠を幅 794px に固定し、scale 2.5（約 240dpi）で撮って JPEG（品質 0.92）で A4 に貼る。保存はボタン側（`qr-poster-YYYYMMDD-HHmmss.pdf`、revoke は 1 秒遅らせる）
 - フレームの色は `/create` の QrGenerator → DownloadPanel → 引き継ぎ payload の `frameColor` で渡す。古い payload では黒
 - コントラスト警告はカードの中ではなく、プレビューの上に 1 回だけ出す
-- 既知の残課題（別タスク）: QR の生成に失敗しても ready になる。A→B→A で同じキーの古い完了が数えられる
+- QR の準備判定（bd-qr_code_create-579 で追加）: QrPreview は描画を予約するたびに世代番号を進め、完了は「いま進行中の最新の描画」のものだけを `onRenderSettled({ ok })` で通知する（予約・やり直しは `onRenderPending`）。そのため A→B→A と戻しても最初の A の完了は数えない。PosterPreview はカードごとに pending/ok/failed を持ち、4 枚すべて ok のときだけ ready=true にする。1 枚でも failed なら ready=false のまま `onFailedChange(true)` で PosterEditor に伝え、PdfDownloadButton は無効のまま「QRコードを作れませんでした。URL が長すぎないか確認してください」を表示する。URL・装飾の変更や再生成で pending に戻ると失敗は解除される。URL の最大長を絞る案（validateUrl）は採らず、失敗を検知して案内する方針とした
 
 ### 2A.6 既存コンポーネントの再利用
 

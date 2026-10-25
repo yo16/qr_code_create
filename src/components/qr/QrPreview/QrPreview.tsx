@@ -48,8 +48,14 @@ interface QrPreviewProps {
    * （エラー計測 qr_render は残す）。
    */
   bare?: boolean;
-  /** 描画の試行が終わったとき（成功・失敗のどちらでも）に呼ばれる */
-  onRenderSettled?: () => void;
+  /**
+   * 描画の試行が終わったときに、結果（ok: 成功したか）を渡して呼ばれる。
+   * 設定が変わって新しい描画が予約された後は、古い描画の完了は通知されない
+   * （常に「いま進行中の最新の描画」の完了だけが届く）
+   */
+  onRenderSettled?: (result: { ok: boolean }) => void;
+  /** 描画が予約された（デバウンス待ちに入った）とき、またはやり直しになったときに呼ばれる */
+  onRenderPending?: () => void;
 }
 
 const DEBOUNCE_MS = 500;
@@ -76,12 +82,19 @@ export function QrPreview({
   canvasRef: externalCanvasRef,
   bare = false,
   onRenderSettled,
+  onRenderPending,
 }: QrPreviewProps) {
   const t = useDict().tool.qrPreview;
   const onRenderSettledRef = useRef(onRenderSettled);
+  const onRenderPendingRef = useRef(onRenderPending);
   useEffect(() => {
     onRenderSettledRef.current = onRenderSettled;
+    onRenderPendingRef.current = onRenderPending;
   });
+  // 描画の世代番号。描画を予約するたび（設定変更・URL 無効化を含む）に進め、
+  // 完了時に自分の世代が最新のときだけ通知する。A→B→A のように同じ設定に戻っても、
+  // 最初の A の完了は古い世代として捨てられる
+  const latestGenerationRef = useRef(0);
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = externalCanvasRef ?? internalCanvasRef;
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -96,13 +109,14 @@ export function QrPreview({
   const hasFrame = frameConfig.type !== "none";
   const hasImageFrame = isImageFrame(frameConfig.type);
 
-  const generateQr = useCallback(async () => {
+  const generateQr = useCallback(async (generation: number) => {
     if (!shouldRender || !canvasRef.current) return;
 
     // 生成を始めた時点の通知先を控える。完了時の最新の ref を呼ぶと、
     // 生成中に設定が変わったとき古い生成の完了が新しい設定の完了として届いてしまう
     const settled = onRenderSettledRef.current;
 
+    let ok = true;
     setIsLoading(true);
     setHasError(false);
 
@@ -191,9 +205,10 @@ export function QrPreview({
     } catch (error) {
       trackErrorOccurred("qr_render", error instanceof Error ? error.name : "unknown");
       setHasError(true);
+      ok = false;
     } finally {
       setIsLoading(false);
-      settled?.();
+      if (generation === latestGenerationRef.current) settled?.({ ok });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- canvasRef は ref で安定、caption は計測にのみ使い再描画に不要（入れると文言入力のたびに再生成される）
   }, [url, fgColor, bgColor, size, shouldRender, logo, frameConfig, hasFrame, hasImageFrame]);
@@ -203,6 +218,9 @@ export function QrPreview({
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
+
+    // 予約のたびに世代を進める。進行中の古い描画の完了はこれで無効になる
+    const generation = ++latestGenerationRef.current;
 
     if (!shouldRender) {
       // canvas をクリア
@@ -214,8 +232,9 @@ export function QrPreview({
       return;
     }
 
+    onRenderPendingRef.current?.();
     debounceTimerRef.current = setTimeout(() => {
-      generateQr();
+      generateQr(generation);
     }, DEBOUNCE_MS);
 
     return () => {

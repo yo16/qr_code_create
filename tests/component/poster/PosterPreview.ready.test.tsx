@@ -10,7 +10,8 @@ interface QrProps {
   url: string;
   frameConfig?: { type: string; color: string };
   bare?: boolean;
-  onRenderSettled?: () => void;
+  onRenderSettled?: (result: { ok: boolean }) => void;
+  onRenderPending?: () => void;
   [key: string]: unknown;
 }
 // 描画のたびに最新の props を記録する（カードの並び順で 0〜3）
@@ -32,14 +33,31 @@ const decoration: DecorationConfig = {
 };
 
 /** 直近の描画で各カードに渡された onRenderSettled（カード 0〜3 の順） */
-function currentSettlers(): Array<() => void> {
-  return latestProps.slice(-4).map((p) => p.onRenderSettled as () => void);
+type Settler = (result: { ok: boolean }) => void;
+function currentSettlers(): Settler[] {
+  return latestProps.slice(-4).map((p) => p.onRenderSettled as Settler);
+}
+/** カードごとの onRenderPending（実物は予約時に呼ぶ） */
+function currentPendings(): Array<() => void> {
+  return latestProps.slice(-4).map((p) => p.onRenderPending as () => void);
 }
 
 /** カード index の「いま渡されている」完了通知を呼ぶ */
-async function settle(indices: number[], settlers = currentSettlers()) {
+async function settle(indices: number[], settlers = currentSettlers(), ok = true) {
   await act(async () => {
-    for (const i of indices) settlers[i]();
+    for (const i of indices) settlers[i]({ ok });
+  });
+}
+
+/** カード index の描画が失敗で終わったことを伝える */
+async function settleFailed(indices: number[], settlers = currentSettlers()) {
+  await settle(indices, settlers, false);
+}
+
+/** カード index の再描画の予約（pending）を伝える */
+async function pend(indices: number[], pendings = currentPendings()) {
+  await act(async () => {
+    for (const i of indices) pendings[i]();
   });
 }
 
@@ -47,12 +65,14 @@ type Props = React.ComponentProps<typeof PosterPreview>;
 
 function setup(overrides: Partial<Props> = {}) {
   const onReadyChange = jest.fn();
+  const onFailedChange = jest.fn();
   const base: Props = {
     url: "https://example.com/a",
     isUrlValid: true,
     description: "説明",
     decoration,
     onReadyChange,
+    onFailedChange,
   };
   const utils = render(<PosterPreview {...base} {...overrides} />);
   const update = (next: Partial<Props>) =>
@@ -61,7 +81,11 @@ function setup(overrides: Partial<Props> = {}) {
     const calls = onReadyChange.mock.calls;
     return calls.length ? calls[calls.length - 1][0] : undefined;
   };
-  return { onReadyChange, update, lastReady, ...utils };
+  const lastFailed = () => {
+    const calls = onFailedChange.mock.calls;
+    return calls.length ? calls[calls.length - 1][0] : undefined;
+  };
+  return { onReadyChange, onFailedChange, update, lastReady, lastFailed, ...utils };
 }
 
 beforeEach(() => {
@@ -245,5 +269,72 @@ describe("PosterPreview のカードと QrPreview への props", () => {
     for (const p of latestProps.slice(-4)) {
       expect(p.frameConfig).toEqual({ type: "none", color: "#00ff00" });
     }
+  });
+});
+
+describe("PosterPreview の失敗の扱い", () => {
+  it("1 枚でも失敗すると、ほかの 3 枚が成功しても ready=false で onFailedChange(true) になること", async () => {
+    const { lastReady, lastFailed } = setup();
+    expect(lastFailed()).toBe(false);
+
+    await settle([0, 1, 2]);
+    await settleFailed([3]);
+
+    expect(lastReady()).toBe(false);
+    expect(lastFailed()).toBe(true);
+  });
+
+  it("4 枚とも成功すれば ready=true で、failed は false のままであること", async () => {
+    const { lastReady, lastFailed } = setup();
+    await settle([0, 1, 2, 3]);
+
+    expect(lastReady()).toBe(true);
+    expect(lastFailed()).toBe(false);
+  });
+
+  it("URL を変えて再生成（pending）に戻ると onFailedChange(false) になり、成功で ready=true に戻ること", async () => {
+    const { update, lastReady, lastFailed } = setup();
+    await settleFailed([0, 1, 2, 3]);
+    expect(lastFailed()).toBe(true);
+
+    update({ url: "https://example.com/fixed" });
+    expect(lastFailed()).toBe(false);
+    expect(lastReady()).toBe(false);
+
+    await settle([0, 1, 2, 3]);
+    expect(lastReady()).toBe(true);
+    expect(lastFailed()).toBe(false);
+  });
+
+  it("キーが同じでも、失敗したカードに onRenderPending が来ると pending に戻り failed が解除されること", async () => {
+    const { lastReady, lastFailed } = setup();
+    await settle([0, 1, 2]);
+    await settleFailed([3]);
+    expect(lastFailed()).toBe(true);
+
+    await pend([3]);
+    expect(lastFailed()).toBe(false);
+    expect(lastReady()).toBe(false);
+
+    await settle([3]);
+    expect(lastReady()).toBe(true);
+  });
+
+  it("ok だったカードに onRenderPending が来ると、そのカードが完了するまで ready=false に戻ること", async () => {
+    const { lastReady } = setup();
+    await settle([0, 1, 2, 3]);
+    expect(lastReady()).toBe(true);
+
+    await pend([2]);
+    expect(lastReady()).toBe(false);
+
+    await settle([2]);
+    expect(lastReady()).toBe(true);
+  });
+
+  it("URL が無効なら QR を描かないので、failed にならず ready=true であること", () => {
+    const { lastReady, lastFailed } = setup({ url: "", isUrlValid: false });
+    expect(lastReady()).toBe(true);
+    expect(lastFailed()).toBe(false);
   });
 });

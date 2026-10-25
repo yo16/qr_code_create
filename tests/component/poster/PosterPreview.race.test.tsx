@@ -114,19 +114,76 @@ describe("PosterPreview + QrPreview（実物）の ready 競合", () => {
     expect(lastReady()).toBe(true);
   });
 
-  it("A の生成中に B へ変え、また A に戻した直後は ready=false で、A の生成がすべて終わると true になること", async () => {
+  it("A の生成中に B → A と戻したとき、最初の A の生成を完了させても ready=false のままで、戻した A の生成が 4 枚終わって初めて true になること", async () => {
     const { rerenderUrl, lastReady } = setup(URL_A);
     await advanceDebounce();
-    expect(pending.filter((p) => p.url === URL_A)).toHaveLength(4);
+    const firstA = pending.filter((p) => p.url === URL_A);
+    expect(firstA).toHaveLength(4);
 
     rerenderUrl(URL_B);
     rerenderUrl(URL_A); // B のデバウンスが走る前に A へ戻す
     expect(lastReady()).toBe(false);
 
-    // B の生成は始まらない（デバウンスで取り消される）。A の生成だけを完了させる
+    // 最初の A の生成が終わっても、世代が古いので数えない（そのあとの再描画で canvas が消えるため）
+    await act(async () => {
+      firstA.forEach((p) => p.resolve());
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    });
+    expect(lastReady()).toBe(false);
+
+    // B の生成は始まらず、戻した A の生成だけがデバウンス後に始まる
     await advanceDebounce();
     expect(pending.filter((p) => p.url === URL_B)).toHaveLength(0);
+    const secondA = pending.filter((p) => p.url === URL_A && !firstA.includes(p));
+    expect(secondA).toHaveLength(4);
+    expect(lastReady()).toBe(false);
+
+    await act(async () => {
+      secondA.forEach((p) => p.resolve());
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    });
+    expect(lastReady()).toBe(true);
+  });
+
+  it("キーが変わらなくても再生成が走る場合（ロゴの identity だけ変更）、ready が false に戻り、新しい生成の完了で true に戻ること", async () => {
+    const logo = {
+      dataUrl: "data:image/png;base64,AA",
+      fileName: "l.png",
+      fileType: "image/png",
+      fileSizeKb: 1,
+      sizePercent: 15,
+    };
+    const onReadyChange = jest.fn();
+    const element = (l: typeof logo) => (
+      <PosterPreview
+        url={URL_A}
+        isUrlValid
+        description="説明"
+        decoration={{ ...decoration, logo: l }}
+        onReadyChange={onReadyChange}
+      />
+    );
+    const lastReady = () => onReadyChange.mock.calls[onReadyChange.mock.calls.length - 1][0];
+    const { rerender } = render(element(logo));
+    await advanceDebounce();
+    const first = [...pending];
+    expect(first).toHaveLength(4);
     await resolveAll(URL_A);
+    expect(lastReady()).toBe(true);
+
+    // 中身は同じで identity だけ違うロゴ（renderKey は変わらないが QrPreview は再生成する）
+    rerender(element({ ...logo }));
+    expect(lastReady()).toBe(false);
+
+    await advanceDebounce();
+    const second = pending.filter((p) => !first.includes(p));
+    expect(second).toHaveLength(4);
+    expect(lastReady()).toBe(false);
+
+    await act(async () => {
+      second.forEach((p) => p.resolve());
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    });
     expect(lastReady()).toBe(true);
   });
 });

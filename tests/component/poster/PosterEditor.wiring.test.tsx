@@ -21,6 +21,9 @@ jest.mock("@/lib/analytics/events", () => ({
   trackPosterGenerated: (...args: unknown[]) => mockTrackPosterGenerated(...args),
 }));
 
+import QRCode from "qrcode";
+const mockToCanvas = QRCode.toCanvas as jest.Mock;
+
 const URL_LABEL = "QRコードに埋め込むURL";
 const DESC_LABEL = "説明文（Markdown）";
 const READY = { name: "PDFをダウンロード（A4印刷用）" };
@@ -79,6 +82,8 @@ async function clickDownload() {
 }
 
 beforeEach(() => {
+  mockToCanvas.mockReset();
+  mockToCanvas.mockResolvedValue(undefined);
   sessionStorage.clear();
   mockTrackPosterGenerated.mockClear();
   Object.defineProperty(URL, "createObjectURL", { configurable: true, value: jest.fn(() => "blob:x") });
@@ -152,5 +157,36 @@ describe("PosterEditor → trackPosterGenerated", () => {
     expect(mockTrackPosterGenerated).toHaveBeenCalledWith(
       expect.objectContaining({ descriptionLength: 5 })
     );
+  });
+});
+
+describe("PosterEditor の QR 生成失敗", () => {
+  const FAILED_MESSAGE = "QRコードを作れませんでした。URL やロゴ・フレームの画像を確認してください";
+
+  it("実物の QrPreview で toCanvas が失敗すると、ボタンが無効で理由が出て、URL を直すと消えて押せるようになること", async () => {
+    mockToCanvas.mockRejectedValue(new Error("The amount of data is too big"));
+    await renderReady();
+
+    expect(screen.getByRole("button", READY)).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(FAILED_MESSAGE);
+    expect(screen.queryByRole("button", PREPARING)).toBeNull();
+
+    // 直す: 生成が成功するようになり、URL を変えて再生成させる
+    mockToCanvas.mockResolvedValue(undefined);
+    fireEvent.change(screen.getByLabelText(URL_LABEL), { target: { value: "https://example.com/ok" } });
+    await settle();
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("button", READY)).not.toBeDisabled();
+  });
+
+  it("URL を変えて再生成が始まった時点（描画前）で、失敗の理由が消えること", async () => {
+    mockToCanvas.mockRejectedValue(new Error("fail"));
+    await renderReady();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(URL_LABEL), { target: { value: "https://example.com/retry" } });
+
+    expect(screen.queryByText(FAILED_MESSAGE)).toBeNull();
   });
 });

@@ -13,6 +13,8 @@ import styles from "./use-case.module.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
+export const dynamicParams = false;
+
 interface UseCasePageProps {
   params: Promise<{ slug: string }>;
 }

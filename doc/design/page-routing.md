@@ -19,12 +19,12 @@
 ├── /create ................ QRコード生成ツール（SSG + CSR）
 ├── /poster ................ 印刷用ポスター（A4 2x2 PDF）作成ツール（SSG + CSR）
 ├── /guide ................. 使い方ガイド一覧（SSG）
-│   └── /guide/[slug] ...... ガイド個別記事（SSG, generateStaticParams）
-├── /use-cases/[slug] ...... 用途別QRコード（SSG, generateStaticParams）
+│   └── /guide/[slug] ...... ガイド個別記事（SSG, generateStaticParams。dynamicParams = false）
+├── /use-cases/[slug] ...... 用途別QRコード（SSG, generateStaticParams。dynamicParams = false）
 ├── /industry/[slug] ....... 業種別QRコード活用（SSG, generateStaticParams）
 ├── /blog .................. ブログ一覧（SSG）
 │   ├── /blog/category/[category] .. カテゴリ別一覧（SSG, generateStaticParams）
-│   └── /blog/[slug] ....... ブログ個別記事（SSG, generateStaticParams）
+│   └── /blog/[slug] ....... ブログ個別記事（SSG, generateStaticParams。dynamicParams = false）
 ├── /compare/[slug] ........ 比較ページ（SSG, generateStaticParams）
 ├── /faq ................... よくある質問（SSG）
 ├── /privacy ............... プライバシーポリシー（SSG）

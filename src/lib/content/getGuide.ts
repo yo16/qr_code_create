@@ -3,6 +3,7 @@ import path from "path";
 import matter from "gray-matter";
 import type { GuideContent, GuideFrontmatter } from "@/types/content";
 import type { Locale } from "@/i18n/types";
+import { isValidSlug } from "./isValidSlug";
 
 /** ja → src/content/guide、en → src/content/en/guide */
 function contentDir(locale: Locale): string {
@@ -12,6 +13,7 @@ function contentDir(locale: Locale): string {
 }
 
 export function getGuide(slug: string, locale: Locale = "ja"): GuideContent | null {
+  if (!isValidSlug(slug)) return null;
   const filePath = path.join(contentDir(locale), `${slug}.mdx`);
   if (!fs.existsSync(filePath)) {
     return null;

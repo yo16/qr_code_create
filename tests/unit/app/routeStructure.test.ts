@@ -124,6 +124,17 @@ describe("英語版トップ（T3 で本実装）", () => {
   });
 });
 
+describe("ja の [slug] ページは dynamicParams = false（qr_code_create-xjj）", () => {
+  // 意図: generateStaticParams に無い slug を実行時に解決させず 404 にする（en の guide と同じ）
+  it.each([
+    [["(ja)", "(marketing)", "guide", "[slug]", "page.tsx"]],
+    [["(ja)", "(marketing)", "blog", "[slug]", "page.tsx"]],
+    [["(ja)", "(marketing)", "use-cases", "[slug]", "page.tsx"]],
+  ])("src/app/%j が dynamicParams = false を export すること", (segments) => {
+    expect(read(...segments)).toMatch(/export\s+const\s+dynamicParams\s*=\s*false/);
+  });
+});
+
 describe("英語ガイド（T4）", () => {
   // 意図（qr_code_create-01z.5）: 英語ガイドのルートと、ja / en 共通のページ本体の配置
   it.each([

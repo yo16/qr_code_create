@@ -2,10 +2,12 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import type { UseCaseContent, UseCaseFrontmatter } from "@/types/content";
+import { isValidSlug } from "./isValidSlug";
 
 const CONTENT_DIR = path.join(process.cwd(), "src/content/use-cases");
 
 export function getUseCase(slug: string): UseCaseContent | null {
+  if (!isValidSlug(slug)) return null;
   const filePath = path.join(CONTENT_DIR, `${slug}.mdx`);
   if (!fs.existsSync(filePath)) {
     return null;

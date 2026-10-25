@@ -48,4 +48,23 @@ describe("PosterPage（機能フラグ ON）", () => {
     render(<PosterPage />);
     expect(screen.getByTestId("poster-editor")).toBeInTheDocument();
   });
+
+  it("JSON-LD（WebApplication と BreadcrumbList）が /poster の URL を指していること", () => {
+    // 意図（qr_code_create-b4m）: SITE_URL の整理で URL 組み立てが変わっていない
+    const { container } = render(<PosterPage />);
+    const blocks = Array.from(container.querySelectorAll('script[type="application/ld+json"]')).map(
+      (el) => JSON.parse(el.textContent ?? "{}")
+    );
+    const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
+
+    const app = blocks.find((b) => b["@type"] === "WebApplication");
+    expect(app?.url).toBe(`${site}/poster`);
+    expect(app?.name).toBe("QR Code Create - 印刷用ポスター作成");
+
+    const crumbs = blocks.find((b) => b["@type"] === "BreadcrumbList");
+    expect(crumbs?.itemListElement).toHaveLength(2);
+    expect(crumbs?.itemListElement[0].item).toBe(site);
+    expect(crumbs?.itemListElement[1].name).toBe("印刷用ポスター作成");
+    expect(crumbs?.itemListElement[1].item).toBe(`${site}/poster`);
+  });
 });

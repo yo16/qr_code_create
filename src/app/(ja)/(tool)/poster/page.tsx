@@ -3,9 +3,10 @@ import { FEATURE_FLAGS } from "@/lib/constants/features";
 import { PosterEditorLoader } from "./PosterEditorLoader";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/metadata/buildMetadata";
-import { buildWebApplicationSchema } from "@/lib/schema/buildJsonLd";
-import { buildBreadcrumbSchema } from "@/lib/schema/buildJsonLd";
+import { buildWebApplicationSchema, buildBreadcrumbSchema } from "@/lib/schema/buildJsonLd";
 import styles from "./page.module.css";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
 export const metadata = buildMetadata({
   title: "印刷用QRコードポスター作成 | A4で4枚同時印刷",
@@ -17,17 +18,14 @@ export const metadata = buildMetadata({
 const posterAppSchema = {
   ...buildWebApplicationSchema(),
   name: "QR Code Create - 印刷用ポスター作成",
-  url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp"}/poster`,
+  url: `${SITE_URL}/poster`,
   description:
     "QRコードと説明文を組み合わせたA4ポスターを無料作成。1枚のA4用紙に4枚分を配置してPDF出力。",
 };
 
 const breadcrumbSchema = buildBreadcrumbSchema([
-  { name: "ホーム", url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp" },
-  {
-    name: "印刷用ポスター作成",
-    url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp"}/poster`,
-  },
+  { name: "ホーム", url: SITE_URL },
+  { name: "印刷用ポスター作成", url: `${SITE_URL}/poster` },
 ]);
 
 export default function PosterPage() {

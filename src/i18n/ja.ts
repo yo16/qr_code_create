@@ -90,7 +90,7 @@ export const ja = {
           "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
       },
       create: {
-        title: "QRコード生成 - QR Code Create",
+        title: "QRコード生成",
         description:
           "URLを入力するだけ。UTMパラメータと装飾フレームでマーケティング効果を最大化するQRコードを無料で作成できます。",
       },

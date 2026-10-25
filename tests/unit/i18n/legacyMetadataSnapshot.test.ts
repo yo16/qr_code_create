@@ -26,7 +26,8 @@ describe("PAGE_METADATA は T2b 前と同じ", () => {
         alternatePaths: { ja: "/", en: "/en" },
       },
       create: {
-        title: "QRコード生成 - QR Code Create",
+        // qr_code_create-176 で意図して変更: サイト名はルートの title template が 1 回付けるので、ページ側からは外した
+        title: "QRコード生成",
         description:
           "URLを入力するだけ。UTMパラメータと装飾フレームでマーケティング効果を最大化するQRコードを無料で作成できます。",
         path: "/create",

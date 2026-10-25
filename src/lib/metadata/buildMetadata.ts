@@ -38,6 +38,9 @@ export function buildMetadata(
   const { title, description, path, ogImagePath = "/images/og/default.png", noIndex = false, alternatePaths } = options;
   const url = `${SITE_URL}${path}`;
   const imageUrl = `${SITE_URL}${ogImagePath}`;
+  // title はテンプレート（layout の title.template）でサイト名が 1 回付く。
+  // og / twitter にはテンプレートが効かないので、サイト名を含まない title にだけここで 1 回付ける (bd-qr_code_create-176 で追加)
+  const socialTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
 
   return {
     title,
@@ -55,7 +58,7 @@ export function buildMetadata(
         : {}),
     },
     openGraph: {
-      title,
+      title: socialTitle,
       description,
       url,
       siteName: SITE_NAME,
@@ -66,7 +69,7 @@ export function buildMetadata(
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: socialTitle,
       description,
       images: [imageUrl],
     },

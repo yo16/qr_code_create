@@ -331,7 +331,7 @@ export type DownloadFormat = 'png' | 'svg' | 'pdf';
 /**
  * 解像度倍率
  */
-export type ResolutionScale = 1 | 2 | 3;
+export type ResolutionScale = 1 | 2 | 4; // 実装は ResolutionSelector の Resolution（bd-qr_code_create-7l1 で 3 → 4 に修正）
 
 /**
  * ダウンロードオプション
@@ -339,7 +339,7 @@ export type ResolutionScale = 1 | 2 | 3;
 export interface DownloadOptions {
   /** ファイルフォーマット */
   format: DownloadFormat;
-  /** 解像度倍率（1x, 2x, 3x） */
+  /** 解像度倍率（1x, 2x, 4x） */
   scale: ResolutionScale;
   /** ファイル名（拡張子なし） */
   fileName: string;

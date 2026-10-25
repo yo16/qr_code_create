@@ -2,10 +2,12 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import type { BlogContent, BlogFrontmatter } from "@/types/content";
+import { isValidSlug } from "./isValidSlug";
 
 const CONTENT_DIR = path.join(process.cwd(), "src/content/blog");
 
 export function getBlog(slug: string): BlogContent | null {
+  if (!isValidSlug(slug)) return null;
   const filePath = path.join(CONTENT_DIR, `${slug}.mdx`);
   if (!fs.existsSync(filePath)) {
     return null;

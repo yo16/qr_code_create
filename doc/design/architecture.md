@@ -396,6 +396,8 @@ Next.js が全SSGページを静的生成
 .next/ に出力
 ```
 
+MDX の個別記事（`/guide/[slug]`、`/use-cases/[slug]`、`/blog/[slug]`、`/en/guide/[slug]`）は `dynamicParams = false` とし、静的生成していない slug はランタイムで描かずに 404 にする。あわせて `getGuide` / `getBlog` / `getUseCase` は slug を `isValidSlug`（`src/lib/content/isValidSlug.ts`、`/^[a-z0-9-]+$/`）で検証し、合わなければファイルを読まずに `null` を返す。`../` や `..\`、大文字（Windows では大文字小文字を区別しないため）でコンテンツディレクトリの外や別ファイルを読めないようにするため（bd-qr_code_create-xjj で追加）。
+
 ### 8.2 デプロイフロー
 
 ```

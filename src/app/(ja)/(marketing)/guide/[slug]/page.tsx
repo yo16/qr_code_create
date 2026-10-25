@@ -4,6 +4,8 @@ import { getGuide, getGuideSlugList } from "@/lib/content/getGuide";
 import { buildMetadata, getGuideAlternatePaths } from "@/lib/metadata/buildMetadata";
 import { GuideArticlePageView } from "@/components/pages/GuideArticlePageView/GuideArticlePageView";
 
+export const dynamicParams = false;
+
 interface GuidePageProps {
   params: Promise<{ slug: string }>;
 }

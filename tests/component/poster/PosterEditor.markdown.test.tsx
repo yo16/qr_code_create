@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, act, within } from "@testing-library/react";
 import { PosterEditor } from "@/components/poster/PosterEditor/PosterEditor";
 import { savePosterHandoff } from "@/lib/handoff/posterHandoff";
 import { FRAME_OPTIONS } from "@/lib/qr/frameRenderer";
@@ -15,7 +15,7 @@ jest.mock("@/lib/qr/drawLogo", () => ({
   drawLogoOnCanvas: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock("@/lib/pdf/generatePosterPdf", () => ({
-  generatePosterPdf: jest.fn().mockResolvedValue(undefined),
+  generatePosterPdf: jest.fn().mockResolvedValue(new Blob(["pdf"])),
 }));
 
 import QRCode from "qrcode";
@@ -40,6 +40,8 @@ const payload: Payload = {
 
 const URL_LABEL = "QRコードに埋め込むURL";
 const DESC_LABEL = "説明文（Markdown）";
+const PREVIEW_NAME = "ポスターのプレビュー（A4縦、同じカード4枚）";
+const PDF_BUTTON = { name: "PDFをダウンロード（A4印刷用）" };
 
 async function renderEditor() {
   render(<PosterEditor />);
@@ -73,13 +75,13 @@ describe("PosterEditor（Markdown 説明文）", () => {
       expect(screen.getByLabelText("適用される装飾")).toHaveTextContent("適用される装飾:");
       expect(screen.getByLabelText(DESC_LABEL)).toHaveValue("");
       expect(screen.getByRole("heading", { name: "プレビュー" })).toBeInTheDocument();
-      expect(screen.getByRole("group", { name: "ポスターのプレビュー（1枚分）" })).toBeInTheDocument();
-      expect(screen.getByText("PDFをダウンロード")).toBeDisabled();
+      expect(screen.getByRole("group", { name: PREVIEW_NAME })).toBeInTheDocument();
+      expect(screen.getByRole("button", PDF_BUTTON)).toBeDisabled();
     });
 
-    it("説明文が空の間はプレビューに案内文が出ること", async () => {
+    it("説明文が空の間はプレビューの 4 枚すべてに案内文が出ること", async () => {
       await renderEditor();
-      expect(screen.getByText("説明文を入力すると、ここに表示されます")).toBeInTheDocument();
+      expect(screen.getAllByText("説明文を入力すると、ここに表示されます")).toHaveLength(4);
     });
 
     it("「準備中」の仮の文言が残っていないこと", async () => {
@@ -96,13 +98,13 @@ describe("PosterEditor（Markdown 説明文）", () => {
         target: { value: "## お店の名前" },
       });
 
-      const card = screen.getByRole("group", { name: "ポスターのプレビュー（1枚分）" });
-      // react-markdown はモックで原文をそのまま表示する
-      expect(card).toHaveTextContent("## お店の名前");
+      const sheet = screen.getByRole("group", { name: PREVIEW_NAME });
+      // react-markdown はモックで原文をそのまま表示する。同じカードが 4 枚ある
+      expect(within(sheet).getAllByText("## お店の名前")).toHaveLength(4);
       expect(screen.queryByText("説明文を入力すると、ここに表示されます")).toBeNull();
     });
 
-    it("URL を入力すると PDF ボタンが有効になり、QR がその URL で生成されること", async () => {
+    it("URL と説明文を入力し QR の描画が終わると PDF ボタンが有効になり、QR がその URL で生成されること", async () => {
       jest.useFakeTimers();
       try {
         await renderEditor();
@@ -110,11 +112,34 @@ describe("PosterEditor（Markdown 説明文）", () => {
         fireEvent.change(screen.getByLabelText(URL_LABEL), {
           target: { value: "https://example.com/new" },
         });
+        // 説明文が空の間は URL が有効でも押せない
+        expect(screen.getByRole("button", PDF_BUTTON)).toBeDisabled();
+        fireEvent.change(screen.getByLabelText(DESC_LABEL), { target: { value: "説明" } });
         await flushDebounce();
 
-        expect(screen.getByText("PDFをダウンロード")).not.toBeDisabled();
         await waitFor(() => expect(mockToCanvas).toHaveBeenCalled());
         expect(lastQrUrl()).toContain("https://example.com/new");
+        await waitFor(() => expect(screen.getByRole("button", PDF_BUTTON)).not.toBeDisabled());
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it("説明文を消す（空白だけにする）とボタンが再び無効になること", async () => {
+      jest.useFakeTimers();
+      try {
+        await renderEditor();
+        fireEvent.change(screen.getByLabelText(URL_LABEL), {
+          target: { value: "https://example.com/new" },
+        });
+        fireEvent.change(screen.getByLabelText(DESC_LABEL), { target: { value: "説明" } });
+        await flushDebounce();
+        await waitFor(() => expect(screen.getByRole("button", PDF_BUTTON)).not.toBeDisabled());
+
+        fireEvent.change(screen.getByLabelText(DESC_LABEL), { target: { value: "   " } });
+
+        expect(screen.getByRole("button", PDF_BUTTON)).toBeDisabled();
+        expect(screen.getByText("説明文を入力するとPDFをダウンロードできます")).toBeInTheDocument();
       } finally {
         jest.useRealTimers();
       }
@@ -126,7 +151,7 @@ describe("PosterEditor（Markdown 説明文）", () => {
       fireEvent.change(screen.getByLabelText(URL_LABEL), { target: { value: "not a url" } });
 
       expect(screen.getByText(/有効なURLを入力してください/)).toBeInTheDocument();
-      expect(screen.getByText("PDFをダウンロード")).toBeDisabled();
+      expect(screen.getByRole("button", PDF_BUTTON)).toBeDisabled();
     });
   });
 

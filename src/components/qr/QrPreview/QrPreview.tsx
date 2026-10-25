@@ -41,6 +41,15 @@ interface QrPreviewProps {
   isUrlValid?: boolean;
   /** 外部から canvasRef を注入する場合に指定（省略時は内部生成） */
   canvasRef?: React.RefObject<HTMLCanvasElement | null>;
+  /**
+   * 他の画面（ポスターなど）の部品として埋め込む表示。
+   * ラベル・コントラスト警告・container の面/枠/余白を描かず、QR だけを出す。
+   * 同じ QR を複数並べる使い方を想定しているため、qr_generated も送らない
+   * （エラー計測 qr_render は残す）。
+   */
+  bare?: boolean;
+  /** 描画の試行が終わったとき（成功・失敗のどちらでも）に呼ばれる */
+  onRenderSettled?: () => void;
 }
 
 const DEBOUNCE_MS = 500;
@@ -65,8 +74,14 @@ export function QrPreview({
   caption,
   isUrlValid = false,
   canvasRef: externalCanvasRef,
+  bare = false,
+  onRenderSettled,
 }: QrPreviewProps) {
   const t = useDict().tool.qrPreview;
+  const onRenderSettledRef = useRef(onRenderSettled);
+  useEffect(() => {
+    onRenderSettledRef.current = onRenderSettled;
+  });
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = externalCanvasRef ?? internalCanvasRef;
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,6 +98,10 @@ export function QrPreview({
 
   const generateQr = useCallback(async () => {
     if (!shouldRender || !canvasRef.current) return;
+
+    // 生成を始めた時点の通知先を控える。完了時の最新の ref を呼ぶと、
+    // 生成中に設定が変わったとき古い生成の完了が新しい設定の完了として届いてしまう
+    const settled = onRenderSettledRef.current;
 
     setIsLoading(true);
     setHasError(false);
@@ -137,6 +156,14 @@ export function QrPreview({
           errorCorrectionLevel: "H",
         });
 
+        // qrcode は toCanvas で canvas.style.width/height に size(px) をインラインで書き込む。
+        // インラインは CSS より優先され、bare の「枠に合わせて縮める」指定（width/height: 100%）が
+        // 効かず QR の中央だけが切り取られるため、bare のときだけ消す（bare でない表示は従来どおり）
+        if (bare) {
+          canvas.style.removeProperty("width");
+          canvas.style.removeProperty("height");
+        }
+
         // Canvas描画フレームを重ねる
         if (hasFrame) {
           const ctx = canvas.getContext("2d");
@@ -152,18 +179,21 @@ export function QrPreview({
       }
 
       // QRコード生成完了イベントを発火
-      trackQrGenerated({
-        hasUtm: url.includes("utm_"),
-        utmCount: (url.match(/utm_/g) || []).length,
-        hasLogo: logo != null,
-        hasFrame: hasFrame,
-        hasCaption: !!(caption && caption.text.trim() !== ""),
-      });
+      if (!bare) {
+        trackQrGenerated({
+          hasUtm: url.includes("utm_"),
+          utmCount: (url.match(/utm_/g) || []).length,
+          hasLogo: logo != null,
+          hasFrame: hasFrame,
+          hasCaption: !!(caption && caption.text.trim() !== ""),
+        });
+      }
     } catch (error) {
       trackErrorOccurred("qr_render", error instanceof Error ? error.name : "unknown");
       setHasError(true);
     } finally {
       setIsLoading(false);
+      settled?.();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- canvasRef は ref で安定、caption は計測にのみ使い再描画に不要（入れると文言入力のたびに再生成される）
   }, [url, fgColor, bgColor, size, shouldRender, logo, frameConfig, hasFrame, hasImageFrame]);
@@ -197,8 +227,8 @@ export function QrPreview({
   }, [generateQr, shouldRender]);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.label}>{t.label}</div>
+    <div className={bare ? styles.bare : styles.container}>
+      {!bare && <div className={styles.label}>{t.label}</div>}
 
       <div
         className={styles.previewArea}
@@ -255,7 +285,7 @@ export function QrPreview({
       )}
 
       {/* コントラスト不足警告 */}
-      {shouldRender && !contrastOk && (
+      {!bare && shouldRender && !contrastOk && (
         <div className={styles.warning} role="alert">
           <span className={styles.warningIcon} aria-hidden="true">
             ⚠

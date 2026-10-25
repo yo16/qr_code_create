@@ -8,6 +8,7 @@ interface ButtonProps {
   type?: "button" | "submit";
   onClick?: () => void;
   className?: string;
+  "aria-busy"?: boolean;
 }
 
 export function Button({
@@ -18,6 +19,7 @@ export function Button({
   type = "button",
   onClick,
   className,
+  "aria-busy": ariaBusy,
 }: ButtonProps) {
   const classNames = [
     styles.button,
@@ -34,6 +36,7 @@ export function Button({
       disabled={disabled}
       onClick={onClick}
       className={classNames}
+      aria-busy={ariaBusy}
     >
       {children}
     </button>

@@ -124,11 +124,20 @@ jest.mock("@/components/qr/DecorationPanel/FrameSelector", () => ({
 }));
 
 jest.mock("@/components/qr/DownloadPanel/DownloadPanel", () => ({
-  DownloadPanel: ({ disabled, decorationCount }: { disabled: boolean; decorationCount: number }) => (
+  DownloadPanel: ({
+    disabled,
+    decorationCount,
+    frameColor,
+  }: {
+    disabled: boolean;
+    decorationCount: number;
+    frameColor?: string;
+  }) => (
     <div
       data-testid="download-panel"
       data-disabled={disabled ? "true" : "false"}
       data-decoration-count={decorationCount}
+      data-frame-color={frameColor ?? "none"}
     />
   ),
 }));
@@ -825,5 +834,22 @@ describe("QrGenerator", () => {
       fireEvent.click(screen.getByTestId("toggle-utm-off"));
       expect(screen.getByTestId("utm-builder")).toHaveAttribute("data-enabled", "false");
     });
+  });
+});
+
+// ポスターへの引き継ぎ用に、フレームの色が DownloadPanel へ渡ること（qr_code_create-ro1）
+describe("QrGenerator → DownloadPanel の frameColor", () => {
+  it("初期状態ではフレームの既定色（黒）が DownloadPanel に渡ること", () => {
+    render(<QrGenerator />);
+    expect(screen.getByTestId("download-panel")).toHaveAttribute("data-frame-color", "#000000");
+  });
+
+  it("プリセットでフレームの色が変わると、その色が DownloadPanel に渡ること", () => {
+    render(<QrGenerator />);
+    fireEvent.click(screen.getByTestId("apply-preset-business"));
+
+    const color = screen.getByTestId("frame-selector").getAttribute("data-frame-color");
+    expect(color).not.toBe("#000000");
+    expect(screen.getByTestId("download-panel")).toHaveAttribute("data-frame-color", color as string);
   });
 });

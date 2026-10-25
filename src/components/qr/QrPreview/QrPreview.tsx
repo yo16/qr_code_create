@@ -171,12 +171,12 @@ export function QrPreview({
         });
 
         // qrcode は toCanvas で canvas.style.width/height に size(px) をインラインで書き込む。
-        // インラインは CSS より優先され、bare の「枠に合わせて縮める」指定（width/height: 100%）が
-        // 効かず QR の中央だけが切り取られるため、bare のときだけ消す（bare でない表示は従来どおり）
-        if (bare) {
-          canvas.style.removeProperty("width");
-          canvas.style.removeProperty("height");
-        }
+        // インラインは CSS より優先され、表示の大きさを CSS で決める場合（/create のスマホ表示の
+        // 768px 以下の .previewArea canvas { width: var(--preview-max) } と、ポスターの bare 表示の
+        // width/height: 100%）に効かず、枠からはみ出して中央だけが見えるため、常に消す。
+        // デスクトップでは canvas の width/height 属性（size）がそのまま表示の大きさになる
+        canvas.style.removeProperty("width");
+        canvas.style.removeProperty("height");
 
         // Canvas描画フレームを重ねる
         if (hasFrame) {

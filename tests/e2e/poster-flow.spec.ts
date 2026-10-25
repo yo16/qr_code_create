@@ -6,7 +6,7 @@ import path from "path";
  * 印刷用ポスター（/poster）の E2E（qr_code_create-ro1）。
  *
  * /poster は公開済み（FEATURE_FLAGS.posterPage = true）なので、常に流す（skip しない）。
- * `npm run build` のあと `npm run test:e2e:poster`（本番ビルド、ポート 3100）で流す。
+ * `npm run build` のあと `npm run test:e2e:prod`（本番ビルド、ポート 3100）で流す。
  * 既定の playwright.config.ts（dev サーバー）では、PDF 生成が遅くポート 3000 も衝突しやすいため対象外。
  * 目視確認用に、スクリーンショットとダウンロードした PDF を tmp/screenshots/ro1/ に保存する。
  * ファイル名を .spec.ts にしているのは、Jest の testMatch に拾われないようにするため。

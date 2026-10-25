@@ -183,7 +183,7 @@
     --preview-max: 128px;
   }
 
-  /* canvas の width/height は HTML 属性なので、通常の CSS 指定で表示サイズを上書きできる */
+  /* canvas の width/height は HTML 属性なので、通常の CSS 指定で表示サイズを上書きできる（qrcode が書き込むインラインの寸法は QrPreview.tsx で消している） */
   .previewArea canvas {
     width: var(--preview-max);
     height: var(--preview-max);

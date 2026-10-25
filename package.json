@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "jest",
     "test:e2e": "playwright test",
-    "test:e2e:poster": "playwright test --config playwright.poster.config.ts",
+    "test:e2e:prod": "playwright test --config playwright.prod.config.ts",
     "build:icons": "node scripts/build-icons.cjs",
     "build:og": "node scripts/build-og.cjs"
   },

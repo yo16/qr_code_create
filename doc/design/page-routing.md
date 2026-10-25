@@ -131,7 +131,7 @@ export const metadata: Metadata = {
 
 **state引き継ぎ**: [アーキテクチャ設計 セクション9](./architecture.md#9-poster-へのstate引き継ぎ機構) を参照。
 
-**公開制御（機能フラグ、qr_code_create-ptg で追加。bd-qr_code_create-l1a で更新）**: `src/lib/constants/features.ts` の `FEATURE_FLAGS.posterPage` で公開を切り替える仕組みを ptg で入れ、Markdown 入力（4me）と A4 2x2 PDF 出力（ro1）の完成後、l1a で `true` にして公開した。false にすると (1) `/create` の DownloadPanel のポスター導線ボタンを描画しない、(2) `sitemap.ts` に `/poster` を含めない、(3) `/poster` へ直接アクセスすると `notFound()` で 404 にする。ro1 で E2E 用に足した環境変数 `NEXT_PUBLIC_FEATURE_POSTER_PAGE` による上書きは、既定値が true になったため l1a で外した。内部モジュール（posterHandoff、generatePosterPdf 等）はフラグの影響を受けない。ポスターの E2E は、事前に `npm run build` してから `npm run test:e2e:poster`（`playwright.poster.config.ts`、ポート 3100）で流す。
+**公開制御（機能フラグ、qr_code_create-ptg で追加。bd-qr_code_create-l1a で更新）**: `src/lib/constants/features.ts` の `FEATURE_FLAGS.posterPage` で公開を切り替える仕組みを ptg で入れ、Markdown 入力（4me）と A4 2x2 PDF 出力（ro1）の完成後、l1a で `true` にして公開した。false にすると (1) `/create` の DownloadPanel のポスター導線ボタンを描画しない、(2) `sitemap.ts` に `/poster` を含めない、(3) `/poster` へ直接アクセスすると `notFound()` で 404 にする。ro1 で E2E 用に足した環境変数 `NEXT_PUBLIC_FEATURE_POSTER_PAGE` による上書きは、既定値が true になったため l1a で外した。内部モジュール（posterHandoff、generatePosterPdf 等）はフラグの影響を受けない。ポスターの E2E（poster-flow）と QR プレビューの枠の実測（create-qr-fit）は、本番ビルドでしか安定しないため、事前に `npm run build` してから `npm run test:e2e:prod`（`playwright.prod.config.ts`、ポート 3100）で流す。既定の `npm run test:e2e`（dev サーバー）からは外している（bd-qr_code_create-b0w で更新）。
 
 ---
 

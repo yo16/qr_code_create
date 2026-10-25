@@ -135,14 +135,17 @@ describe("QrPreview canvas のインライン寸法", () => {
     expect(canvas.width).toBe(512);
   });
 
-  it("bare でないとき、描画後の canvas にインラインの width / height が残ること（/create の挙動）", async () => {
+  it("bare でないときも、描画後の canvas にインラインの width / height が残らないこと（canvas の属性サイズは size のまま）", async () => {
     const { container } = render(<QrPreview url="https://example.com" isUrlValid size={256} />);
     await flush();
 
     expect(mockToCanvas).toHaveBeenCalledTimes(1);
     const canvas = container.querySelector("canvas") as HTMLCanvasElement;
-    expect(canvas.style.width).toBe("256px");
-    expect(canvas.style.height).toBe("256px");
+    expect(canvas.style.width).toBe("");
+    expect(canvas.style.height).toBe("");
+    // ダウンロードの大きさを決める属性サイズは変わらない
+    expect(canvas.width).toBe(256);
+    expect(canvas.height).toBe(256);
   });
 });
 

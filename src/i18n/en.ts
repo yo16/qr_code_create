@@ -24,6 +24,8 @@ export const en = {
     terms: "Terms of service (Japanese)",
     faq: "FAQ",
     contact: "Contact (Japanese)",
+    // /poster の英語版が無いので en のフッターには出ない（Dict のキーを満たすための文言）
+    poster: "Poster maker (Japanese)",
     japaneseOnlyNote:
       "Our privacy policy and terms of service are available in Japanese only.",
   },

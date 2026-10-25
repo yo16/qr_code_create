@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getDict } from "@/i18n/getDict";
 import type { Locale } from "@/i18n/types";
+import { FEATURE_FLAGS } from "@/lib/constants/features";
 import { Container } from "../Container/Container";
 import styles from "./Footer.module.css";
 
@@ -36,6 +37,7 @@ export function Footer({ locale = "ja" }: FooterProps = {}) {
               <Link href="/privacy">{footer.privacy}</Link>
               <Link href="/terms">{footer.terms}</Link>
               <Link href="/faq">{footer.faq}</Link>
+              {FEATURE_FLAGS.posterPage && <Link href="/poster">{footer.poster}</Link>}
               <Link href="/contact">{footer.contact}</Link>
             </div>
           )}

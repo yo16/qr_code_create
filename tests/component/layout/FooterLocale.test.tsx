@@ -29,6 +29,12 @@ describe("Footer locale=en", () => {
   });
 
   // 意図: 英語版の無い FAQ への導線は出さない
+  it("ポスターへのリンクが無い（/poster に英語版は無い）", () => {
+    const { container } = render(<Footer locale="en" />);
+    expect(container.querySelector('a[href="/poster"]')).toBeNull();
+    expect(screen.queryByText(ja.footer.poster)).toBeNull();
+  });
+
   it("FAQ リンクが無い", () => {
     const { container } = render(<Footer locale="en" />);
     expect(screen.queryByRole("link", { name: "FAQ" })).toBeNull();
@@ -51,5 +57,25 @@ describe("Footer locale=ja", () => {
       expect(link).not.toHaveAttribute("hreflang");
     }
     expect(container).not.toHaveTextContent(en.footer.japaneseOnlyNote);
+  });
+
+  // 意図（qr_code_create-b4m）: 既定（フラグ true）で「印刷用ポスター」が /poster を指して出る
+  it("「印刷用ポスター」が /poster を指し、hreflang も付かないこと", () => {
+    render(<Footer locale="ja" />);
+    const link = screen.getByRole("link", { name: "印刷用ポスター" });
+    expect(link).toHaveAttribute("href", "/poster");
+    expect(link).not.toHaveAttribute("hreflang");
+    expect(ja.footer.poster).toBe("印刷用ポスター");
+  });
+
+  it("リンクの並びが FAQ、印刷用ポスター、お問い合わせの順であること", () => {
+    const { container } = render(<Footer locale="ja" />);
+    const hrefs = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href"));
+    const faq = hrefs.indexOf("/faq");
+    const poster = hrefs.indexOf("/poster");
+    const contact = hrefs.indexOf("/contact");
+    expect(faq).toBeGreaterThanOrEqual(0);
+    expect(poster).toBe(faq + 1);
+    expect(contact).toBe(poster + 1);
   });
 });

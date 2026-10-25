@@ -23,6 +23,7 @@ export const ja = {
     terms: "利用規約",
     faq: "よくある質問",
     contact: "お問い合わせ",
+    poster: "印刷用ポスター",
     // 英語版のフッターだけが表示する注記。ja では使わない（Dict のキーを揃えるため）
     japaneseOnlyNote: "プライバシーポリシーと利用規約は日本語のみです。",
   },

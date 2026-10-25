@@ -218,3 +218,103 @@ describe("QrPreview onRenderSettled", () => {
     expect(newSettled).not.toHaveBeenCalled();
   });
 });
+
+describe("QrPreview onRenderSettled の結果と onRenderPending", () => {
+  it("生成に成功すると { ok: true } で呼ばれること", async () => {
+    const onRenderSettled = jest.fn();
+    render(<QrPreview url="https://example.com" isUrlValid onRenderSettled={onRenderSettled} />);
+    await flush();
+
+    expect(onRenderSettled).toHaveBeenCalledTimes(1);
+    expect(onRenderSettled).toHaveBeenCalledWith({ ok: true });
+  });
+
+  it("toCanvas が例外のときは { ok: false } で呼ばれること", async () => {
+    mockToCanvas.mockRejectedValue(new Error("The amount of data is too big"));
+    const onRenderSettled = jest.fn();
+    render(<QrPreview url="https://example.com" isUrlValid onRenderSettled={onRenderSettled} />);
+    await flush();
+
+    expect(onRenderSettled).toHaveBeenCalledTimes(1);
+    expect(onRenderSettled).toHaveBeenCalledWith({ ok: false });
+  });
+
+  it("onRenderPending はデバウンスを予約する時点（生成前）で呼ばれ、settled より先であること", async () => {
+    const order: string[] = [];
+    const onRenderPending = jest.fn(() => order.push("pending"));
+    const onRenderSettled = jest.fn(() => order.push("settled"));
+    render(
+      <QrPreview
+        url="https://example.com"
+        isUrlValid
+        onRenderPending={onRenderPending}
+        onRenderSettled={onRenderSettled}
+      />
+    );
+
+    expect(onRenderPending).toHaveBeenCalledTimes(1);
+    expect(mockToCanvas).not.toHaveBeenCalled();
+    await flush();
+
+    expect(order).toEqual(["pending", "settled"]);
+  });
+
+  it("URL が変わるたびに onRenderPending が呼ばれること", async () => {
+    const onRenderPending = jest.fn();
+    const { rerender } = render(
+      <QrPreview url="https://example.com/a" isUrlValid onRenderPending={onRenderPending} />
+    );
+    rerender(<QrPreview url="https://example.com/b" isUrlValid onRenderPending={onRenderPending} />);
+
+    expect(onRenderPending).toHaveBeenCalledTimes(2);
+  });
+
+  it("URL が無効なら onRenderPending も呼ばれないこと", () => {
+    const onRenderPending = jest.fn();
+    render(<QrPreview url="" isUrlValid={false} onRenderPending={onRenderPending} />);
+    expect(onRenderPending).not.toHaveBeenCalled();
+  });
+
+  it("A の生成中に B → A と変えたとき、最初の A の完了は通知されず、最新の世代の完了だけが通知されること", async () => {
+    const resolvers: Array<() => void> = [];
+    mockToCanvas.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvers.push(resolve);
+        })
+    );
+    const onRenderSettled = jest.fn();
+    const { rerender } = render(
+      <QrPreview url="https://example.com/a" isUrlValid onRenderSettled={onRenderSettled} />
+    );
+    await flush(); // 最初の A の生成が始まる（未完了）
+    expect(resolvers).toHaveLength(1);
+
+    rerender(<QrPreview url="https://example.com/b" isUrlValid onRenderSettled={onRenderSettled} />);
+    rerender(<QrPreview url="https://example.com/a" isUrlValid onRenderSettled={onRenderSettled} />);
+
+    // 最初の A の生成を完了させても、世代が古いので通知されない
+    await act(async () => {
+      resolvers[0]();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(onRenderSettled).not.toHaveBeenCalled();
+
+    // 戻した A の生成（デバウンス後に始まる）が完了すると通知される
+    await act(async () => {
+      jest.advanceTimersByTime(500);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(resolvers).toHaveLength(2);
+    await act(async () => {
+      resolvers[1]();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(onRenderSettled).toHaveBeenCalledTimes(1);
+    expect(onRenderSettled).toHaveBeenCalledWith({ ok: true });
+  });
+});

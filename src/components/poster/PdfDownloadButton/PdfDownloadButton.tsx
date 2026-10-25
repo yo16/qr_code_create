@@ -12,6 +12,8 @@ interface PdfDownloadButtonProps {
   disabled?: boolean;
   /** QRコードの描画が終わっているか。false の間は押せず「QRコードを準備中...」と表示する */
   ready?: boolean;
+  /** QRコードの生成に失敗したか。true の間はボタンを無効のままにして理由を表示する */
+  renderFailed?: boolean;
   /** 入力の識別子。変わると前回の成功/失敗メッセージを消す（省略時は消えない） */
   resetKey?: string;
   /** GA4 イベント用のメタデータ */
@@ -53,6 +55,7 @@ export function PdfDownloadButton({
   previewRef,
   disabled = false,
   ready = true,
+  renderFailed = false,
   resetKey = "",
   hasUtm,
   hasLogo,
@@ -107,10 +110,15 @@ export function PdfDownloadButton({
       >
         {isGenerating
           ? "生成中..."
-          : !ready && !disabled
+          : !ready && !disabled && !renderFailed
             ? "QRコードを準備中..."
             : "PDFをダウンロード（A4印刷用）"}
       </Button>
+      {renderFailed && (
+        <p className={styles.error} role="alert">
+          QRコードを作れませんでした。URL やロゴ・フレームの画像を確認してください
+        </p>
+      )}
       <p className={styles.note}>A4縦1ページに同じカードを4枚配置します。切り取って配布できます。</p>
       <div aria-live="polite">
         {status === "success" && isResultCurrent && (

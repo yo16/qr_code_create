@@ -216,6 +216,23 @@ test.describe("印刷用ポスター", () => {
     });
   }
 
+  test("QR が作れない長さの URL では、PDF ボタンが無効で理由が出て、短い URL に直すと消える", async ({ page }) => {
+    await page.goto("/poster");
+    // validateUrl は通るが、誤り訂正レベル H の QR の容量（約 1,270 バイト）を超える URL
+    const tooLong = `https://example.com/${"a".repeat(1600)}`;
+    await page.getByLabel(URL_LABEL).fill(tooLong);
+    await page.getByLabel(DESCRIPTION_LABEL).fill("説明");
+
+    const reason = page.getByText("QRコードを作れませんでした。URL やロゴ・フレームの画像を確認してください");
+    await expect(reason).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("button", { name: DOWNLOAD_BUTTON })).toBeDisabled();
+    await expect(page.getByRole("button", { name: PREPARING_BUTTON })).toHaveCount(0);
+
+    await page.getByLabel(URL_LABEL).fill("https://example.com/short");
+    await expect(reason).toHaveCount(0, { timeout: 15_000 });
+    await waitForReady(page);
+  });
+
   test("説明文を消すと、押せる状態から再び無効に戻る", async ({ page }) => {
     await page.goto("/poster");
     await page.getByLabel(URL_LABEL).fill("https://example.com/toggle");

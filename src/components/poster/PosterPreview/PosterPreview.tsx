@@ -23,10 +23,17 @@ interface PosterPreviewProps {
    * URL が無効で QR を描かないときは true。
    */
   onReadyChange?: (ready: boolean) => void;
+  /**
+   * 4 枚のうち 1 枚でも QR の生成に失敗したか（true）を伝える。
+   * URL や装飾が変わって描き直しが始まると false に戻る。
+   */
+  onFailedChange?: (failed: boolean) => void;
 }
 
 /** 1ページに並べるカードの数（2x2） */
 const CARD_COUNT = 4;
+type CardStatus = "pending" | "ok" | "failed";
+const initialStatuses = (): CardStatus[] => Array.from({ length: CARD_COUNT }, () => "pending");
 /** QR の canvas の実ピクセル数。表示サイズは CSS 側で枠に合わせて縮める */
 const QR_CANVAS_SIZE = 512;
 
@@ -39,6 +46,7 @@ export function PosterPreview({
   frameColor = "#000000",
   innerRef,
   onReadyChange,
+  onFailedChange,
 }: PosterPreviewProps) {
   const frameConfig = useMemo<FrameConfig>(
     () => ({ type: (decoration.frameType ?? "none") as FrameType, color: frameColor }),
@@ -66,33 +74,51 @@ export function PosterPreview({
   useEffect(() => {
     renderKeyRef.current = renderKey;
   }, [renderKey]);
-  // 完了したカードの添字の集合（どのキーのものか付けて持つ）。
-  // 同じカードが 2 回完了しても 1 枚と数えるため、件数ではなく集合にする
-  const [settled, setSettled] = useState<{ key: string; indices: number[] }>({
+  // カードごとの状態。キーが変わったら全カードを pending に戻す。
+  // pending: 描画待ち/中、ok: 最新の描画が成功、failed: 最新の描画が失敗
+  const [cards, setCards] = useState<{ key: string; statuses: CardStatus[] }>({
     key: renderKey,
-    indices: [],
+    statuses: initialStatuses(),
   });
 
-  // キーが変わったら記録を空にし直す（元のキーに戻った場合に古い記録が残らないようにする）。
+  // キーが変わったら記録を作り直す（元のキーに戻った場合に古い記録が残らないようにする）。
   // render 中に前の値と比べて setState する、React 公式の「props 変化での state 調整」の書き方
-  if (settled.key !== renderKey) {
-    setSettled({ key: renderKey, indices: [] });
+  if (cards.key !== renderKey) {
+    setCards({ key: renderKey, statuses: initialStatuses() });
   }
 
-  // 描画中に古い設定の完了通知が来ても数えない（key が今と違えば捨てる）
-  const handleSettled = useCallback((key: string, index: number) => {
+  const updateCard = useCallback((key: string, index: number, status: CardStatus) => {
+    // 古いキーの通知は捨てる
     if (key !== renderKeyRef.current) return;
-    setSettled((prev) => {
-      const base = prev.key === key ? prev.indices : [];
-      return base.includes(index) ? prev : { key, indices: [...base, index] };
+    setCards((prev) => {
+      const base = prev.key === key ? prev.statuses : initialStatuses();
+      if (base[index] === status) return prev;
+      const statuses = [...base];
+      statuses[index] = status;
+      return { key, statuses };
     });
   }, []);
 
-  const ready =
-    !shouldRender || (settled.key === renderKey && settled.indices.length >= CARD_COUNT);
+  // 描画の予約・やり直しのたびに、そのカードを未完了に戻す（失敗の状態もここで解除される）。
+  // 完了の通知は QrPreview が「いま進行中の最新の描画」のものだけを送ってくる
+  const handlePending = useCallback(
+    (key: string, index: number) => updateCard(key, index, "pending"),
+    [updateCard]
+  );
+  const handleSettled = useCallback(
+    (key: string, index: number, ok: boolean) => updateCard(key, index, ok ? "ok" : "failed"),
+    [updateCard]
+  );
+
+  const statuses = cards.key === renderKey ? cards.statuses : initialStatuses();
+  const failed = shouldRender && statuses.includes("failed");
+  const ready = !shouldRender || statuses.every((status) => status === "ok");
   useEffect(() => {
     onReadyChange?.(ready);
   }, [ready, onReadyChange]);
+  useEffect(() => {
+    onFailedChange?.(failed);
+  }, [failed, onFailedChange]);
 
   const hasDescription = description.trim() !== "";
   const hasCaption = isUrlValid && decoration.caption.text.trim() !== "";
@@ -129,7 +155,8 @@ export function PosterPreview({
               logo={decoration.logo}
               frameConfig={frameConfig}
               bare
-              onRenderSettled={() => handleSettled(renderKey, index)}
+              onRenderSettled={(result) => handleSettled(renderKey, index, result.ok)}
+              onRenderPending={() => handlePending(renderKey, index)}
             />
             {hasCaption && (
               <p

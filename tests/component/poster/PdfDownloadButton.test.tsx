@@ -269,3 +269,43 @@ describe("PdfDownloadButton", () => {
     });
   });
 });
+
+describe("PdfDownloadButton の QR 生成失敗（renderFailed）", () => {
+  const FAILED_MESSAGE = "QRコードを作れませんでした。URL やロゴ・フレームの画像を確認してください";
+
+  it("renderFailed のときボタンが無効で、理由が role=alert で表示されること", () => {
+    setup({ renderFailed: true, ready: false });
+
+    expect(screen.getByRole("button")).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(FAILED_MESSAGE);
+  });
+
+  it("renderFailed のときラベルは「QRコードを準備中...」にならず、通常のままであること", () => {
+    setup({ renderFailed: true, ready: false });
+
+    expect(screen.getByRole("button", { name: READY_LABEL })).toBeInTheDocument();
+    expect(screen.queryByText("QRコードを準備中...")).toBeNull();
+  });
+
+  it("renderFailed のとき押しても生成されないこと", () => {
+    setup({ renderFailed: true, ready: false });
+
+    fireEvent.click(screen.getByRole("button"));
+
+    expect(mockGeneratePosterPdf).not.toHaveBeenCalled();
+  });
+
+  it("renderFailed が false に戻ると理由が消え、ready なら押せること", () => {
+    const { rerenderWith } = setup({ renderFailed: true, ready: false });
+
+    rerenderWith({ renderFailed: false, ready: true });
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("button", { name: READY_LABEL })).not.toBeDisabled();
+  });
+
+  it("renderFailed でないとき、理由は表示されないこと", () => {
+    setup({ ready: true });
+    expect(screen.queryByText(FAILED_MESSAGE)).toBeNull();
+  });
+});

@@ -70,6 +70,8 @@ function PosterEditorContent() {
   const tQr = useDict().tool.qrPreview;
   // 最初のレンダリングで QR が描かれるまでは押せないようにする（PosterPreview が確定後に伝える）
   const [qrReady, setQrReady] = useState(false);
+  // 4 枚のうち 1 枚でも QR の生成に失敗したか（URL が長すぎるときなど）
+  const [qrFailed, setQrFailed] = useState(false);
   const contrastOk = isContrastSufficient(state.decoration.fgColor, state.decoration.bgColor);
   const hasDescription = state.description.trim() !== "";
 
@@ -155,6 +157,7 @@ function PosterEditorContent() {
             frameColor={state.frameColor}
             innerRef={previewRef}
             onReadyChange={setQrReady}
+            onFailedChange={setQrFailed}
           />
         </div>
       </section>
@@ -164,6 +167,7 @@ function PosterEditorContent() {
           previewRef={previewRef}
           disabled={!state.isUrlValid || !hasDescription}
           ready={qrReady}
+          renderFailed={qrFailed}
           resetKey={resultResetKey}
           hasUtm={state.utmEnabled && qrUrl.includes("utm_")}
           hasLogo={state.decoration.logo != null}

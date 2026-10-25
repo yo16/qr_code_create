@@ -562,7 +562,8 @@ interface DownloadPanelProps {
 
 **機能**:
 - フォーマット選択（PNG / SVG / PDF）
-- 高解像度オプション（通常: 1x、高解像度: 2x, 3x）
+- 解像度オプション（通常: 1x、印刷向け（推奨）: 2x、高品質: 4x。PNG のみ。実装は `ResolutionSelector` の `Resolution = 1 | 2 | 4`）
+  - ガイド記事（`src/content/guide/getting-started.mdx`、`src/content/en/guide/getting-started.mdx`）の解像度の説明は、この選択肢とラベルに合わせる。一致はテスト `tests/component/content/jaGuideResolution.test.tsx` と `enGuideResolution.test.tsx` で検査する（bd-qr_code_create-7l1 で追加）
 - ダウンロードボタン
 - ダウンロード時に `trackQrDownloaded` GA4イベント発火
 - ダウンロード処理は `lib/qr/downloadQr.ts` に委譲

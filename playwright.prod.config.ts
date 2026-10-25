@@ -6,13 +6,13 @@ import { defineConfig, devices } from "@playwright/test";
  * 実行手順:
  *   1. npm run build
  *   2. npm run test:e2e:prod   （または npx playwright test --config playwright.prod.config.ts）
- * 本番ビルドを next start（ポート 3100）で起動して流す。対象は poster-flow.spec.ts と create-qr-fit.spec.ts。
+ * 本番ビルドを next start（ポート 3100）で起動して流す。対象は poster-flow.spec.ts、create-qr-fit.spec.ts、unknown-slug-404.spec.ts。
  * /poster が 404 だと poster-flow.spec.ts の beforeAll が失敗する。
  */
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: ["poster-flow.spec.ts", "create-qr-fit.spec.ts"],
+  testMatch: ["poster-flow.spec.ts", "create-qr-fit.spec.ts", "unknown-slug-404.spec.ts"],
   fullyParallel: false,
   workers: 1,
   retries: 0,

@@ -1,8 +1,78 @@
-.container {
+/*
+ * スマホは縦並び（フォーム → プレビュー → ダウンロード）、
+ * PC（1024px 以上）は左にフォームとダウンロード、右にプレビューの 2 カラム（45% : 55%）。
+ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "form"
+    "preview"
+    "actions";
+  gap: var(--spacing-lg);
+}
+
+.form {
+  grid-area: form;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  max-width: 640px;
+}
+
+.preview {
+  grid-area: preview;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  /* 画面が狭いときも A4 全体が見える幅に収める */
+  max-width: 560px;
+  width: 100%;
+}
+
+/* デスクトップでは A4 の高さが画面に収まるよう、幅を高さから逆算して絞る */
+.previewSheet {
+  width: 100%;
+}
+
+.contrastWarning {
+  margin: 0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--color-foreground);
+  background-color: var(--color-warning-wash);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-control);
+}
+
+.actions {
+  grid-area: actions;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);
+    grid-template-areas:
+      "form preview"
+      "actions preview";
+    grid-template-rows: auto 1fr;
+    column-gap: var(--spacing-xl);
+    align-items: start;
+  }
+
+  .preview {
+    position: sticky;
+    top: var(--spacing-md);
+    max-width: none;
+  }
+
+  /* 見出し・警告・余白ぶん（約 10rem）を引いた高さに A4 比率（210:297）で収まる幅 */
+  .previewSheet {
+    width: min(100%, calc((100vh - 10rem) * 210 / 297));
+  }
 }
 
 .loading {
@@ -63,37 +133,6 @@
   font-weight: 600;
   color: var(--color-text);
   margin: 0;
-}
-
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.downloadButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-sm) var(--spacing-xl);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: #ffffff;
-  background-color: var(--color-primary);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: background-color 0.2s, opacity 0.2s;
-  min-width: 200px;
-}
-
-.downloadButton:hover:not(:disabled) {
-  background-color: var(--color-primary-hover, #1a56db);
-}
-
-.downloadButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .disabledHint {

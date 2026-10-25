@@ -1,17 +1,52 @@
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
+/*
+ * A4縦（210 x 297mm）の枠。画面のプレビューと PDF（html2canvas）で同じ DOM を使うため、
+ * 寸法はすべてこの枠の幅を基準にした cqw（枠幅の 1%）で書く。
+ * 1cqw = 2.1mm（210mm / 100）。幅が変わっても見た目の比率が崩れず、PDF の見た目と一致する。
+ *
+ * 白地・黒文字・灰色の切り取り線は固定色にしている。印刷物なので、
+ * サイトのテーマ色や配色の変更に左右されず、紙の上で常に同じ見た目にするため。
+ */
+.sheet {
+  container-type: inline-size;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   width: 100%;
-  max-width: 320px;
-  padding: var(--spacing-md);
-  border: 1px solid var(--color-border);
+  aspect-ratio: 210 / 297;
   background-color: #ffffff;
   color: #1a1a1a;
+  /* 枠線は outline にして、PDF に写るサイズ（要素の箱）を A4 比率のまま保つ */
+  outline: 1px solid var(--color-border);
+}
+
+/* 105 x 148.5mm のカード。幅は枠の 50%、高さも枠の 50% */
+.card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2cqw;
+  min-width: 0;
+  min-height: 0;
+  padding: 3cqw;
+  overflow: hidden;
+  /* 切り取り線: 中央の十字になるよう、左列の右辺と上段の下辺に点線を引く */
+  border: 0 dashed #8a8a8a;
+}
+
+.card:nth-child(odd) {
+  border-right-width: 1px;
+}
+
+.card:nth-child(-n + 2) {
+  border-bottom-width: 1px;
 }
 
 .description {
-  font-size: var(--font-size-sm);
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  font-size: 1.8cqw;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
@@ -60,9 +95,9 @@
 }
 
 .description blockquote {
-  padding-left: var(--spacing-sm);
-  border-left: 3px solid var(--color-border);
-  color: var(--color-muted);
+  padding-left: 0.6em;
+  border-left: 3px solid #cccccc;
+  color: #555555;
 }
 
 .description code {
@@ -72,8 +107,8 @@
 }
 
 .description pre {
-  padding: var(--spacing-sm);
-  overflow-x: auto;
+  padding: 0.6em;
+  overflow: hidden;
   background-color: rgba(0, 0, 0, 0.06);
 }
 
@@ -84,7 +119,7 @@
 
 .description hr {
   border: none;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid #cccccc;
   margin: 0.8em 0;
 }
 
@@ -95,20 +130,35 @@
 
 .description th,
 .description td {
-  border: 1px solid var(--color-border);
+  border: 1px solid #cccccc;
   padding: 2px 6px;
 }
 
 .description a {
-  color: var(--color-primary);
+  color: #1f5fbf;
   text-decoration: underline;
 }
 
 .empty {
-  color: var(--color-muted);
+  color: #777777;
 }
 
+/* QR（QrPreview の bare 表示）。表示幅はカード幅（50cqw）の 60% */
 .qr {
+  --preview-max: 30cqw;
+  flex: 0 0 auto;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 1cqw;
+}
+
+/* キャプション。文字サイズは QR の表示幅に対する比率（元の 256px 基準）で決める */
+.caption {
+  width: 100%;
+  margin: 0;
+  font-size: calc(30cqw * var(--caption-size, 14) / 256);
+  line-height: 1.3;
+  text-align: center;
+  overflow-wrap: anywhere;
 }

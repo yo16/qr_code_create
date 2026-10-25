@@ -131,7 +131,7 @@ export const metadata: Metadata = {
 
 **state引き継ぎ**: [アーキテクチャ設計 セクション9](./architecture.md#9-poster-へのstate引き継ぎ機構) を参照。
 
-**公開制御（機能フラグ、qr_code_create-ptg で追加）**: `src/lib/constants/features.ts` の `FEATURE_FLAGS.posterPage` で公開を切り替える。false の間は (1) `/create` の DownloadPanel にポスター導線ボタンを描画しない、(2) `sitemap.ts` に `/poster` を含めない、(3) `/poster` へ直接アクセスすると `notFound()` で 404 にする。Markdown 入力（4me）と A4 2x2 PDF 出力（ro1）が完成するまで false を保ち、完成時に true に戻す。内部モジュール（posterHandoff、generatePosterPdf 等）はフラグの影響を受けない。
+**公開制御（機能フラグ、qr_code_create-ptg で追加）**: `src/lib/constants/features.ts` の `FEATURE_FLAGS.posterPage` で公開を切り替える。false の間は (1) `/create` の DownloadPanel にポスター導線ボタンを描画しない、(2) `sitemap.ts` に `/poster` を含めない、(3) `/poster` へ直接アクセスすると `notFound()` で 404 にする。Markdown 入力（4me）と A4 2x2 PDF 出力（ro1）が完成するまで false を保ち、完成時に true に戻す。内部モジュール（posterHandoff、generatePosterPdf 等）はフラグの影響を受けない。E2E のために、ビルド時の環境変数 `NEXT_PUBLIC_FEATURE_POSTER_PAGE=1` のときだけ true になる（bd-qr_code_create-ro1 で追加。Vercel には設定しない。公開するときはこの変数ではなく `posterPage` の既定値を true に変える）。ポスターの E2E は `NEXT_PUBLIC_FEATURE_POSTER_PAGE=1` でビルドしてから `npm run test:e2e:poster`（`playwright.poster.config.ts`、ポート 3100）で流し、skipped が 0 件であることを確かめる。
 
 ---
 

@@ -17,6 +17,8 @@ export interface PosterState {
   utmEnabled: boolean;
   /** 装飾設定（QrState の decoration と同じ） */
   decoration: DecorationConfig;
+  /** フレームの色（decoration.frameType と組で使う。未指定は黒） */
+  frameColor?: string;
 }
 
 /**
@@ -35,6 +37,8 @@ export interface PosterHandoffPayload {
   utmEnabled: boolean;
   /** 装飾設定 */
   decoration: DecorationConfig;
+  /** フレームの色。古い payload には無いので省略可（受信側で黒にする） */
+  frameColor?: string;
   /** 保存時刻（ISO8601文字列）。1時間以上前の payload は受信側で破棄する */
   savedAt: string;
 }

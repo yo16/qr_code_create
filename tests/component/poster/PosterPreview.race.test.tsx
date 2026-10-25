@@ -1,0 +1,132 @@
+import React from "react";
+import { render, act } from "@testing-library/react";
+import { PosterPreview } from "@/components/poster/PosterPreview/PosterPreview";
+import type { DecorationConfig } from "@/types/qr";
+
+// 実物の QrPreview + PosterPreview を組み合わせ、qrcode の toCanvas だけを
+// 「テストが好きなタイミングで完了させられる Promise」に差し替えて、ready の競合を再現する。
+interface Pending {
+  url: string;
+  resolve: () => void;
+}
+let pending: Pending[] = [];
+jest.mock("qrcode", () => ({
+  toCanvas: jest.fn(
+    (_canvas: unknown, url: string) =>
+      new Promise<void>((resolve) => {
+        pending.push({ url, resolve });
+      })
+  ),
+}));
+jest.mock("@/lib/qr/drawLogo", () => ({
+  drawLogoOnCanvas: jest.fn().mockResolvedValue(undefined),
+}));
+
+const decoration: DecorationConfig = {
+  fgColor: "#000000",
+  bgColor: "#ffffff",
+  logo: null,
+  frameType: null,
+  caption: { text: "", fontSize: 16 },
+  preset: null,
+};
+
+const URL_A = "https://example.com/a";
+const URL_B = "https://example.com/b";
+
+/** デバウンス（500ms）を進め、動的 import などの Promise も流す */
+async function advanceDebounce() {
+  await act(async () => {
+    jest.advanceTimersByTime(500);
+  });
+  await act(async () => {
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+  });
+}
+
+/** 指定 URL の保留中の生成をすべて完了させる */
+async function resolveAll(url: string) {
+  const targets = pending.filter((p) => p.url === url);
+  await act(async () => {
+    targets.forEach((p) => p.resolve());
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+  });
+  return targets.length;
+}
+
+function setup(url: string) {
+  const onReadyChange = jest.fn();
+  const element = (u: string) => (
+    <PosterPreview
+      url={u}
+      isUrlValid
+      description="説明"
+      decoration={decoration}
+      onReadyChange={onReadyChange}
+    />
+  );
+  const utils = render(element(url));
+  const lastReady = () => {
+    const calls = onReadyChange.mock.calls;
+    return calls.length ? calls[calls.length - 1][0] : undefined;
+  };
+  return { rerenderUrl: (u: string) => utils.rerender(element(u)), lastReady };
+}
+
+beforeEach(() => {
+  pending = [];
+  jest.useFakeTimers();
+});
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+describe("PosterPreview + QrPreview（実物）の ready 競合", () => {
+  it("4 枚の生成がそろうまで ready=false で、そろった時点で true になること", async () => {
+    const { lastReady } = setup(URL_A);
+    expect(lastReady()).toBe(false);
+
+    await advanceDebounce();
+    expect(pending.filter((p) => p.url === URL_A)).toHaveLength(4);
+    expect(lastReady()).toBe(false);
+
+    // 3 枚だけ完了させる経路は個別には作れないので、まとめて完了させて true を確かめる
+    await resolveAll(URL_A);
+    expect(lastReady()).toBe(true);
+  });
+
+  it("生成中に URL を変えたとき、古い生成が終わっても ready=false のままで、新しい 4 枚が終わって初めて true になること", async () => {
+    const { rerenderUrl, lastReady } = setup(URL_A);
+    await advanceDebounce(); // A の生成 4 枚が始まる（未完了）
+    expect(pending.filter((p) => p.url === URL_A)).toHaveLength(4);
+
+    rerenderUrl(URL_B);
+    expect(lastReady()).toBe(false);
+    await advanceDebounce(); // B の生成 4 枚が始まる（未完了）
+    expect(pending.filter((p) => p.url === URL_B)).toHaveLength(4);
+
+    // 古い生成（A）が 4 枚とも終わっても、B の完了としては数えない
+    await resolveAll(URL_A);
+    expect(lastReady()).toBe(false);
+
+    // B の 4 枚が終わって初めて true
+    await resolveAll(URL_B);
+    expect(lastReady()).toBe(true);
+  });
+
+  it("A の生成中に B へ変え、また A に戻した直後は ready=false で、A の生成がすべて終わると true になること", async () => {
+    const { rerenderUrl, lastReady } = setup(URL_A);
+    await advanceDebounce();
+    expect(pending.filter((p) => p.url === URL_A)).toHaveLength(4);
+
+    rerenderUrl(URL_B);
+    rerenderUrl(URL_A); // B のデバウンスが走る前に A へ戻す
+    expect(lastReady()).toBe(false);
+
+    // B の生成は始まらない（デバウンスで取り消される）。A の生成だけを完了させる
+    await advanceDebounce();
+    expect(pending.filter((p) => p.url === URL_B)).toHaveLength(0);
+    await resolveAll(URL_A);
+    expect(lastReady()).toBe(true);
+  });
+});

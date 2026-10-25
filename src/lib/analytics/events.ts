@@ -103,6 +103,19 @@ export function trackQrDownloaded(options: {
   });
 }
 
+// 印刷用ポスターPDF生成
+export function trackPosterGenerated(options: {
+  hasUtm: boolean;
+  hasLogo: boolean;
+  descriptionLength: number;
+}): void {
+  trackEvent("poster_generated", {
+    has_utm: options.hasUtm,
+    has_logo: options.hasLogo,
+    description_length: options.descriptionLength,
+  });
+}
+
 // ロゴアップロード
 export function trackLogoUploaded(
   fileType: string,

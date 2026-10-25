@@ -128,15 +128,17 @@ describe("poster.mdx の節の順序（qr_code_create-frp）", () => {
     expect(otherH2Lines).toEqual([
       MERIT_H2,
       "## ポスター用QRコードの推奨UTM設定",
+      // qr_code_create-fyt で意図して追加: 印刷用ポスター（/poster）への導線の節（推奨UTM設定の後、おすすめデザインの前）
+      "## 複数の場所に同じQRを掲示する",
       "## ポスター用QRコードのおすすめデザイン",
       "## ポスター用QRコードの活用例",
       "## まとめ",
     ]);
   });
 
-  it("h2 の総数が 6 のままであること", () => {
-    // 意図: 節の追加・削除・重複が起きていないことを保証する
+  it("h2 の総数が 7 であること（frp の 6 + fyt で追加した 1 節）", () => {
+    // 意図: 節の追加・削除・重複が意図せず起きていないことを保証する。fyt で「複数の場所に同じQRを掲示する」を 1 つ追加した
     const content = readContent();
-    expect(getH2Lines(content)).toHaveLength(6);
+    expect(getH2Lines(content)).toHaveLength(7);
   });
 });

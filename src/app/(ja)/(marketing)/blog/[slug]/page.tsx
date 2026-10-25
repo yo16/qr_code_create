@@ -11,6 +11,8 @@ import styles from "./blog.module.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
+export const dynamicParams = false;
+
 interface BlogPageProps {
   params: Promise<{ slug: string }>;
 }

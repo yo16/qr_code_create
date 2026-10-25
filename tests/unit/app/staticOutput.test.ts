@@ -86,6 +86,32 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect((ogTitle as string).split("QR Code Create")).toHaveLength(2);
   });
 
+  // 意図（qr_code_create-kg5）: HowTo の url（#step-N）の移動先として、ステップ見出しに id が付いて出力される
+  it.each([["guide/getting-started.html"], ["en/guide/getting-started.html"]])(
+    "%s に id=step-1〜step-3 の見出しがあること",
+    (file) => {
+      const full = path.join(BUILD_APP, ...file.split("/"));
+      if (!fs.existsSync(full)) {
+        throw new Error(full + " がありません。npm run build 後に実行してください。");
+      }
+      const html = fs.readFileSync(full, "utf8");
+      for (const n of [1, 2, 3]) {
+        expect(html).toMatch(new RegExp('<h2[^>]*id="step-' + n + '"'));
+      }
+      expect(html).not.toContain('id="step-4"');
+    }
+  );
+
+  it("ほかのガイド（download-formats）の h2 に step- の id が付いていないこと", () => {
+    const full = path.join(BUILD_APP, "guide", "download-formats.html");
+    if (!fs.existsSync(full)) {
+      throw new Error(full + " がありません。npm run build 後に実行してください。");
+    }
+    const html = fs.readFileSync(full, "utf8");
+    expect(html).toContain("<h2");
+    expect(html).not.toContain('id="step-');
+  });
+
   it("en/guide/utm-setup.html が生成されていないこと", () => {
     // 対照: ja 側の utm-setup は生成されている（パスの組み立て違いで素通りしない）
     expect(fs.existsSync(path.join(BUILD_APP, "guide", "utm-setup.html"))).toBe(true);

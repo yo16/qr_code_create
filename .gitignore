@@ -152,3 +152,7 @@ __pycache__/
 # bd (beads) 1.3.2 runtime files
 *.gate.lock*
 .beads-credential-key
+
+# Agent scratch files and worktrees
+/tmp/
+/.claude/worktrees/

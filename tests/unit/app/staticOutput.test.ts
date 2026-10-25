@@ -112,6 +112,40 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect(html).not.toContain('id="step-');
   });
 
+  // 意図（qr_code_create-swm）: `**utm_term**（…）` が太字として描画される。
+  // 以前の `**utm_term（…）**` は CommonMark の規則（閉じの ** の直前が記号の全角括弧で、直後が文字）で太字にならず、** が表示されていた
+  it("guide/utm-setup.html に <strong>utm_term</strong> と <strong>utm_content</strong> があること", () => {
+    const full = path.join(BUILD_APP, "guide", "utm-setup.html");
+    if (!fs.existsSync(full)) {
+      throw new Error(full + " がありません。npm run build 後に実行してください。");
+    }
+    const html = fs.readFileSync(full, "utf8");
+    expect(html).toContain("<strong>utm_term</strong>");
+    expect(html).toContain("<strong>utm_content</strong>");
+  });
+
+  it("ja のガイド全件の HTML 本文に、生の ** が残っていないこと（script・コードブロックを除く）", () => {
+    const dir = path.join(BUILD_APP, "guide");
+    if (!fs.existsSync(dir)) {
+      throw new Error(dir + " がありません。npm run build 後に実行してください。");
+    }
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith(".html"));
+    // 空振り防止: ガイドの HTML が複数あり、太字（<strong>）を使う記事も含まれる
+    expect(files.length).toBeGreaterThan(3);
+    expect(files).toContain("utm-setup.html");
+    let strongCount = 0;
+    for (const file of files) {
+      const html = fs.readFileSync(path.join(dir, file), "utf8");
+      strongCount += html.split("<strong>").length - 1;
+      const text = html
+        .replace(/<script[\s\S]*?<\/script>/g, "")
+        .replace(/<pre[\s\S]*?<\/pre>/g, "")
+        .replace(/<code[\s\S]*?<\/code>/g, "");
+      expect({ file, hasRawBold: text.includes("**") }).toEqual({ file, hasRawBold: false });
+    }
+    expect(strongCount).toBeGreaterThan(0);
+  });
+
   it("en/guide/utm-setup.html が生成されていないこと", () => {
     // 対照: ja 側の utm-setup は生成されている（パスの組み立て違いで素通りしない）
     expect(fs.existsSync(path.join(BUILD_APP, "guide", "utm-setup.html"))).toBe(true);

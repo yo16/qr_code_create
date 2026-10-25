@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { INITIAL_POSTER_STATE, type PosterState } from "@/types/poster";
+import type { DecorationConfig } from "@/types/qr";
+import { UtmBuilder } from "@/components/qr/UtmBuilder/UtmBuilder";
+import { MarkdownInput } from "@/components/poster/MarkdownInput";
+import { PosterPreview } from "@/components/poster/PosterPreview";
+import { FRAME_OPTIONS } from "@/lib/qr/frameRenderer";
+import { buildUtmUrl } from "@/lib/url/buildUtmUrl";
 import { loadPosterHandoff } from "@/lib/handoff/posterHandoff";
 import { generatePosterPdf } from "@/lib/pdf/generatePosterPdf";
 import { validateUrl } from "@/lib/url/validateUrl";
@@ -21,6 +27,22 @@ function createInitialState(): PosterState {
     utmEnabled: payload.utmEnabled,
     decoration: payload.decoration,
   };
+}
+
+/** 引き継いだ装飾の要約文を作る */
+function summarizeDecoration(decoration: DecorationConfig): string {
+  const parts = [`色（${decoration.fgColor} / ${decoration.bgColor}）`];
+  if (decoration.frameType && decoration.frameType !== "none") {
+    const label =
+      FRAME_OPTIONS.find((o) => o.type === decoration.frameType)?.label ??
+      decoration.frameType;
+    parts.push(`フレーム（${label}）`);
+  }
+  if (decoration.logo) parts.push("ロゴあり");
+  if (decoration.caption.text.trim() !== "") {
+    parts.push(`キャプション（${decoration.caption.text.trim()}）`);
+  }
+  return `適用される装飾: ${parts.join("、")}`;
 }
 
 export function PosterEditor() {
@@ -52,6 +74,11 @@ function PosterEditorContent() {
       isUrlValid: result.isValid,
     }));
   };
+
+  const qrUrl = useMemo(
+    () => buildUtmUrl(state.url, state.utm, state.utmEnabled),
+    [state.url, state.utm, state.utmEnabled]
+  );
 
   const handleDownload = async () => {
     if (!state.isUrlValid || isGenerating) return;
@@ -86,9 +113,34 @@ function PosterEditorContent() {
       </section>
 
       <section className={styles.section}>
-        <p className={styles.notice}>
-          Markdown説明文の入力欄・プレビューは準備中です。次のバージョンで追加されます。
-        </p>
+        <UtmBuilder
+          values={state.utm}
+          onChange={(utm) => setState((prev) => ({ ...prev, utm }))}
+          enabled={state.utmEnabled}
+          onEnabledChange={(utmEnabled) => setState((prev) => ({ ...prev, utmEnabled }))}
+        />
+      </section>
+
+      <section className={styles.section} aria-label="適用される装飾">
+        <p className={styles.summary}>{summarizeDecoration(state.decoration)}</p>
+      </section>
+
+      <section className={styles.section}>
+        <MarkdownInput
+          value={state.description}
+          onChange={(description) => setState((prev) => ({ ...prev, description }))}
+          placeholder={"## お店の名前\n\n**今週のおすすめ** はこちらから"}
+        />
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.previewTitle}>プレビュー</h2>
+        <PosterPreview
+          url={qrUrl}
+          isUrlValid={state.isUrlValid}
+          description={state.description}
+          decoration={state.decoration}
+        />
       </section>
 
       <div className={styles.actions}>

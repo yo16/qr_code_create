@@ -9,6 +9,34 @@
   border-radius: var(--radius-surface);
 }
 
+/*
+ * bare: 他の画面に埋め込む表示。面・枠・余白を持たず、QR の表示幅は親が
+ * --preview-max（継承されるカスタムプロパティ）で決める
+ */
+.bare {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 画面用の枠・背景・角丸は印刷物には不要 */
+.bare .previewArea {
+  /*
+   * flex のままだと canvas（flex アイテム）が min-width:auto で本来の幅（512px）より縮まず、
+   * max-width/max-height と overflow:hidden で中央だけが切り取られて見える。
+   * block にして、canvas を枠いっぱい（width/height 100%）に縮める
+   */
+  display: block;
+  border: none;
+  background: none;
+  border-radius: 0;
+}
+
+.bare .previewArea canvas {
+  width: 100%;
+  height: 100%;
+}
+
 .label {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
@@ -155,7 +183,7 @@
     --preview-max: 128px;
   }
 
-  /* canvas の width/height は HTML 属性なので、通常の CSS 指定で表示サイズを上書きできる */
+  /* canvas の width/height は HTML 属性なので、通常の CSS 指定で表示サイズを上書きできる（qrcode が書き込むインラインの寸法は QrPreview.tsx で消している） */
   .previewArea canvas {
     width: var(--preview-max);
     height: var(--preview-max);

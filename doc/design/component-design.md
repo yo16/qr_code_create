@@ -680,6 +680,12 @@ interface MarkdownInputProps {
 - 外部リンクの `<a>` には `rel="noopener noreferrer"` を自動付与（カスタム components プロパティで実装）
 - 画像埋め込み (`![alt](url)`) は **不許可**（カスタム components プロパティで `img` を `null` に置換、または引用文として表示）
 
+**実装メモ（bd-qr_code_create-4me で追加）**:
+- MarkdownInput はテキストエリア・記法ヘルプ（`<details>`）・文字数だけを持ち、プレビューは PosterPreview に統合した（ui-ux-spec 2A.3 に合わせる）。文字数は `DESCRIPTION_SOFT_LIMIT = 500` のソフトリミットで、超えても入力は止めず `role="status"` で警告する
+- Markdown の描画は `src/components/poster/MarkdownRenderer/` に切り出した（ro1 の 2x2 配置でも再利用する）。`allowedElements` で上記の要素だけを許可し、`unwrapDisallowed` で許可外の要素は文字だけ残す
+- リンクは `sanitizeUrl` で、`http://`・`https://`・`mailto:` で始まる絶対 URL だけを通す。制御文字・空白・`%09`/`%0a`/`%0d` を含むもの、相対パス、`#anchor`、`//host`、スキームの無い URL は空にし、`<span>` で文字だけ表示する（印刷物では相対リンクに意味が無く、文字参照による迂回も防ぐため）
+- `react-markdown` は ESM 専用のため、Jest の default プロジェクトではモックに差し替える。実物で変換結果を検証するテストは `*.realmd.test.tsx` とし、`jest.config.ts` の markdown-real プロジェクトで実行する
+
 ### 2A.4 PosterPreview
 
 A4縦比率の枠内に2x2のカード配置でプレビューを表示する。
@@ -734,6 +740,16 @@ interface PdfDownloadButtonProps {
   4. `pdf.save('qr-poster.pdf')` でダウンロードトリガー
 - 生成中はローディング表示（ボタン無効化 + スピナー）
 - 成功時に GA4 イベント `poster_generated` を発火（パラメータは [データモデル 4.1](./data-model.md#41-イベント定義) 参照）
+
+**実装メモ（bd-qr_code_create-ro1 で追加）**:
+- PosterPreview は A4 の枠（`aspect-ratio: 210/297`、`container-type: inline-size`）に同じカードを 2x2 で 4 枚並べる。寸法は cqw で書き、画面と PDF で同じ DOM を使う。2〜4 枚目は `aria-hidden`。切り取り線は中央の十字の点線だけ
+- QrPreview に `bare`（ラベル・コントラスト警告・面・枠・余白を描かず、`qr_generated` も送らない）と `onRenderSettled`（生成を始めた時点の関数を `finally` で呼ぶ）を追加した。qrcode の `toCanvas` は canvas に px の寸法をインラインで書き込むので、bare のときは描画後にそれを消し、CSS で枠の幅に収める
+- QR の準備判定（ready）: PosterPreview は描画に関わる値（shouldRender、URL、色、ロゴ、フレーム種別、フレーム色）をキーにし、キーが変わったら記録を空にして、同じキーで 4 枚の完了（カードの添字の集合）がそろったら ready にする。`generateQr` の依存とキーは対応させること
+- PdfDownloadButton は `ready`、URL の有効性、説明文が空でないこと（trim 後）を満たすときだけ押せる。準備中は「QRコードを準備中...」。生成中は `aria-busy`
+- generatePosterPdf は `({ previewElement })` から Blob を返す。html2canvas の `onclone` で複製側の枠を幅 794px に固定し、scale 2.5（約 240dpi）で撮って JPEG（品質 0.92）で A4 に貼る。保存はボタン側（`qr-poster-YYYYMMDD-HHmmss.pdf`、revoke は 1 秒遅らせる）
+- フレームの色は `/create` の QrGenerator → DownloadPanel → 引き継ぎ payload の `frameColor` で渡す。古い payload では黒
+- コントラスト警告はカードの中ではなく、プレビューの上に 1 回だけ出す
+- QR の準備判定（bd-qr_code_create-579 で追加）: QrPreview は描画を予約するたびに世代番号を進め、完了は「いま進行中の最新の描画」のものだけを `onRenderSettled({ ok })` で通知する（予約・やり直しは `onRenderPending`）。そのため A→B→A と戻しても最初の A の完了は数えない。PosterPreview はカードごとに pending/ok/failed を持ち、4 枚すべて ok のときだけ ready=true にする。1 枚でも failed なら ready=false のまま `onFailedChange(true)` で PosterEditor に伝え、PdfDownloadButton は無効のまま「QRコードを作れませんでした。URL が長すぎないか確認してください」を表示する。URL・装飾の変更や再生成で pending に戻ると失敗は解除される。URL の最大長を絞る案（validateUrl）は採らず、失敗を検知して案内する方針とした
 
 ### 2A.6 既存コンポーネントの再利用
 

@@ -282,6 +282,7 @@ export function QrGenerator({ initialParams }: QrGeneratorProps = {}) {
             utm={state.utm}
             utmEnabled={state.utmEnabled}
             decoration={state.decoration}
+            frameColor={frameConfig.color}
           />
         </section>
       </div>

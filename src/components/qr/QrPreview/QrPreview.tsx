@@ -41,6 +41,21 @@ interface QrPreviewProps {
   isUrlValid?: boolean;
   /** 外部から canvasRef を注入する場合に指定（省略時は内部生成） */
   canvasRef?: React.RefObject<HTMLCanvasElement | null>;
+  /**
+   * 他の画面（ポスターなど）の部品として埋め込む表示。
+   * ラベル・コントラスト警告・container の面/枠/余白を描かず、QR だけを出す。
+   * 同じ QR を複数並べる使い方を想定しているため、qr_generated も送らない
+   * （エラー計測 qr_render は残す）。
+   */
+  bare?: boolean;
+  /**
+   * 描画の試行が終わったときに、結果（ok: 成功したか）を渡して呼ばれる。
+   * 設定が変わって新しい描画が予約された後は、古い描画の完了は通知されない
+   * （常に「いま進行中の最新の描画」の完了だけが届く）
+   */
+  onRenderSettled?: (result: { ok: boolean }) => void;
+  /** 描画が予約された（デバウンス待ちに入った）とき、またはやり直しになったときに呼ばれる */
+  onRenderPending?: () => void;
 }
 
 const DEBOUNCE_MS = 500;
@@ -65,8 +80,21 @@ export function QrPreview({
   caption,
   isUrlValid = false,
   canvasRef: externalCanvasRef,
+  bare = false,
+  onRenderSettled,
+  onRenderPending,
 }: QrPreviewProps) {
   const t = useDict().tool.qrPreview;
+  const onRenderSettledRef = useRef(onRenderSettled);
+  const onRenderPendingRef = useRef(onRenderPending);
+  useEffect(() => {
+    onRenderSettledRef.current = onRenderSettled;
+    onRenderPendingRef.current = onRenderPending;
+  });
+  // 描画の世代番号。描画を予約するたび（設定変更・URL 無効化を含む）に進め、
+  // 完了時に自分の世代が最新のときだけ通知する。A→B→A のように同じ設定に戻っても、
+  // 最初の A の完了は古い世代として捨てられる
+  const latestGenerationRef = useRef(0);
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = externalCanvasRef ?? internalCanvasRef;
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -81,9 +109,14 @@ export function QrPreview({
   const hasFrame = frameConfig.type !== "none";
   const hasImageFrame = isImageFrame(frameConfig.type);
 
-  const generateQr = useCallback(async () => {
+  const generateQr = useCallback(async (generation: number) => {
     if (!shouldRender || !canvasRef.current) return;
 
+    // 生成を始めた時点の通知先を控える。完了時の最新の ref を呼ぶと、
+    // 生成中に設定が変わったとき古い生成の完了が新しい設定の完了として届いてしまう
+    const settled = onRenderSettledRef.current;
+
+    let ok = true;
     setIsLoading(true);
     setHasError(false);
 
@@ -137,6 +170,14 @@ export function QrPreview({
           errorCorrectionLevel: "H",
         });
 
+        // qrcode は toCanvas で canvas.style.width/height に size(px) をインラインで書き込む。
+        // インラインは CSS より優先され、表示の大きさを CSS で決める場合（/create のスマホ表示の
+        // 768px 以下の .previewArea canvas { width: var(--preview-max) } と、ポスターの bare 表示の
+        // width/height: 100%）に効かず、枠からはみ出して中央だけが見えるため、常に消す。
+        // デスクトップでは canvas の width/height 属性（size）がそのまま表示の大きさになる
+        canvas.style.removeProperty("width");
+        canvas.style.removeProperty("height");
+
         // Canvas描画フレームを重ねる
         if (hasFrame) {
           const ctx = canvas.getContext("2d");
@@ -152,18 +193,22 @@ export function QrPreview({
       }
 
       // QRコード生成完了イベントを発火
-      trackQrGenerated({
-        hasUtm: url.includes("utm_"),
-        utmCount: (url.match(/utm_/g) || []).length,
-        hasLogo: logo != null,
-        hasFrame: hasFrame,
-        hasCaption: !!(caption && caption.text.trim() !== ""),
-      });
+      if (!bare) {
+        trackQrGenerated({
+          hasUtm: url.includes("utm_"),
+          utmCount: (url.match(/utm_/g) || []).length,
+          hasLogo: logo != null,
+          hasFrame: hasFrame,
+          hasCaption: !!(caption && caption.text.trim() !== ""),
+        });
+      }
     } catch (error) {
       trackErrorOccurred("qr_render", error instanceof Error ? error.name : "unknown");
       setHasError(true);
+      ok = false;
     } finally {
       setIsLoading(false);
+      if (generation === latestGenerationRef.current) settled?.({ ok });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- canvasRef は ref で安定、caption は計測にのみ使い再描画に不要（入れると文言入力のたびに再生成される）
   }, [url, fgColor, bgColor, size, shouldRender, logo, frameConfig, hasFrame, hasImageFrame]);
@@ -173,6 +218,9 @@ export function QrPreview({
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
+
+    // 予約のたびに世代を進める。進行中の古い描画の完了はこれで無効になる
+    const generation = ++latestGenerationRef.current;
 
     if (!shouldRender) {
       // canvas をクリア
@@ -184,8 +232,9 @@ export function QrPreview({
       return;
     }
 
+    onRenderPendingRef.current?.();
     debounceTimerRef.current = setTimeout(() => {
-      generateQr();
+      generateQr(generation);
     }, DEBOUNCE_MS);
 
     return () => {
@@ -197,8 +246,8 @@ export function QrPreview({
   }, [generateQr, shouldRender]);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.label}>{t.label}</div>
+    <div className={bare ? styles.bare : styles.container}>
+      {!bare && <div className={styles.label}>{t.label}</div>}
 
       <div
         className={styles.previewArea}
@@ -255,7 +304,7 @@ export function QrPreview({
       )}
 
       {/* コントラスト不足警告 */}
-      {shouldRender && !contrastOk && (
+      {!bare && shouldRender && !contrastOk && (
         <div className={styles.warning} role="alert">
           <span className={styles.warningIcon} aria-hidden="true">
             ⚠

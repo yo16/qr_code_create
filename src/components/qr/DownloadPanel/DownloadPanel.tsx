@@ -23,6 +23,8 @@ interface DownloadPanelProps {
   utm?: UtmParams;
   utmEnabled?: boolean;
   decoration?: DecorationConfig;
+  /** フレームの色（ポスターに引き継ぐ） */
+  frameColor?: string;
 }
 
 export function DownloadPanel({
@@ -36,6 +38,7 @@ export function DownloadPanel({
   utm,
   utmEnabled = true,
   decoration,
+  frameColor,
 }: DownloadPanelProps) {
   const t = useDict().tool.download;
   // /poster に英語版は無いので、en では導線を出さない
@@ -58,6 +61,7 @@ export function DownloadPanel({
         caption: { text: "", fontSize: 14 },
         preset: null,
       },
+      frameColor,
     });
     router.push("/poster");
   };

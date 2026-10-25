@@ -2,6 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  // ポスター（poster-flow）と /create の QR の収まり（create-qr-fit）の E2E は、
+  // 本番ビルド + ポート 3100 の `npm run test:e2e:prod` だけで流す。
+  // dev サーバーでは PDF 生成（html2canvas）が遅く、ポート 3000 も別のプロセスと衝突しやすいため
+  testIgnore: ["**/poster-flow.spec.ts", "**/create-qr-fit.spec.ts"],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

@@ -5,8 +5,8 @@ import { getBlogSlugList } from "@/lib/content/getBlog";
 import { FEATURE_FLAGS } from "@/lib/constants/features";
 
 // 静的ページ: /, /create, /guide, /use-cases, /blog, /faq, /contact, /privacy, /terms の 9 件
-// /poster は機能フラグ FEATURE_FLAGS.posterPage が true のときだけ追加され、10 件になる
-const STATIC_PAGE_COUNT = FEATURE_FLAGS.posterPage ? 10 : 9;
+// /poster は公開済み（FEATURE_FLAGS.posterPage = true）なので追加され、10 件になる
+const STATIC_PAGE_COUNT = 10;
 
 describe("sitemap", () => {
   describe("エントリ数の検証", () => {
@@ -67,28 +67,22 @@ describe("sitemap", () => {
       }
     );
 
-    it("/poster の有無が FEATURE_FLAGS.posterPage と一致すること（false なら含まれない）", () => {
-      // 意図: 未完成の /poster をフラグ OFF 時は sitemap から除外し、検索エンジンに露出させない
+    it("/poster が既定で含まれること（posterPage は true で公開済み）", () => {
+      // 意図: 公開した /poster を検索エンジンに伝える。モックなしの既定値で確かめる
+      expect(FEATURE_FLAGS.posterPage).toBe(true);
       const result = sitemap();
-      const posterPage = result.find((entry) => {
-        const url = new URL(entry.url);
-        return url.pathname === "/poster";
-      });
-      expect(posterPage !== undefined).toBe(FEATURE_FLAGS.posterPage);
+      const posterPages = result.filter((entry) => new URL(entry.url).pathname === "/poster");
+      expect(posterPages).toHaveLength(1);
     });
 
-    it("/poster が含まれる場合は changeFrequency=monthly、priority=0.8 であること", () => {
-      // 意図: フラグ ON 時のエントリ属性を固定する（OFF 時は対象 0 件のため検証をスキップした形になる）
+    it("/poster は changeFrequency=monthly、priority=0.8 で、英語版の alternates を持たないこと", () => {
+      // 意図: /poster に英語版は無いので hreflang の alternates を付けない
       const result = sitemap();
-      const posterPages = result.filter((entry) => {
-        const url = new URL(entry.url);
-        return url.pathname === "/poster";
-      });
-      expect(posterPages.length).toBeLessThanOrEqual(1);
-      for (const page of posterPages) {
-        expect(page.changeFrequency).toBe("monthly");
-        expect(page.priority).toBe(0.8);
-      }
+      const page = result.find((entry) => new URL(entry.url).pathname === "/poster");
+      expect(page).toBeDefined();
+      expect(page?.changeFrequency).toBe("monthly");
+      expect(page?.priority).toBe(0.8);
+      expect(page?.alternates).toBeUndefined();
     });
   });
 

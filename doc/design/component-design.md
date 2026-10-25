@@ -680,6 +680,12 @@ interface MarkdownInputProps {
 - 外部リンクの `<a>` には `rel="noopener noreferrer"` を自動付与（カスタム components プロパティで実装）
 - 画像埋め込み (`![alt](url)`) は **不許可**（カスタム components プロパティで `img` を `null` に置換、または引用文として表示）
 
+**実装メモ（bd-qr_code_create-4me で追加）**:
+- MarkdownInput はテキストエリア・記法ヘルプ（`<details>`）・文字数だけを持ち、プレビューは PosterPreview に統合した（ui-ux-spec 2A.3 に合わせる）。文字数は `DESCRIPTION_SOFT_LIMIT = 500` のソフトリミットで、超えても入力は止めず `role="status"` で警告する
+- Markdown の描画は `src/components/poster/MarkdownRenderer/` に切り出した（ro1 の 2x2 配置でも再利用する）。`allowedElements` で上記の要素だけを許可し、`unwrapDisallowed` で許可外の要素は文字だけ残す
+- リンクは `sanitizeUrl` で、`http://`・`https://`・`mailto:` で始まる絶対 URL だけを通す。制御文字・空白・`%09`/`%0a`/`%0d` を含むもの、相対パス、`#anchor`、`//host`、スキームの無い URL は空にし、`<span>` で文字だけ表示する（印刷物では相対リンクに意味が無く、文字参照による迂回も防ぐため）
+- `react-markdown` は ESM 専用のため、Jest の default プロジェクトではモックに差し替える。実物で変換結果を検証するテストは `*.realmd.test.tsx` とし、`jest.config.ts` の markdown-real プロジェクトで実行する
+
 ### 2A.4 PosterPreview
 
 A4縦比率の枠内に2x2のカード配置でプレビューを表示する。

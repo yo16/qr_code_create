@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import type { PosterHandoffPayload } from "@/types/poster";
 
@@ -19,6 +19,15 @@ jest.mock("@/lib/pdf/generatePosterPdf", () => ({
 const mockValidateUrl = jest.fn();
 jest.mock("@/lib/url/validateUrl", () => ({
   validateUrl: (url: string) => mockValidateUrl(url),
+}));
+
+// PosterPreview 内の QrPreview が Canvas を使う。jsdom には Canvas がなく
+// "Not implemented: getContext" のエラーが出るため、qrcode と drawLogo をモックする
+jest.mock("qrcode", () => ({
+  toCanvas: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock("@/lib/qr/drawLogo", () => ({
+  drawLogoOnCanvas: jest.fn().mockResolvedValue(undefined),
 }));
 
 // PosterEditor は依存モックセットアップ後にインポート
@@ -42,6 +51,10 @@ const testPayload: PosterHandoffPayload = {
 };
 
 beforeEach(() => {
+  // URL が無効なとき QrPreview は canvas.getContext("2d") でクリアする。jsdom 未実装のエラーを避けるためスタブ化
+  jest
+    .spyOn(HTMLCanvasElement.prototype, "getContext")
+    .mockReturnValue({ clearRect: jest.fn() } as unknown as CanvasRenderingContext2D);
   mockLoadPosterHandoff.mockReset();
   mockGeneratePosterPdf.mockReset();
   mockGeneratePosterPdf.mockResolvedValue(undefined);
@@ -215,7 +228,10 @@ describe("PosterEditor", () => {
       });
 
       // Promise を解決してクリーンアップ
-      resolvePdf();
+      // 解決後の setIsGenerating(false) を act 内で流して警告を防ぐ
+      await act(async () => {
+        resolvePdf();
+      });
     });
   });
 });

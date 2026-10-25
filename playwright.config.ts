@@ -2,6 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  // ポスターの E2E は、本番ビルド + ポート 3100 の `npm run test:e2e:poster` だけで流す。
+  // dev サーバーでは PDF 生成（html2canvas）が遅く、ポート 3000 も別のプロセスと衝突しやすいため
+  testIgnore: "**/poster-flow.spec.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

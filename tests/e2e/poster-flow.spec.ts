@@ -5,13 +5,13 @@ import path from "path";
 /**
  * 印刷用ポスター（/poster）の E2E（qr_code_create-ro1）。
  *
- * /poster は機能フラグ NEXT_PUBLIC_FEATURE_POSTER_PAGE=1 でビルドしたときだけ存在する
- * （既定のフラグ OFF では 404）。フラグ ON でビルド・起動した環境でだけ実行し、それ以外は skip する。
+ * /poster は公開済み（FEATURE_FLAGS.posterPage = true）なので、常に流す（skip しない）。
+ * `npm run build` のあと `npm run test:e2e:poster`（本番ビルド、ポート 3100）で流す。
+ * 既定の playwright.config.ts（dev サーバー）では、PDF 生成が遅くポート 3000 も衝突しやすいため対象外。
  * 目視確認用に、スクリーンショットとダウンロードした PDF を tmp/screenshots/ro1/ に保存する。
  * ファイル名を .spec.ts にしているのは、Jest の testMatch に拾われないようにするため。
  */
 
-const FLAG_ON = process.env.NEXT_PUBLIC_FEATURE_POSTER_PAGE === "1";
 const OUT_DIR = path.join(process.cwd(), "tmp", "screenshots", "ro1");
 
 const VIEWPORTS = [
@@ -28,15 +28,13 @@ const MIN_PDF_BYTES = 50 * 1024;
 const MAX_PDF_BYTES = 5 * 1024 * 1024;
 
 test.describe("印刷用ポスター", () => {
-  test.skip(!FLAG_ON, "NEXT_PUBLIC_FEATURE_POSTER_PAGE=1 でビルドした環境でのみ実行する");
-
   test.beforeAll(async ({ playwright, baseURL }) => {
     fs.mkdirSync(OUT_DIR, { recursive: true });
     // フラグなしのビルドで流すと /poster が 404 になり、全件 skip ではなく失敗にして気づけるようにする
     const request = await playwright.request.newContext({ baseURL });
     const response = await request.get("/poster");
     await request.dispose();
-    expect(response.status(), "/poster が 404 です。NEXT_PUBLIC_FEATURE_POSTER_PAGE=1 でビルドしてください").not.toBe(404);
+    expect(response.status(), "/poster が 404 です。機能フラグ posterPage が true か確認してください").not.toBe(404);
   });
 
   /** QR の描画が終わるまで待つ（ボタンが「準備中」でなくなり、押せる状態になる） */

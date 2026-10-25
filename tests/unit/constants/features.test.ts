@@ -1,6 +1,6 @@
 // 機能フラグ定義（src/lib/constants/features.ts）のテスト
-// posterPage は NEXT_PUBLIC_FEATURE_POSTER_PAGE === "1" のときだけ true になる。
-// 実行環境にこの変数が入っていても結果が変わらないよう、テスト内で変数を設定・削除してから読み込み直す。
+// qr_code_create-l1a で /poster を公開したため、posterPage は true が既定で、環境変数では切り替わらない。
+// （フラグを false にしたときの挙動は、モックを使う posterPage.test.tsx / DownloadPanel.flagOff.test.tsx が守る）
 const ENV_KEY = "NEXT_PUBLIC_FEATURE_POSTER_PAGE";
 
 type Flags = typeof import("@/lib/constants/features").FEATURE_FLAGS;
@@ -38,24 +38,16 @@ describe("FEATURE_FLAGS", () => {
     expect(flags).not.toBeNull();
   });
 
-  it("posterPage が boolean であること（文字列などの truthy な値が入らない）", () => {
-    for (const value of [undefined, "1", "0", "true", ""]) {
-      expect(typeof loadFlags(value).posterPage).toBe("boolean");
-    }
+  it("posterPage が boolean の true であること（公開済み）", () => {
+    const flags = loadFlags(undefined);
+    expect(typeof flags.posterPage).toBe("boolean");
+    expect(flags.posterPage).toBe(true);
   });
 
-  it("環境変数が未設定なら posterPage は false であること（本番に露出させない）", () => {
-    expect(loadFlags(undefined).posterPage).toBe(false);
-  });
-
-  it('環境変数が "1" のときだけ posterPage が true になること', () => {
-    expect(loadFlags("1").posterPage).toBe(true);
-  });
-
-  it.each([["0"], ["true"], ["TRUE"], ["on"], ["yes"], [""], [" 1"], ["1 "], ["01"]])(
-    "環境変数が %j のときは posterPage が false であること",
+  it.each([[undefined], ["1"], ["0"], ["true"], ["false"], [""], ["off"]])(
+    "環境変数が %j でも posterPage は true のままであること（環境変数で上書きされない）",
     (value) => {
-      expect(loadFlags(value).posterPage).toBe(false);
+      expect(loadFlags(value).posterPage).toBe(true);
     }
   );
 });

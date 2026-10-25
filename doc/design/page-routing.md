@@ -90,10 +90,12 @@ export const metadata: Metadata = {
 **メタデータ**:
 ```typescript
 export const metadata: Metadata = {
-  title: 'QRコード作成 | QR Code Create',
+  title: 'QRコード生成',
   description: 'URLを入力してUTMパラメータ付きQRコードを無料で作成。装飾フレーム、ロゴ、色のカスタマイズが可能。PNG/SVG/PDFでダウンロード。',
 };
 ```
+
+**title の規則** (bd-qr_code_create-176 で追加): ページ側の title にはサイト名「QR Code Create」を含めない。ルートレイアウトの `title.template`（`%s | QR Code Create`）が 1 回だけ付ける。例外はトップ（`/` と `/en`）で、サイト名を含む完全な文字列を title にする。トップの page.tsx は `title.template` を定義した layout と同じセグメントにあり、テンプレートが効かないため、二重にならない。`buildMetadata` は og:title / twitter:title にテンプレートが効かないため、title にサイト名が無ければ ` | QR Code Create` を 1 回付ける。
 
 **JSON-LD**: WebApplication, HowTo, BreadcrumbList
 
@@ -131,7 +133,7 @@ export const metadata: Metadata = {
 
 **state引き継ぎ**: [アーキテクチャ設計 セクション9](./architecture.md#9-poster-へのstate引き継ぎ機構) を参照。
 
-**公開制御（機能フラグ、qr_code_create-ptg で追加。bd-qr_code_create-l1a で更新）**: `src/lib/constants/features.ts` の `FEATURE_FLAGS.posterPage` で公開を切り替える仕組みを ptg で入れ、Markdown 入力（4me）と A4 2x2 PDF 出力（ro1）の完成後、l1a で `true` にして公開した。false にすると (1) `/create` の DownloadPanel のポスター導線ボタンを描画しない、(2) `sitemap.ts` に `/poster` を含めない、(3) `/poster` へ直接アクセスすると `notFound()` で 404 にする。ro1 で E2E 用に足した環境変数 `NEXT_PUBLIC_FEATURE_POSTER_PAGE` による上書きは、既定値が true になったため l1a で外した。内部モジュール（posterHandoff、generatePosterPdf 等）はフラグの影響を受けない。ポスターの E2E（poster-flow）と QR プレビューの枠の実測（create-qr-fit）は、本番ビルドでしか安定しないため、事前に `npm run build` してから `npm run test:e2e:prod`（`playwright.prod.config.ts`、ポート 3100）で流す。既定の `npm run test:e2e`（dev サーバー）からは外している（bd-qr_code_create-b0w で更新）。
+**公開制御（機能フラグ、qr_code_create-ptg で追加。bd-qr_code_create-l1a で更新）**: `src/lib/constants/features.ts` の `FEATURE_FLAGS.posterPage` で公開を切り替える仕組みを ptg で入れ、Markdown 入力（4me）と A4 2x2 PDF 出力（ro1）の完成後、l1a で `true` にして公開した。false にすると (1) `/create` の DownloadPanel のポスター導線ボタンを描画しない、(2) `sitemap.ts` に `/poster` を含めない、(3) `/poster` へ直接アクセスすると `notFound()` で 404 にする、(4) 日本語版フッターの「印刷用ポスター」のリンクを描画しない（bd-qr_code_create-b4m で追加）。`public/llms.txt` は静的ファイルでフラグを見ないため、false に戻すときは llms.txt の /poster の行も手で消す。ro1 で E2E 用に足した環境変数 `NEXT_PUBLIC_FEATURE_POSTER_PAGE` による上書きは、既定値が true になったため l1a で外した。内部モジュール（posterHandoff、generatePosterPdf 等）はフラグの影響を受けない。ポスターの E2E（poster-flow）と QR プレビューの枠の実測（create-qr-fit）は、本番ビルドでしか安定しないため、事前に `npm run build` してから `npm run test:e2e:prod`（`playwright.prod.config.ts`、ポート 3100）で流す。既定の `npm run test:e2e`（dev サーバー）からは外している（bd-qr_code_create-b0w で更新）。
 
 ---
 

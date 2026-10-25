@@ -14,12 +14,15 @@ function languagesFor(jaPath: string, enPath: string) {
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  // /poster は機能フラグが true のときだけ載せる
+  const posterPages: MetadataRoute.Sitemap = FEATURE_FLAGS.posterPage
+    ? [{ url: `${SITE_URL}/poster`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 }]
+    : [];
+
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}`, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0, alternates: languagesFor("/", "/en") },
     { url: `${SITE_URL}/create`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9, alternates: languagesFor("/create", "/en/create") },
-    ...(FEATURE_FLAGS.posterPage
-      ? [{ url: `${SITE_URL}/poster`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.8 }]
-      : []),
+    ...posterPages,
     { url: `${SITE_URL}/guide`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/use-cases`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/blog`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },

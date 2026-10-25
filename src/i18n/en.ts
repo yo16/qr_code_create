@@ -24,6 +24,8 @@ export const en = {
     terms: "Terms of service (Japanese)",
     faq: "FAQ",
     contact: "Contact (Japanese)",
+    // /poster の英語版が無いので en のフッターには出ない（Dict のキーを満たすための文言）
+    poster: "Poster maker (Japanese)",
     japaneseOnlyNote:
       "Our privacy policy and terms of service are available in Japanese only.",
   },
@@ -92,7 +94,7 @@ export const en = {
           "Enter a URL, add UTM parameters with guided presets, and download the QR code as PNG, SVG, or PDF. No sign-up.",
       },
       create: {
-        title: "Create a QR code - QR Code Create",
+        title: "Create a QR code",
         description:
           "Enter a URL, add UTM parameters, pick a frame and colors, and download the QR code for free. Track scans in Google Analytics.",
       },

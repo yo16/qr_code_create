@@ -23,6 +23,7 @@ export const ja = {
     terms: "利用規約",
     faq: "よくある質問",
     contact: "お問い合わせ",
+    poster: "印刷用ポスター",
     // 英語版のフッターだけが表示する注記。ja では使わない（Dict のキーを揃えるため）
     japaneseOnlyNote: "プライバシーポリシーと利用規約は日本語のみです。",
   },
@@ -90,7 +91,7 @@ export const ja = {
           "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
       },
       create: {
-        title: "QRコード生成 - QR Code Create",
+        title: "QRコード生成",
         description:
           "URLを入力するだけ。UTMパラメータと装飾フレームでマーケティング効果を最大化するQRコードを無料で作成できます。",
       },

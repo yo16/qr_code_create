@@ -68,6 +68,7 @@ describe("llms.txt", () => {
   // 意図: 主要ページが相対パスではなく qr-create.jp ドメインの絶対 URL で列挙されていること
   it.each([
     "https://qr-create.jp/create",
+    "https://qr-create.jp/poster",
     "https://qr-create.jp/guide",
     "https://qr-create.jp/guide/getting-started",
     "https://qr-create.jp/use-cases",
@@ -75,5 +76,42 @@ describe("llms.txt", () => {
   ])("主要ページの絶対 URL %s が列挙されていること", (url) => {
     const content = fs.readFileSync(LLMS_PATH, "utf-8");
     expect(content).toContain(url);
+  });
+});
+
+// qr_code_create-b4m: /poster の公開に合わせて llms.txt に載せる
+describe("llms.txt の /poster", () => {
+  function section(content: string, heading: string): string {
+    const start = content.indexOf(heading);
+    expect(start).toBeGreaterThanOrEqual(0);
+    const rest = content.slice(start + heading.length);
+    const next = rest.indexOf(String.fromCharCode(10) + "## ");
+    return next === -1 ? rest : rest.slice(0, next);
+  }
+
+  it("## Pages に /poster の行（絶対 URL と説明）があること", () => {
+    const pages = section(fs.readFileSync(LLMS_PATH, "utf-8"), "## Pages");
+    expect(pages).toMatch(/^- https:\/\/qr-create\.jp\/poster : .+$/m);
+  });
+
+  it("## Features にポスター作成の行があること", () => {
+    const features = section(fs.readFileSync(LLMS_PATH, "utf-8"), "## Features");
+    expect(features).toMatch(/^- Poster maker/m);
+  });
+
+  it("sitemap の主要な ja ページが ## Pages にすべて載っていること（/poster を含む）", async () => {
+    const { default: sitemap } = await import("@/app/sitemap");
+    const pages = section(fs.readFileSync(LLMS_PATH, "utf-8"), "## Pages");
+    const site = "https://qr-create.jp";
+    const paths = sitemap()
+      .map((entry) => new URL(entry.url).pathname)
+      .filter((p) => !p.startsWith("/en"));
+    // llms.txt に載せる主要ページ（法務系・個別記事は対象外）
+    const main = ["/", "/create", "/poster", "/guide", "/use-cases", "/faq", "/blog"];
+    for (const p of main) {
+      expect(paths).toContain(p);
+      const url = p === "/" ? `${site}/ ` : `${site}${p} `;
+      expect(pages).toContain(url);
+    }
   });
 });

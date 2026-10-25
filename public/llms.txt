@@ -14,6 +14,7 @@ QR Code Create is a free QR code generator with UTM parameter guidance. The serv
 - Color customization (foreground/background)
 - Caption text
 - PNG/SVG/PDF export
+- Poster maker (A4 PDF, 4 QR code cards per sheet, for printing)
 
 ## Target Users
 Japanese small business owners, event organizers, marketers
@@ -30,6 +31,7 @@ Japanese (ja). All pages are written in Japanese.
 ## Pages
 - https://qr-create.jp/ : Top page
 - https://qr-create.jp/create : QR code generator (the tool itself)
+- https://qr-create.jp/poster : Poster maker (A4 PDF, 4 cards per sheet)
 - https://qr-create.jp/guide : Guide index
 - https://qr-create.jp/guide/getting-started : Getting started: create a QR code in 3 steps
 - https://qr-create.jp/guide/utm-parameters : What UTM parameters are

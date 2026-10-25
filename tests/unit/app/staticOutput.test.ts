@@ -61,6 +61,30 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect(html).toContain('<a href="/en/create">Open the QR code generator</a>');
   });
 
+  // 意図（qr_code_create-176）: サイト名「QR Code Create」が <title> と og:title にちょうど 1 回だけ付く。
+  // ページ側の title にサイト名を入れると、ルートの template で 2 回になる
+  it.each([
+    ["index.html"],
+    ["en.html"],
+    ["create.html"],
+    ["en/create.html"],
+    ["poster.html"],
+    ["guide/getting-started.html"],
+    ["faq.html"],
+  ])("%s の <title> と og:title にサイト名がちょうど 1 回であること", (file) => {
+    const full = path.join(BUILD_APP, ...file.split("/"));
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const html = fs.readFileSync(full, "utf8");
+    const title = html.match(/<title>([^<]*)<\/title>/)?.[1];
+    const ogTitle = html.match(/<meta property="og:title" content="([^"]*)"/)?.[1];
+    expect(title).toBeDefined();
+    expect(ogTitle).toBeDefined();
+    expect((title as string).split("QR Code Create")).toHaveLength(2);
+    expect((ogTitle as string).split("QR Code Create")).toHaveLength(2);
+  });
+
   it("en/guide/utm-setup.html が生成されていないこと", () => {
     // 対照: ja 側の utm-setup は生成されている（パスの組み立て違いで素通りしない）
     expect(fs.existsSync(path.join(BUILD_APP, "guide", "utm-setup.html"))).toBe(true);

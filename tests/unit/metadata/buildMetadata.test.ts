@@ -41,7 +41,8 @@ describe("buildMetadata", () => {
 
     it("openGraph.titleが正しいこと", () => {
       const result = buildMetadata(options);
-      expect(result.openGraph?.title).toBe(options.title);
+      // og:title にはテンプレートが効かないので、サイト名が 1 回付く（qr_code_create-176）
+      expect(result.openGraph?.title).toBe(`${options.title} | QR Code Create`);
     });
 
     it("openGraph.descriptionが正しいこと", () => {
@@ -90,7 +91,7 @@ describe("buildMetadata", () => {
 
     it("twitter.titleが正しいこと", () => {
       const result = buildMetadata(options);
-      expect(result.twitter?.title).toBe(options.title);
+      expect(result.twitter?.title).toBe(`${options.title} | QR Code Create`);
     });
 
     it("twitter.descriptionが正しいこと", () => {

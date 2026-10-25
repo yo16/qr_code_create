@@ -8,7 +8,7 @@ import { buildBreadcrumbSchema } from "@/lib/schema/buildJsonLd";
 import styles from "./page.module.css";
 
 export const metadata = buildMetadata({
-  title: "印刷用QRコードポスター作成 | A4で4枚同時印刷 - QR Code Create",
+  title: "印刷用QRコードポスター作成 | A4で4枚同時印刷",
   description:
     "QRコードと説明文を組み合わせたA4ポスターを無料作成。1枚のA4用紙に4枚分のQRコードを配置し、PDFでダウンロードできます。チラシ・店舗POP・案内ポスターに最適。",
   path: "/poster",

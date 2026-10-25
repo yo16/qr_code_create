@@ -90,10 +90,12 @@ export const metadata: Metadata = {
 **メタデータ**:
 ```typescript
 export const metadata: Metadata = {
-  title: 'QRコード作成 | QR Code Create',
+  title: 'QRコード生成',
   description: 'URLを入力してUTMパラメータ付きQRコードを無料で作成。装飾フレーム、ロゴ、色のカスタマイズが可能。PNG/SVG/PDFでダウンロード。',
 };
 ```
+
+**title の規則** (bd-qr_code_create-176 で追加): ページ側の title にはサイト名「QR Code Create」を含めない。ルートレイアウトの `title.template`（`%s | QR Code Create`）が 1 回だけ付ける。例外はトップ（`/` と `/en`）で、サイト名を含む完全な文字列を title にする。トップの page.tsx は `title.template` を定義した layout と同じセグメントにあり、テンプレートが効かないため、二重にならない。`buildMetadata` は og:title / twitter:title にテンプレートが効かないため、title にサイト名が無ければ ` | QR Code Create` を 1 回付ける。
 
 **JSON-LD**: WebApplication, HowTo, BreadcrumbList
 

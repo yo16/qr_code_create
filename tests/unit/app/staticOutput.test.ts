@@ -72,6 +72,7 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     ["guide/getting-started.html"],
     ["faq.html"],
     ["blog/event-survey-qr-poster.html"],
+    ["blog/utm-on-off-when-to-use.html"],
   ])("%s の <title> と og:title にサイト名がちょうど 1 回であること", (file) => {
     const full = path.join(BUILD_APP, ...file.split("/"));
     if (!fs.existsSync(full)) {

@@ -1,0 +1,25 @@
+{
+  "yomiyasuVersion": "2.4.0",
+  "note": "yomiyasu v2.4.0 の lint を通らない既存の日本語記事を、現状の内容のまま例外として許容するための基準。ここへ記事を追加してはならない。",
+  "files": {
+    "src/content/blog/why-i-built-qr-code-create.mdx": "ade5e8694329efec22f876b3311709fa9c7722beb23c11a94613d98970331a65",
+    "src/content/guide/analytics-measurement.mdx": "3f4f3f56ebacf7c393810e96147464a93b16748763a518c890ee06c7539f0cdf",
+    "src/content/guide/decoration.mdx": "87e0e09c6455a1aea20dff89a2da04c0455c88b3f668afe87b1ae351064d3159",
+    "src/content/guide/design-tips.mdx": "b02e028ed6c979ac5f8cf08ecb94ee0d1bf75555888115951c650c6aafdf2702",
+    "src/content/guide/download-formats.mdx": "f912f28ad8519d3c0b0b4b8ad0717e5cfc444f4ef18aae4202e3ab9a19c6a1e0",
+    "src/content/guide/effective-qr-usage.mdx": "d9bd7e130919ab313a7b3c2c41e4bc655801232422b324ba4bfd721c64fec23c",
+    "src/content/guide/getting-started.mdx": "99a4bacbc6ec29f5293792e8ff9b683f89c0572b0622ca0605b73a27c8fa8929",
+    "src/content/guide/tips.mdx": "317e5cf5b9060f611420e37b302c9ccddd9c1612fc1a245677e3348403d16a26",
+    "src/content/guide/utm-parameters.mdx": "873a1a83bfc2db7ea99eb5e897c494c13647bbe84c9474e17d21bfc69d7e30fd",
+    "src/content/guide/utm-setup.mdx": "29fb6043b8b66db9d31d3191379d0a4a857c5acf1395983b424c0ef4ea78a3ed",
+    "src/content/use-cases/business-card.mdx": "1d23529e990c0741829565c56c380551d6033ed0472b726301ba1a0dec87b13c",
+    "src/content/use-cases/event.mdx": "04946d7ab6672580eb32fe6bd2f56b6144469fee74722f8069f752ca2bf74970",
+    "src/content/use-cases/flyer.mdx": "21f002371315597f020b6e406473cba2bd0b7d5e278d43b21f49c6aca1f3d550",
+    "src/content/use-cases/menu.mdx": "22e9d0702d61dacbf2da1a2df2684a985239106257702433ef34ad9df6168709",
+    "src/content/use-cases/poster.mdx": "87134ca20c09c38346311794efb8c1bdd87c721fe5c302729c0202fca14343b3",
+    "src/content/use-cases/product-package.mdx": "3c6303b0f622794465b893350f16af659dec56e38fe961234f40f018cde544ca",
+    "src/content/use-cases/receipt.mdx": "deb9bd268e24cfcb1e830dcfd15f1bc256727807b53dbc10744856bbc47cf166",
+    "src/content/use-cases/signage.mdx": "373a1da2552c83520023c5789d5fc95aabbf0e60de0c54c492547bb3b357f2d5",
+    "src/content/use-cases/store.mdx": "f11a78947c7ec47d2194566ad36f7b730952dec267859fe9fd495f43d7024d82"
+  }
+}

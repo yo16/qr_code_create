@@ -124,27 +124,66 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect(html).toContain("<strong>utm_content</strong>");
   });
 
-  it("ja のガイド全件の HTML 本文に、生の ** が残っていないこと（script・コードブロックを除く）", () => {
-    const dir = path.join(BUILD_APP, "guide");
+  // 意図（qr_code_create-6cl）: 生の ** と、strong の入れ子が HTML 本文に残っていない（script・コードブロックを除く）。
+  // ディレクトリ単位で検査し、空振り防止として .html が 1 件以上あること、
+  // requireStrong のディレクトリでは太字（<strong>）が 1 件以上あることも確かめる
+  // （blog は記事が太字を使わないので requireStrong を付けない）
+  const expectNoRawBold = (relDir: string[], requireStrong: boolean): void => {
+    const dir = path.join(BUILD_APP, ...relDir);
     if (!fs.existsSync(dir)) {
       throw new Error(dir + " がありません。npm run build 後に実行してください。");
     }
     const files = fs.readdirSync(dir).filter((f) => f.endsWith(".html"));
-    // 空振り防止: ガイドの HTML が複数あり、太字（<strong>）を使う記事も含まれる
-    expect(files.length).toBeGreaterThan(3);
-    expect(files).toContain("utm-setup.html");
+    expect(files.length).toBeGreaterThan(0);
     let strongCount = 0;
     for (const file of files) {
       const html = fs.readFileSync(path.join(dir, file), "utf8");
       strongCount += html.split("<strong>").length - 1;
       const text = html
         .replace(/<script[\s\S]*?<\/script>/g, "")
-        .replace(/<pre[\s\S]*?<\/pre>/g, "")
-        .replace(/<code[\s\S]*?<\/code>/g, "");
+        .replace(/<pre\b[\s\S]*?<\/pre>/g, "")
+        .replace(/<code\b[\s\S]*?<\/code>/g, "");
       expect({ file, hasRawBold: text.includes("**") }).toEqual({ file, hasRawBold: false });
+      // 太字の崩れ方のもう一つ: strong が閉じる前に次の strong が開く入れ子（生の ** にならない）
+      const nested = /<strong\b[^>]*>(?:(?!<\/strong>)[\s\S])*<strong\b/.test(text);
+      expect({ file, hasNestedStrong: nested }).toEqual({ file, hasNestedStrong: false });
     }
-    expect(strongCount).toBeGreaterThan(0);
+    if (requireStrong) expect(strongCount).toBeGreaterThan(0);
+  };
+
+  it("ja のガイド全件の HTML 本文に、生の ** と strong の入れ子が残っていないこと（script・コードブロックを除く）", () => {
+    expectNoRawBold(["guide"], true);
+    // 空振り防止: ガイドの HTML が複数あり、太字を使う記事も含まれる
+    const files = fs.readdirSync(path.join(BUILD_APP, "guide")).filter((f) => f.endsWith(".html"));
+    expect(files.length).toBeGreaterThan(3);
+    expect(files).toContain("utm-setup.html");
   });
+
+  it.each([
+    ["use-cases", ["use-cases"], true],
+    ["blog", ["blog"], false],
+    ["en/guide", ["en", "guide"], true],
+  ] as [string, string[], boolean][])(
+    "%s の全件の HTML 本文に、生の ** と strong の入れ子が残っていないこと（script・コードブロックを除く）",
+    (_label, relDir, requireStrong) => {
+      expectNoRawBold(relDir, requireStrong);
+    }
+  );
+
+  // 意図（qr_code_create-6cl）: `**PNG形式**（Nx解像度）を` が太字として描画される。
+  // 以前の `**PNG形式（Nx解像度）**を` は閉じの ** の直前が全角「）」で直後が文字のため太字にならず、** が表示されていた。
+  // store は後ろに別の ** があり、生の ** ではなく <strong>PNG形式（2x解像度）<strong>…</strong>SVG形式</strong> の入れ子になっていた
+  it.each(["menu.html", "product-package.html", "receipt.html", "store.html"])(
+    "use-cases/%s に <strong>PNG形式</strong> があること",
+    (file) => {
+      const full = path.join(BUILD_APP, "use-cases", file);
+      if (!fs.existsSync(full)) {
+        throw new Error(full + " がありません。npm run build 後に実行してください。");
+      }
+      const html = fs.readFileSync(full, "utf8");
+      expect(html).toContain("<strong>PNG形式</strong>");
+    }
+  );
 
   it("en/guide/utm-setup.html が生成されていないこと", () => {
     // 対照: ja 側の utm-setup は生成されている（パスの組み立て違いで素通りしない）

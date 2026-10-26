@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-// ブログ記事「UTMパラメータをOFFにしたい場面と切り替え方法」(qr_code_create-33a)
+// ブログ記事「個人用や社内利用のQRコードで、UTMパラメータをOFFにする場面と切り替え方法」(qr_code_create-33a)
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
@@ -29,6 +29,14 @@ describe("記事 utm-on-off-when-to-use: frontmatter", () => {
     expect(typeof data.title).toBe("string");
     expect((data.title as string).length).toBeGreaterThan(0);
     expect(data.title as string).not.toContain("QR Code Create");
+  });
+
+  it("title がダッシュ類（—、–、――、──）を含まないこと", () => {
+    expect(data.title as string).not.toMatch(/[—–―─]/);
+  });
+
+  it("title が新しい題と一致すること", () => {
+    expect(data.title).toBe("個人用や社内利用のQRコードで、UTMパラメータをOFFにする場面と切り替え方法");
   });
 
   it("description が非空の文字列であること", () => {

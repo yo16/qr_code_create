@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
+import os from "os";
 import crypto from "crypto";
+import matter from "gray-matter";
 import { spawnSync } from "child_process";
 
 // yomiyasu lint の強制テスト（yomiyasuLint.test.ts）と検出力のテスト（yomiyasuLintGuard.test.ts）の共通処理
@@ -82,8 +84,32 @@ export function collectLintFailures(opts: {
     if (!isLintTarget(baseline, key, fs.readFileSync(abs, "utf-8"))) continue;
     const { status, output } = runLint(python, abs);
     if (status !== 0) failures.push(`${key} (終了コード ${status})\n${output.trim()}`);
+    const fm = lintFrontmatter(python, abs);
+    if (fm && fm.status !== 0) {
+      failures.push(`${key} の frontmatter（title / description） (終了コード ${fm.status})\n${fm.output.trim()}`);
+    }
   }
   return failures;
+}
+
+/**
+ * frontmatter の title と description を空行区切りの段落にして一時 .md で lint する。
+ * yomiyasu 本体は frontmatter を見ないため、テスト側で検査する。どちらも無ければ null
+ */
+function lintFrontmatter(python: string, abs: string): { status: number | null; output: string } | null {
+  const { data } = matter(fs.readFileSync(abs, "utf-8"));
+  const paragraphs = [data.title, data.description].filter(
+    (v): v is string => typeof v === "string" && v.trim() !== ""
+  );
+  if (paragraphs.length === 0) return null;
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "yomiyasu-fm-"));
+  try {
+    const tmpFile = path.join(tmpDir, "frontmatter.md");
+    fs.writeFileSync(tmpFile, `${paragraphs.join("\n\n")}\n`, "utf-8");
+    return runLint(python, tmpFile);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
 }
 
 /** 内容が基準のハッシュと一致する（＝例外として許容される）か */

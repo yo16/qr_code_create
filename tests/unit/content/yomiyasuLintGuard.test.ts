@@ -4,6 +4,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
+import matter from "gray-matter";
 import {
   ROOT,
   SKILL_DIR,
@@ -89,6 +90,76 @@ describe("yomiyasu lint の検出力", () => {
       const keys = failures.map((m) => m.split(" ")[0]);
 
       expect(keys).toEqual(["src/content/blog/edited-warn.mdx"]);
+    }, 120_000);
+  });
+
+  describe("frontmatter（title / description）の lint", () => {
+    const FM_LABEL = " の frontmatter（title / description）";
+    const passBody = matter(read(PASS_SAMPLE)).content.trim();
+    const article = (fm: string, body: string = passBody) => `---\n${fm}\n---\n\n${body}\n`;
+    const okFm = 'title: "検査用の記事"\ndescription: "yomiyasu lint を通ることを確かめるための固定サンプルです。"';
+
+    // 一時の content ツリーに files を置いて collectLintFailures を実行し、失敗メッセージを返す
+    const run = (name: string, files: Record<string, string>, baseline: Baseline = { ...tempBaseline, files: {} }) => {
+      expect(python).not.toBeNull();
+      const root = path.join(tmpDir, name);
+      for (const [rel, body] of Object.entries(files)) {
+        const abs = path.join(root, ...rel.split("/"));
+        fs.mkdirSync(path.dirname(abs), { recursive: true });
+        fs.writeFileSync(abs, body, "utf-8");
+      }
+      return collectLintFailures({ contentRoot: root, baseline, python: python as string });
+    };
+
+    it("title にダッシュを含む記事は frontmatter の失敗 1 件だけになり、本文の失敗は含まれないこと", () => {
+      const failures = run("fm-title", {
+        "blog/dash-title.mdx": article(`title: "QRコードの作り方 — 初心者向け"\ndescription: "固定サンプルです。"`),
+      });
+      expect(failures).toHaveLength(1);
+      expect(failures[0]).toContain(`src/content/blog/dash-title.mdx${FM_LABEL}`);
+    }, 120_000);
+
+    it("description にダッシュを含む記事も frontmatter の失敗 1 件だけになること", () => {
+      const failures = run("fm-desc", {
+        "blog/dash-desc.mdx": article(`title: "検査用の記事"\ndescription: "作り方 — 初心者向けの説明です。"`),
+      });
+      expect(failures).toHaveLength(1);
+      expect(failures[0]).toContain(`src/content/blog/dash-desc.mdx${FM_LABEL}`);
+    }, 120_000);
+
+    it("title / description が両方通る記事（pass-sample）は失敗に含まれないこと", () => {
+      expect(run("fm-pass", { "blog/pass.mdx": read(PASS_SAMPLE) })).toEqual([]);
+    }, 120_000);
+
+    it("title / description が無い記事でも落ちず、本文だけで判定されること", () => {
+      const failures = run("fm-empty", {
+        "blog/no-fm-pass.mdx": article('category: "test"'),
+        "blog/no-fm-warn.mdx": article('category: "test"', matter(read(WARN_SAMPLE)).content.trim()),
+      });
+      const keys = failures.map((m) => m.split(" ")[0]);
+      expect(keys).toEqual(["src/content/blog/no-fm-warn.mdx"]);
+      expect(failures.some((m) => m.includes(FM_LABEL))).toBe(false);
+    }, 120_000);
+
+    it("en/ 配下の title にダッシュを含む記事は対象外のままであること", () => {
+      const failures = run("fm-en", {
+        "en/blog/dash-title.mdx": article(`title: "How to make — for beginners"\ndescription: "固定サンプルです。"`),
+      });
+      expect(failures).toEqual([]);
+    }, 120_000);
+
+    it("基準と同ハッシュの記事は title にダッシュがあっても対象外のままであること", () => {
+      const content = article(`title: "QRコードの作り方 — 初心者向け"\ndescription: "固定サンプルです。"`);
+      const baseline: Baseline = {
+        yomiyasuVersion: "test",
+        note: "test",
+        files: { "src/content/blog/baselined-dash.mdx": hashContent(content) },
+      };
+      expect(run("fm-baselined", { "blog/baselined-dash.mdx": content }, baseline)).toEqual([]);
+    }, 120_000);
+
+    it("ダッシュを含まない title / description を持つ記事（自前で組み立てた形）は失敗しないこと", () => {
+      expect(run("fm-ok", { "blog/ok.mdx": article(okFm) })).toEqual([]);
     }, 120_000);
   });
 

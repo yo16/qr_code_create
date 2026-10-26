@@ -240,6 +240,7 @@ Homepage (/)
 
 - ブログ記事とガイドの本文は、プロジェクトのスキル `.claude/skills/yomiyasu/`（AI が書いた日本語を自然な日本語に推敲する手順と lint）に従って書き、推敲する。根拠のない統計や固有名詞の断定を書かない。
 - 公開前に `python -I .claude/skills/yomiyasu/scripts/yomiyasu_lint.py <mdx> --doc-type article --reader general --fail-on warn` を通す（終了コード 0）。lint は表現と書式の決まった規則だけを点検するもので、意味の保持や読みやすさの合否ではない。
+- この lint は `npm test`（`tests/unit/content/yomiyasuLint.test.ts`）で強制される。lint に通らない既存記事は `tests/fixtures/yomiyasu-baseline.json` に内容のハッシュ付きで例外として載せており、編集すると例外から外れて lint が必須になる。基準へ記事を追加しない。
 - 記事の構造・frontmatter・導線（`/create` へのリンク）は `tests/unit/content/blog-*.test.ts` で検証する。
 
 ---

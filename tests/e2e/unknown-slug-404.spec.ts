@@ -4,8 +4,11 @@ import { test, expect } from "@playwright/test";
  * 存在しない slug が 404 になること（qr_code_create-xjj）。
  * dynamicParams = false と slug 検証の回帰防止。
  *
- * 実行例（next start を 3100 で起動する設定）:
- *   npx playwright test --config tmp/playwright.xjj.config.ts
+ * あわせて、404 のサーバー HTML（JS を実行しない生の HTML）が Next のエラー骨組みでないこと
+ * （lang="ja"、title、h1、__next_error__ が無い）を固定する（qr_code_create-a2s）。
+ *
+ * 本番ビルドで流す（dev サーバーでは挙動が違う）:
+ *   npm run build のあと npm run test:e2e:prod
  */
 
 test.setTimeout(120_000);
@@ -29,6 +32,21 @@ test.describe("存在しない slug は 404", () => {
     const response = await page.goto("/use-cases/no-such-case", { timeout: NAV_TIMEOUT });
     expect(response?.status()).toBe(404);
   });
+});
+
+test.describe("404 のサーバー HTML（JS を実行しない生の HTML）", () => {
+  // 意図: notFound() の 404 が Next のエラー骨組み（id="__next_error__"、lang なし、既定 title）にならない
+  for (const url of ["/guide/no-such-guide", "/blog/no-such-post", "/use-cases/no-such-case"]) {
+    test(`${url} の生 HTML が 404 用のページになっている`, async ({ request }) => {
+      const response = await request.get(url, { timeout: NAV_TIMEOUT });
+      expect(response.status()).toBe(404);
+      const html = await response.text();
+      expect(html).toContain('<html lang="ja"');
+      expect(html).not.toContain('id="__next_error__"');
+      expect(html).toMatch(/<title>ページが見つかりません \| QR Code Create<\/title>/);
+      expect(html).toMatch(/<h1[^>]*>ページが見つかりません<\/h1>/);
+    });
+  }
 });
 
 test.describe("存在する slug は従来どおり", () => {

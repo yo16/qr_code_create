@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Breadcrumb } from "@/components/layout/Breadcrumb/Breadcrumb";
 import { ArticleCta } from "@/components/marketing/ArticleCta/ArticleCta";
+import { GuideHeading } from "@/components/marketing/GuideHeading/GuideHeading";
 import { buildBlogPostingSchema, buildBreadcrumbSchema, buildHowToSchema } from "@/lib/schema/buildJsonLd";
 import { getDict } from "@/i18n/getDict";
 import type { Locale } from "@/i18n/types";
@@ -77,7 +78,10 @@ export function GuideArticlePageView({ locale, slug, guide }: GuideArticlePageVi
         <p className={styles.date}>{guide.date}</p>
       </header>
       <div className={styles.content}>
-        <MDXRemote source={guide.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
+        <MDXRemote
+          source={guide.content}
+          components={{ h2: GuideHeading }}
+          options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
       </div>
       <ArticleCta href={`${prefix}/create`} />
     </article>

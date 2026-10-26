@@ -32,6 +32,10 @@
   padding-bottom: var(--spacing-sm);
   border-bottom: 1px solid var(--color-border);
 }
+/* 固定ヘッダーに step-N の見出しが隠れないようにする（ヘッダー 64px + 余白） */
+.content :global(h2[id]) {
+  scroll-margin-top: calc(var(--spacing-3xl) + var(--spacing-md));
+}
 .content :global(h3) {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);

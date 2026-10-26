@@ -1116,4 +1116,6 @@ export default function CreatePage() {
 | `LanguageSwitcher` | Client | `src/components/layout/Header/LanguageSwitcher.tsx` | 「EN」/「日本語」のテキストリンク。`usePathname()` と `getAlternatePath()` で対応ページへ、無ければ相手言語のトップへ（[i18n-en 8 節](./i18n-en.md#8-言語切り替え-ui)） |
 | `HomePageView` / `CreatePageView` / `GuideArticlePageView` | Server | `src/components/pages/` | props に `locale`。ページ本体を ja / en で共用し、`page.tsx` は metadata と View を呼ぶだけにする（[i18n-en 5.1](./i18n-en.md#51-pageview-への抽出)） |
 
+`GuideArticlePageView` は MDX の h2 を `GuideHeading`（`src/components/marketing/GuideHeading/`）に差し替える。見出しのテキストが `ステップN` / `Step N` で始まるときだけ `id="step-N"` を付け（HowTo の JSON-LD の `#step-N` と対応）、それ以外の h2 には id を付けない。判定は `src/lib/content/stepHeading.ts` の `getStepHeadingId()`。同じ記事でステップ番号を重複させない（id が重複する）。番号は半角数字で書く。ブログと用途別ページには適用しない（bd-qr_code_create-kg5 で追加）。
+
 既存の Server Component（`Header`、`Footer`、`src/components/top/*` など）は `locale = "ja"` を既定とする props を足し、`getDict(locale)` で文言を引く。

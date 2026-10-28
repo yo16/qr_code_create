@@ -32,6 +32,7 @@ describe("GuideHeading", () => {
   it("子要素にリンクが入れ子になっていても判定できること", () => {
     render(
       <GuideHeading>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/create">
           <em>Step 1</em>
         </a>

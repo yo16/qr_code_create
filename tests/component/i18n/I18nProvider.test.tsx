@@ -76,17 +76,16 @@ describe("I18nProvider / useDict / useLocale", () => {
     expect(warnSpy).not.toHaveBeenCalled();
   });
 
-  // 意図: en なのに messages を渡し忘れたら、開発環境で気付けるよう console.warn を出す（表示は ja に落ちる）
-  it('locale="en" で messages 省略時は console.warn を出し ja を返す', () => {
-    render(
-      <I18nProvider locale="en">
-        <Probe />
-      </I18nProvider>
-    );
-    expect(warnSpy).toHaveBeenCalled();
-    expect(String(warnSpy.mock.calls[0][0])).toContain("[i18n]");
-    expect(String(warnSpy.mock.calls[0][0])).toContain('locale="en"');
-    expect(screen.getByTestId("locale")).toHaveTextContent("en");
-    expect(screen.getByTestId("loading")).toHaveTextContent("読み込み中");
+  // 意図: ja 以外で messages を渡し忘れたら throw する（ja の文言に落ちたまま気付かないのを防ぐ。多言語 M2）
+  it('locale="en" で messages 省略時は throw する', () => {
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    expect(() =>
+      render(
+        <I18nProvider locale="en">
+          <Probe />
+        </I18nProvider>
+      )
+    ).toThrow(/\[i18n\].*locale="en"/);
+    errorSpy.mockRestore();
   });
 });

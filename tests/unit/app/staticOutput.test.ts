@@ -192,6 +192,14 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect(fs.existsSync(path.join(BUILD_APP, "en", "guide", "utm-setup.html"))).toBe(false);
   });
 
+  // 意図（M2）: [locale] は ja を受けず、未知の slug も生成しない。/ja と /en/foo は静的 HTML にならない
+  it("ja.html と en/foo.html が生成されていないこと", () => {
+    // 対照: en.html は生成されている（パスの組み立て違いで素通りしない）
+    expect(fs.existsSync(path.join(BUILD_APP, "en.html"))).toBe(true);
+    expect(fs.existsSync(path.join(BUILD_APP, "ja.html"))).toBe(false);
+    expect(fs.existsSync(path.join(BUILD_APP, "en", "foo.html"))).toBe(false);
+  });
+
   // 意図（qr_code_create-01z.4）: en の文言が Client バンドル（.next/static）に入っていない。
   // en は getDict 経由で Server からだけ読まれ、Client へは RSC ペイロード（HTML 内）で渡る想定。
   // needle は辞書から導出し、Server スライス（hero の説明文）と Client スライス（ボタン・aria-label・ラベル）の両方を含める。
@@ -356,7 +364,7 @@ describe("動的レンダリングを招く API を使っていないこと", ()
     });
 
   const targets = [
-    ...listFiles(path.join(APP, "en")),
+    ...listFiles(path.join(APP, "[locale]")),
     path.join(ROOT, "src", "components", "layout", "RootShell", "RootShell.tsx"),
     path.join(APP, "(ja)", "layout.tsx"),
   ];

@@ -16,15 +16,16 @@ jest.mock("@/components/pages/GuideArticlePageView/GuideArticlePageView", () => 
 }));
 
 import { metadata as jaHome } from "@/app/(ja)/page";
-import { metadata as enHome } from "@/app/en/page";
+import { generateMetadata as enHomeMetadata } from "@/app/[locale]/page";
 import { metadata as jaCreate } from "@/app/(ja)/(tool)/create/page";
-import { metadata as enCreate } from "@/app/en/(tool)/create/page";
+import { generateMetadata as enCreateMetadata } from "@/app/[locale]/(tool)/create/page";
 import { generateMetadata as jaGuideMetadata } from "@/app/(ja)/(marketing)/guide/[slug]/page";
-import { generateMetadata as enGuideMetadata } from "@/app/en/(marketing)/guide/[slug]/page";
+import { generateMetadata as enGuideMetadata } from "@/app/[locale]/(marketing)/guide/[slug]/page";
 import { metadata as jaFaq } from "@/app/(ja)/(marketing)/faq/page";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
+const enParams = { params: Promise.resolve({ locale: "en" }) };
 const guideParams = (slug: string) => ({ params: Promise.resolve({ slug }) });
 
 async function loadPairs(): Promise<
@@ -34,19 +35,19 @@ async function loadPairs(): Promise<
     {
       name: "home",
       ja: jaHome,
-      en: enHome,
+      en: await enHomeMetadata(enParams),
       expected: { ja: `${SITE_URL}/`, en: `${SITE_URL}/en` },
     },
     {
       name: "create",
       ja: jaCreate,
-      en: enCreate,
+      en: await enCreateMetadata(enParams),
       expected: { ja: `${SITE_URL}/create`, en: `${SITE_URL}/en/create` },
     },
     {
       name: "getting-started",
       ja: await jaGuideMetadata(guideParams("getting-started")),
-      en: await enGuideMetadata(guideParams("getting-started")),
+      en: await enGuideMetadata({ params: Promise.resolve({ locale: "en", slug: "getting-started" }) }),
       expected: {
         ja: `${SITE_URL}/guide/getting-started`,
         en: `${SITE_URL}/en/guide/getting-started`,

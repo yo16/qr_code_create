@@ -4,13 +4,13 @@ import EnGuidePage, {
   dynamicParams,
   generateStaticParams,
   generateMetadata,
-} from "@/app/en/(marketing)/guide/[slug]/page";
+} from "@/app/[locale]/(marketing)/guide/[slug]/page";
 import { I18nProvider } from "@/i18n/I18nProvider";
 import { getClientMessages } from "@/i18n/getDict";
 import { getGuide, getGuideSlugList } from "@/lib/content/getGuide";
 
 /**
- * 英語ガイドのページ（src/app/en/(marketing)/guide/[slug]/page.tsx、qr_code_create-01z.5）。
+ * 英語ガイドのページ（src/app/[locale]/(marketing)/guide/[slug]/page.tsx、qr_code_create-01z.5）。
  * 英語の MDX がある slug だけを静的生成し、それ以外は 404（dynamicParams = false）。
  */
 
@@ -47,7 +47,7 @@ describe("en ガイドページの静的生成", () => {
 
   // 意図: generateStaticParams は en の slug だけ（ja にしか無い utm-setup などを含まない）
   it("generateStaticParams は getGuideSlugList(\"en\") と同じで ja だけの slug を含まない", async () => {
-    const params = await generateStaticParams();
+    const params = await generateStaticParams({ params: { locale: "en" } });
     expect(params).toEqual(getGuideSlugList("en").map((slug) => ({ slug })));
     expect(params).toEqual([{ slug: "getting-started" }]);
     const slugs = params.map((p) => p.slug);
@@ -60,7 +60,7 @@ describe("en ガイドページの静的生成", () => {
 describe("en ガイドページの generateMetadata", () => {
   // 意図: canonical / og:url が /en/guide/getting-started、og:locale が en_US、英語のタイトル
   it("getting-started で英語の title、canonical が /en/guide/getting-started、og locale en_US", async () => {
-    const metadata = await generateMetadata({ params: Promise.resolve({ slug: "getting-started" }) });
+    const metadata = await generateMetadata({ params: Promise.resolve({ locale: "en", slug: "getting-started" }) });
     const guide = getGuide("getting-started", "en")!;
     expect(metadata.title).toBe(guide.title);
     expect(metadata.description).toBe(guide.description);
@@ -73,7 +73,7 @@ describe("en ガイドページの generateMetadata", () => {
 
   // 意図: en に無い slug / 存在しない slug では空 metadata
   it.each(["utm-setup", "nonexistent-slug"])("%s では空オブジェクト", async (slug) => {
-    const metadata = await generateMetadata({ params: Promise.resolve({ slug }) });
+    const metadata = await generateMetadata({ params: Promise.resolve({ locale: "en", slug }) });
     expect(metadata).toEqual({});
   });
 });
@@ -85,7 +85,7 @@ describe("en ガイドページの描画", () => {
 
   // 意図: getting-started が英語で描画される（中身は GuideArticlePageView locale=en）
   it("getting-started で英語の h1 と /en のパンくずが出る", async () => {
-    const jsx = await EnGuidePage({ params: Promise.resolve({ slug: "getting-started" }) });
+    const jsx = await EnGuidePage({ params: Promise.resolve({ locale: "en", slug: "getting-started" }) });
     render(
       <I18nProvider locale="en" messages={getClientMessages("en")}>
         {jsx}
@@ -100,7 +100,22 @@ describe("en ガイドページの描画", () => {
 
   // 意図: en に無い slug / 存在しない slug は notFound
   it.each(["utm-setup", "nonexistent-slug"])("%s では notFound が呼ばれる", async (slug) => {
-    await expect(EnGuidePage({ params: Promise.resolve({ slug }) })).rejects.toThrow("notFound called");
+    await expect(EnGuidePage({ params: Promise.resolve({ locale: "en", slug }) })).rejects.toThrow("notFound called");
+    expect(notFound).toHaveBeenCalled();
+  });
+
+  // 意図: /ja/guide/... は [locale] で受けず 404（ja は (ja) 側のルート）
+  it("locale=ja では default が notFound を呼ぶ", async () => {
+    await expect(
+      EnGuidePage({ params: Promise.resolve({ locale: "ja", slug: "getting-started" }) })
+    ).rejects.toThrow("notFound called");
+    expect(notFound).toHaveBeenCalled();
+  });
+
+  it("locale=ja では generateMetadata が notFound を呼ぶ", async () => {
+    await expect(
+      generateMetadata({ params: Promise.resolve({ locale: "ja", slug: "getting-started" }) })
+    ).rejects.toThrow("notFound called");
     expect(notFound).toHaveBeenCalled();
   });
 });

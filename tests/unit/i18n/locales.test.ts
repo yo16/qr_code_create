@@ -6,6 +6,10 @@ import { hasVersion, localePath, splitLocale } from "@/lib/i18n/routes";
 /** 多言語 M1（qr_code_create-38x.1）。設計: doc/design/i18n-multi.md 5 節 */
 
 describe("locales", () => {
+  it("LOCALES は [ja, en, es, pt-br, de] と完全一致する", () => {
+    expect([...LOCALES]).toEqual(["ja", "en", "es", "pt-br", "de"]);
+  });
+
   it("LOCALES は ja を先頭に持ち、ja と en を含む", () => {
     expect(LOCALES[0]).toBe("ja");
     expect([...LOCALES]).toEqual(expect.arrayContaining(["ja", "en"]));
@@ -19,8 +23,13 @@ describe("locales", () => {
   it.each([
     ["ja", true],
     ["en", true],
+    ["es", true],
+    ["pt-br", true],
+    ["de", true],
     ["EN", false],
-    ["es", false],
+    ["PT-BR", false],
+    ["pt_BR", false],
+    ["fr", false], // M4: es は LOCALES に入ったので、未対応の言語には fr を使う
     ["", false],
     ["/en", false],
   ])("isLocale(%j) は %s", (v, expected) => {
@@ -30,8 +39,13 @@ describe("locales", () => {
   it.each([
     ["ja", false],
     ["en", true],
+    ["es", true],
+    ["pt-br", true],
+    ["de", true],
     ["EN", false],
-    ["es", false],
+    ["PT-BR", false],
+    ["pt_BR", false],
+    ["fr", false], // M4: es は LOCALES に入ったので、未対応の言語には fr を使う
     ["", false],
     ["/en", false],
   ])("isNonJaLocale(%j) は %s", (v, expected) => {

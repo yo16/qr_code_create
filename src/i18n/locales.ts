@@ -1,4 +1,4 @@
-export const LOCALES = ["ja", "en"] as const;
+export const LOCALES = ["ja", "en", "es", "pt-br", "de"] as const;
 export type Locale = (typeof LOCALES)[number];
 export type NonJaLocale = Exclude<Locale, "ja">;
 export const NON_JA_LOCALES = LOCALES.filter((l): l is NonJaLocale => l !== "ja");

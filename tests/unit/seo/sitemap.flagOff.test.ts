@@ -2,6 +2,7 @@ import sitemap from "@/app/sitemap";
 import { getGuideSlugList } from "@/lib/content/getGuide";
 import { getUseCaseSlugList } from "@/lib/content/getUseCase";
 import { getBlogSlugList } from "@/lib/content/getBlog";
+import { NON_JA_LOCALES } from "@/i18n/locales";
 
 // フラグ OFF（posterPage=false）に戻したときの sitemap を守る。
 // jest.mock はファイル単位で固定されるため、フラグ ON（既定）の検証は sitemap.test.ts に分けている。
@@ -20,7 +21,8 @@ describe("sitemap（フラグ OFF）", () => {
   });
 
   it("エントリ数が、フラグ ON のとき（静的ページ 10 件）より 1 件少ない 9 件の静的ページ前提であること", () => {
-    const enCount = 2 + getGuideSlugList("en").length;
+    // M4: 非 ja の言語数 x 3 件（設計書 11.1）
+    const enCount = NON_JA_LOCALES.length * (2 + getGuideSlugList("en").length);
     const others =
       getGuideSlugList().length + getUseCaseSlugList().length + getBlogSlugList().length + enCount;
     const flagOnTotal = 10 + others;

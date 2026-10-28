@@ -1,9 +1,12 @@
 import { ja } from "./ja";
 import { en } from "./en";
+import { es } from "./es";
+import { ptBr } from "./ptBr";
+import { de } from "./de";
 import { pickClientDict } from "./client";
 import type { ClientDict, Dict, Locale } from "./types";
 
-const DICTS = { ja, en } satisfies Record<Locale, Dict>;
+const DICTS = { ja, en, es, "pt-br": ptBr, de } satisfies Record<Locale, Dict>;
 
 /** Server 専用: locale の辞書を返す。 */
 export function getDict(locale: Locale): Dict {

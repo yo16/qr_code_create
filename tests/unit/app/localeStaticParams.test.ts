@@ -18,9 +18,9 @@ describe("[locale] layout の generateStaticParams", () => {
 });
 
 describe("[locale]/guide/[slug] の generateStaticParams", () => {
-  it('locale="en" では getGuideSlugList("en") を { slug } の配列で返す', async () => {
-    const result = await guideParams({ params: { locale: "en" } });
-    const slugs = getGuideSlugList("en");
+  it.each([...NON_JA_LOCALES])("locale=%s では getGuideSlugList(locale) を { slug } の配列で返し、1 件以上ある", async (locale) => {
+    const result = await guideParams({ params: { locale } });
+    const slugs = getGuideSlugList(locale);
     expect(slugs.length).toBeGreaterThan(0);
     expect(result).toEqual(slugs.map((slug) => ({ slug })));
   });

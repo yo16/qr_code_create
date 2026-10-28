@@ -58,10 +58,18 @@ async function loadPairs(): Promise<
 
 describe("3 組 6 ページの hreflang 相互参照", () => {
   // 意図: 各組の ja / en が同じ 3 URL（ja / en / x-default=ja）を出す
-  it("各ページの languages が組ごとに同じ 3 URL", async () => {
+  it("各ページの languages が組ごとに同じ 6 URL", async () => {
     const pairs = await loadPairs();
     for (const { name, ja, en, expected } of pairs) {
-      const want = { ja: expected.ja, en: expected.en, "x-default": expected.ja };
+      // 設計書 11.1 / 7.1: ja・en・x-default の値は変えず、es / pt-BR / de のキーを足す（M4）
+      const want = {
+        ja: expected.ja,
+        en: expected.en,
+        es: expected.en.replace("/en", "/es"),
+        "pt-BR": expected.en.replace("/en", "/pt-br"),
+        de: expected.en.replace("/en", "/de"),
+        "x-default": expected.ja,
+      };
       expect({ name, lang: "ja", languages: ja.alternates?.languages }).toEqual({ name, lang: "ja", languages: want });
       expect({ name, lang: "en", languages: en.alternates?.languages }).toEqual({ name, lang: "en", languages: want });
     }
@@ -83,11 +91,12 @@ describe("3 組 6 ページの hreflang 相互参照", () => {
   });
 
   // 意図: og:locale と og:locale:alternate が言語ごとに逆になる
-  it("ja は og ja_JP + alternate en_US、en は en_US + alternate ja_JP", async () => {
+  // M4: alternateLocale に es_ES / pt_BR / de_DE が増える（設計書 7.1）
+  it("ja は og ja_JP + alternate en_US ほか、en は en_US + alternate ja_JP ほか", async () => {
     const pairs = await loadPairs();
     for (const { ja, en } of pairs) {
-      expect(ja.openGraph).toMatchObject({ locale: "ja_JP", alternateLocale: ["en_US"] });
-      expect(en.openGraph).toMatchObject({ locale: "en_US", alternateLocale: ["ja_JP"] });
+      expect(ja.openGraph).toMatchObject({ locale: "ja_JP", alternateLocale: ["en_US", "es_ES", "pt_BR", "de_DE"] });
+      expect(en.openGraph).toMatchObject({ locale: "en_US", alternateLocale: ["ja_JP", "es_ES", "pt_BR", "de_DE"] });
     }
   });
 });

@@ -11,13 +11,13 @@ interface FooterProps {
 
 export function Footer({ locale = "ja" }: FooterProps = {}) {
   const { footer } = getDict(locale);
-  const isEn = locale === "en";
+  const isNonJa = locale !== "ja";
   return (
     <footer className={styles.footer}>
       <Container>
         <div className={styles.inner}>
-          {isEn ? (
-            // 英語版の無い規約系は日本語ページへリンクし、リンク名と注記で日本語だと伝える
+          {isNonJa ? (
+            // 翻訳版の無い規約系は日本語ページへリンクし、リンク名と注記で日本語だと伝える
             <>
               <div className={styles.links}>
                 <Link href="/privacy" hrefLang="ja">

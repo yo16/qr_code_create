@@ -1,5 +1,7 @@
 import { getDict } from "@/i18n/getDict";
 import type { Locale } from "@/i18n/types";
+import { LOCALE_CONFIG } from "@/lib/i18n/localeConfig";
+import { localePath } from "@/lib/i18n/routes";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
@@ -11,13 +13,13 @@ export function buildWebApplicationSchema(locale: Locale = "ja") {
     "@type": "WebApplication",
     name: "QR Code Create",
     description: schema.webApplication.description,
-    url: `${SITE_URL}${locale === "en" ? "/en" : ""}/create`,
+    url: `${SITE_URL}${localePath(locale, "/create")}`,
     applicationCategory: "UtilityApplication",
     operatingSystem: "Any",
     offers: {
       "@type": "Offer",
       price: "0",
-      priceCurrency: locale === "en" ? "USD" : "JPY",
+      priceCurrency: LOCALE_CONFIG[locale].currency,
     },
     featureList: schema.webApplication.featureList,
     inLanguage: schema.inLanguage,
@@ -55,7 +57,7 @@ export function buildHowToSchema(options?: {
       name: options.name,
       description: options.description,
       totalTime: options.totalTime ?? "PT3M",
-      ...(locale === "en" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
+      ...(locale !== "ja" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
       tool: {
         "@type": "HowToTool",
         name: "QR Code Create",
@@ -74,7 +76,7 @@ export function buildHowToSchema(options?: {
     name: howTo.name,
     description: howTo.description,
     totalTime: "PT3M",
-    ...(locale === "en" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
+    ...(locale !== "ja" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
     tool: {
       "@type": "HowToTool",
       name: "QR Code Create",
@@ -115,7 +117,7 @@ export function buildBreadcrumbSchema(
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    ...(locale === "en" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
+    ...(locale !== "ja" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
     itemListElement: items.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,

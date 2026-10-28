@@ -7,6 +7,7 @@ import { GuideHeading } from "@/components/marketing/GuideHeading/GuideHeading";
 import { buildBlogPostingSchema, buildBreadcrumbSchema, buildHowToSchema } from "@/lib/schema/buildJsonLd";
 import { getDict } from "@/i18n/getDict";
 import type { Locale } from "@/i18n/types";
+import { LOCALE_CONFIG } from "@/lib/i18n/localeConfig";
 import type { GuideContent } from "@/types/content";
 import styles from "./guide.module.css";
 
@@ -20,8 +21,8 @@ interface GuideArticlePageViewProps {
 
 export function GuideArticlePageView({ locale, slug, guide }: GuideArticlePageViewProps) {
   const { breadcrumb } = getDict(locale).guide;
-  const isEn = locale === "en";
-  const prefix = isEn ? "/en" : "";
+  const isNonJa = locale !== "ja";
+  const prefix = LOCALE_CONFIG[locale].prefix;
 
   const blogSchema = buildBlogPostingSchema(
     {
@@ -29,17 +30,17 @@ export function GuideArticlePageView({ locale, slug, guide }: GuideArticlePageVi
       description: guide.description,
       slug,
       datePublished: guide.date,
-      ...(isEn ? { basePath: "/en/guide" } : {}),
+      ...(isNonJa ? { basePath: `${prefix}/guide` } : {}),
     },
     locale
   );
 
-  // ja は ホーム › 使い方ガイド › 記事、en は /en/guide 一覧が無いので Home › 記事
+  // ja は ホーム › 使い方ガイド › 記事、ほかは {prefix}/guide 一覧が無いので Home › 記事
   const breadcrumbSchema = buildBreadcrumbSchema(
-    isEn
+    isNonJa
       ? [
-          { name: breadcrumb.home, url: `${SITE_URL}/en` },
-          { name: guide.title, url: `${SITE_URL}/en/guide/${slug}` },
+          { name: breadcrumb.home, url: `${SITE_URL}${prefix}` },
+          { name: guide.title, url: `${SITE_URL}${prefix}/guide/${slug}` },
         ]
       : [
           { name: breadcrumb.home, url: `${SITE_URL}/` },
@@ -49,7 +50,7 @@ export function GuideArticlePageView({ locale, slug, guide }: GuideArticlePageVi
     locale
   );
 
-  const breadcrumbItems = isEn
+  const breadcrumbItems = isNonJa
     ? [{ label: guide.title }]
     : [{ label: breadcrumb.guide, href: "/guide" }, { label: guide.title }];
 

@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 
 /**
  * Header に置いた言語切り替えの配置（qr_code_create-01z.6）。
- * 設計: doc/design/i18n-en.md 8.3 節
+ * 設計: doc/design/i18n-multi.md 8 節
  * - デスクトップ: desktopNav の右（CTA の後ろ）
  * - モバイル: メニューボタンの左に常に出し、MobileNav のパネル内には置かない
  */
@@ -67,7 +67,7 @@ const cases = [
     name: "ja",
     render: renderJa,
     pathname: "/create",
-    label: /^EN/,
+    label: "English",
     href: "/en/create",
     cta: ja.header.cta,
     menuOpen: ja.common.mobileMenu.open,
@@ -76,7 +76,7 @@ const cases = [
     name: "en",
     render: renderEn,
     pathname: "/en/create",
-    label: /^日本語/,
+    label: "日本語",
     href: "/create",
     cta: en.header.cta,
     menuOpen: en.common.mobileMenu.open,
@@ -93,13 +93,23 @@ describe.each(cases)("Header の言語切り替え（$name）", (c) => {
     return Array.from(container.querySelectorAll("a[hreflang]"));
   }
 
-  // 意図: 切り替えリンクがちょうど 1 つあり、対応ページを指す
-  it("切り替えリンクがちょうど 1 つで、対応ページを指す", () => {
+  // 意図: 言語切り替えは 5 言語のリンクを持ち、反対側の言語（ja なら en、en なら ja）は対応ページを指す
+  it("切り替えの一覧に 5 言語のリンクがあり、反対側の言語は対応ページを指す", () => {
     const { container } = c.render();
     const links = getSwitchLinks(container);
-    expect(links).toHaveLength(1);
-    expect(links[0]).toHaveTextContent(c.label);
-    expect(links[0]).toHaveAttribute("href", c.href);
+    expect(links).toHaveLength(5);
+    const other = links.find((a) => a.textContent === c.label);
+    expect(other).toHaveAttribute("href", c.href);
+  });
+
+  // 意図: E2E が構造（ボタンの直後の ul）で切り替えボタンを取るので、aria-controls を持つボタンは切り替えボタンだけ
+  it("aria-controls を持つボタンは切り替えボタンだけで、直後に ul がある", () => {
+    const { container } = c.render();
+    const controlled = container.querySelectorAll("button[aria-controls]");
+    expect(controlled).toHaveLength(1);
+    expect(controlled[0].nextElementSibling?.tagName).toBe("UL");
+    const menu = screen.getByRole("button", { name: c.menuOpen });
+    expect(menu).not.toHaveAttribute("aria-controls");
   });
 
   // 意図: 切り替えは desktopNav の外（モバイルで desktopNav が隠れても見える）
@@ -125,19 +135,19 @@ describe.each(cases)("Header の言語切り替え（$name）", (c) => {
   it("切り替えは actions ラッパーの中で desktopNav と MobileNav の間にある", () => {
     const { container } = c.render();
     const link = getSwitchLinks(container)[0];
-    const actions = link.parentElement!;
+    const actions = link.closest("ul")!.parentElement!.parentElement!;
     expect(actions).toHaveClass("actions");
     const children = Array.from(actions.children);
-    const linkIndex = children.indexOf(link);
+    const linkIndex = children.indexOf(link.closest("ul")!.parentElement!);
     const navIndex = children.findIndex((el) => el.tagName === "NAV");
-    const mobileIndex = children.findIndex((el) => el.contains(screen.getByRole("button")));
+    const mobileIndex = children.findIndex((el) => el.contains(screen.getByRole("button", { name: c.menuOpen })));
     expect(navIndex).toBeGreaterThanOrEqual(0);
     expect(navIndex).toBeLessThan(linkIndex);
     expect(linkIndex).toBeLessThan(mobileIndex);
   });
 
   // 意図: メニューのパネルを開いても、パネル内に切り替えは重ねて置かない
-  it("MobileNav のパネルを開いてもパネル内に切り替えリンクが無く、全体でも 1 つのまま", () => {
+  it("MobileNav のパネルを開いてもパネル内に切り替えリンクが無く、全体でも 5 つのまま", () => {
     const { container } = c.render();
     fireEvent.click(screen.getByRole("button", { name: c.menuOpen }));
     const navs = container.querySelectorAll("nav");
@@ -145,6 +155,6 @@ describe.each(cases)("Header の言語切り替え（$name）", (c) => {
     expect(navs).toHaveLength(2);
     const panel = navs[1];
     expect(panel.querySelector("a[hreflang]")).toBeNull();
-    expect(getSwitchLinks(container)).toHaveLength(1);
+    expect(getSwitchLinks(container)).toHaveLength(5);
   });
 });

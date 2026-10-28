@@ -48,7 +48,7 @@ test.describe("/en/guide/getting-started", () => {
   test("本文に日本語が無く、内部リンクは /en 系か規約系だけ", async ({ page }) => {
     await page.goto(EN_GUIDE, { timeout: NAV_TIMEOUT });
     // 言語切り替え（a[hreflang]、qr_code_create-01z.6）の「日本語」と行き先 /guide/getting-started は仕様なので除く
-    const switchLink = page.locator("header a[hreflang]");
+    const switchLink = page.locator('header a[hreflang="ja"]');
     await expect(switchLink).toHaveAttribute("lang", "ja");
     await expect(switchLink).toHaveAttribute("href", "/guide/getting-started");
     const text = await page.locator("body").innerText();

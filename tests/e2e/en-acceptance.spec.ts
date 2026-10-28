@@ -1,6 +1,4 @@
 import { test, expect, type Page } from "@playwright/test";
-import { enClient } from "../../src/i18n/enClient";
-import { jaClient } from "../../src/i18n/jaClient";
 import { LOCALES } from "../../src/i18n/locales";
 import { LOCALE_CONFIG, TRANSLATED_PATHS } from "../../src/lib/i18n/localeConfig";
 import { localePath } from "../../src/lib/i18n/routes";
@@ -42,15 +40,13 @@ const EXPECTED_HREFLANGS = [...LOCALES.map((l) => LOCALE_CONFIG[l].hreflang), "x
 const norm = (href: string | null) => new URL(href ?? "", "http://invalid.invalid").href;
 const pathOf = (href: string | null) => new URL(href ?? "", "http://invalid.invalid").pathname;
 
-function switchLink(page: Page) {
-  return page.locator("header a[hreflang]");
-}
-
-async function clickSwitch(page: Page, expectedPath: string, expectedLang: "ja" | "en") {
-  await expect(switchLink(page)).toHaveCount(1);
+/** 言語切り替えのボタンで一覧を開き、hreflang の言語のリンクを選んで遷移を待つ */
+async function clickSwitch(page: Page, hreflang: "ja" | "en", expectedPath: string, expectedLang: "ja" | "en") {
+  const button = page.locator("header button:has(+ ul)");
+  if ((await button.getAttribute("aria-expanded")) !== "true") await button.click();
   await Promise.all([
     page.waitForURL((url) => url.pathname === expectedPath, { timeout: NAV_TIMEOUT }),
-    switchLink(page).click(),
+    page.locator(`header a[hreflang="${hreflang}"]`).click(),
   ]);
   await expect(page.locator("html")).toHaveAttribute("lang", expectedLang);
 }
@@ -58,7 +54,7 @@ async function clickSwitch(page: Page, expectedPath: string, expectedLang: "ja" 
 test.describe("英語ページの表示と言語切り替えの往復", () => {
   for (const { name, ja, en, enH1 } of PAIRS) {
     // 意図: 英語ページが lang="en" で英語の h1、「日本語」で対応する ja ページ（lang="ja"）へ、「EN」で戻る
-    test(`${name}: ${en} は lang="en" で h1 が英語、「日本語」→ ${ja} →「EN」→ ${en}`, async ({ page }) => {
+    test(`${name}: ${en} は lang="en" で h1 が英語、切り替えで ${ja} → ${en}`, async ({ page }) => {
       const response = await page.goto(en, { timeout: NAV_TIMEOUT });
       expect(response?.status()).toBe(200);
       await expect(page.locator("html")).toHaveAttribute("lang", "en");
@@ -67,13 +63,13 @@ test.describe("英語ページの表示と言語切り替えの往復", () => {
       await expect(h1).toHaveText(enH1);
       expect(await h1.innerText()).not.toMatch(JAPANESE);
 
-      await expect(switchLink(page)).toHaveText(new RegExp(`^${enClient.common.languageSwitch.label}`));
-      await clickSwitch(page, ja, "ja");
+      await expect(page.locator("header button:has(+ ul)")).toHaveText(/English/);
+      await clickSwitch(page, "ja", ja, "ja");
       // ja ページの h1 は日本語を含む
       expect(await page.locator("h1").first().innerText()).toMatch(JAPANESE);
 
-      await expect(switchLink(page)).toHaveText(new RegExp(`^${jaClient.common.languageSwitch.label}`));
-      await clickSwitch(page, en, "en");
+      await expect(page.locator("header button:has(+ ul)")).toHaveText(/日本語/);
+      await clickSwitch(page, "en", en, "en");
       await expect(page.locator("h1")).toHaveText(enH1);
     });
   }

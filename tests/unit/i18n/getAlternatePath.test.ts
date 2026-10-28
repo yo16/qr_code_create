@@ -22,6 +22,64 @@ describe("getAlternatePath: 設計 8.2 の表", () => {
   });
 });
 
+describe("getAlternatePath: 設計 8.3 の表（多言語）", () => {
+  // 意図: 多言語の設計書 8.3 節の表の全行を固定する（en 向けの既存行と重なる行は省く）
+  it.each([
+    ["/", "es", "/es"],
+    ["/create", "pt-br", "/pt-br/create"],
+    ["/guide/getting-started", "de", "/de/guide/getting-started"],
+    ["/faq", "de", "/de"],
+    ["/guide/utm-setup", "de", "/de"],
+    ["/es/create", "ja", "/create"],
+    ["/es/create", "de", "/de/create"],
+    ["/de/guide/getting-started", "en", "/en/guide/getting-started"],
+    ["/pt-br", "ja", "/"],
+    ["/pt-br/", "ja", "/"],
+    ["/en/create/", "es", "/es/create"],
+    ["/es", "es", "/es"],
+    ["/es/foo", "ja", "/"],
+    ["/es/foo", "es", "/es"],
+    ["/esports", "es", "/es"],
+    ["/ja", "en", "/en"],
+  ] as const)("%s → (to=%s) %s", (input, to, expected) => {
+    expect(getAlternatePath(input, to)).toBe(expected);
+  });
+
+  // 意図: 接頭辞はセグメント単位。/esports や /pt-brazil は接頭辞と見なさず、ja の未定義 URL として扱う
+  it.each([
+    ["/esports", "ja", "/esports"],
+    ["/pt-brazil", "ja", "/pt-brazil"],
+    ["/deutsch", "ja", "/deutsch"],
+    ["/pt-brazil", "pt-br", "/pt-br"],
+  ] as const)("接頭辞に似た %s → (to=%s) %s", (input, to, expected) => {
+    expect(getAlternatePath(input, to)).toBe(expected);
+  });
+
+  // 意図: 別言語の接頭辞配下の未定義 URL からも、自分自身を指さない行き先になる
+  it.each(["en", "es", "pt-br", "de"] as const)("/%s/foo はどの言語宛てでも自分自身を指さない", (prefix) => {
+    for (const to of ["ja", "en", "es", "pt-br", "de"] as const) {
+      expect(getAlternatePath(`/${prefix}/foo`, to)).not.toBe(`/${prefix}/foo`);
+    }
+  });
+
+  // 意図: 翻訳ページのある言語どうしは、全組み合わせで対応ページへ移り、戻ると元に戻る
+  const prefixes = { ja: "", en: "/en", es: "/es", "pt-br": "/pt-br", de: "/de" } as const;
+  const pairs = (["ja", "en", "es", "pt-br", "de"] as const).flatMap((a) =>
+    (["ja", "en", "es", "pt-br", "de"] as const).map((b) => [a, b] as const)
+  );
+  it.each(pairs)("/create は %s → %s で対応ページへ移り、戻ると元のパスになる", (a, b) => {
+    const from = `${prefixes[a]}/create`;
+    const dest = getAlternatePath(from, b);
+    expect(dest).toBe(`${prefixes[b]}/create`);
+    expect(getAlternatePath(dest, a)).toBe(from);
+  });
+
+  it("クエリ・hash が混ざっても多言語宛てで落とす", () => {
+    expect(getAlternatePath("/create?x=1#a", "pt-br")).toBe("/pt-br/create");
+    expect(getAlternatePath("/de/create?x=1", "es")).toBe("/es/create");
+  });
+});
+
 describe("getAlternatePath: 境界", () => {
   // 意図: 末尾スラッシュは除いて判定する
   it.each([

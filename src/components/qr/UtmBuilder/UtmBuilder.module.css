@@ -18,6 +18,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: var(--spacing-xs);
+  max-width: 100%;
 }
 
 /* Toggle label (text + switch) */
@@ -97,10 +98,18 @@
 }
 
 /* Effectiveness Indicator */
+/*
+ * 星・段階・説明を 1 行に並べ、入らなければ説明を次の行へ送る。
+ * 段階ラベルは nowrap なので、折り返しがないと長い言語（pt-br など）で
+ * この行の最小幅が列を押し広げ、ページが横にはみ出す。
+ */
 .effectiveness {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
-  gap: var(--spacing-xs);
+  column-gap: var(--spacing-xs);
+  row-gap: 2px;
   font-size: var(--font-size-sm);
   font-weight: 500;
 }
@@ -124,6 +133,7 @@
 
 .effectivenessMessage {
   font-size: var(--font-size-sm);
+  text-align: right;
   color: inherit;
 }
 

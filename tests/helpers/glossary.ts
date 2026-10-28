@@ -18,12 +18,6 @@ import {
 const JAPANESE = /[　-〿぀-ゟ゠-ヿ一-鿿＀-￯]/;
 const SYMBOLS = ["PNG", "SVG", "PDF", "UTM", "URL"] as const;
 
-/**
- * 仮名・漢字を含まなくてよい例外（M5 で消す切り替え UI の旧キー。自言語名を日本語で出す）
- * TODO: M5 で common.languageSwitch.label のキーを消すとき、この例外も一緒に消す
- */
-const KANA_EXEMPT_KEYS = new Set(["common.languageSwitch.label"]);
-
 export interface CheckGlossaryOptions {
   /** 呼びかけの禁止（du / tu など）。大文字小文字を区別する正規表現（glossary/{locale}.ts の addressForbidden） */
   addressForbidden?: readonly RegExp[];
@@ -137,7 +131,7 @@ export function checkGlossary(
 
   // 文字種: 仮名と漢字が無い（辞書、ガイド）
   for (const { key, value } of dictLeaves) {
-    if (!KANA_EXEMPT_KEYS.has(key) && JAPANESE.test(value)) failures.push(`辞書 ${key} に日本語の文字がある: ${value}`);
+    if (JAPANESE.test(value)) failures.push(`辞書 ${key} に日本語の文字がある: ${value}`);
   }
   for (const g of guides) {
     for (const line of g.text.split(/\r?\n/)) {

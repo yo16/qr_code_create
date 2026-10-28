@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { openList, switchButton, switchList } from "./helpers/languageSwitch";
 
 /**
  * 言語切り替え（disclosure）の E2E（qr_code_create-38x.5）。
@@ -29,28 +30,8 @@ function pathFor(lang: Lang, jaPath: string): string {
   return jaPath === "/" ? lang.prefix : `${lang.prefix}${jaPath}`;
 }
 
-/** 切り替えのボタン（メニューボタンは直後に ul を持たない） */
-function switchButton(page: Page) {
-  return page.locator("header button:has(+ ul)");
-}
-
-/** 切り替えの一覧（ボタンの直後の ul） */
-function switchList(page: Page) {
-  return page.locator("header button:has(+ ul) + ul");
-}
-
 function switchLinkFor(page: Page, lang: Lang) {
   return switchList(page).locator(`a[hreflang="${lang.hreflang}"]`);
-}
-
-async function openList(page: Page) {
-  const button = switchButton(page);
-  // ハイドレーション前のクリックは失われるので、開くまで繰り返す
-  await expect(async () => {
-    if ((await button.getAttribute("aria-expanded")) !== "true") await button.click();
-    await expect(button).toHaveAttribute("aria-expanded", "true", { timeout: 1000 });
-  }).toPass({ timeout: 15_000 });
-  await expect(switchList(page)).toBeVisible();
 }
 
 /** ボタンにフォーカスがある状態でキーを押して開く（ハイドレーション前の入力が失われても繰り返す） */

@@ -248,7 +248,7 @@ ja と en にも同じキーを足す（`Dict` が全言語に要求するため
 |---|---|---|---|
 | `common.languageSwitch.buttonLabel` | 切り替えボタンの読み上げ名（視覚的に隠す） | 言語（Language） | Language |
 | `common.languageSwitch.listLabel` | 一覧の `aria-label` | 言語を選ぶ | Choose a language |
-- 既存の `common.languageSwitch.label` / `hint` は、切り替え UI を作るタスク（M5）で消す。消すまでは残す
+- 旧キー `common.languageSwitch.label` / `hint` は、翻訳タスクと衝突しないよう M9 で全辞書から消した
 - フッターの「規約は日本語だけ」の注記は、今の en 用のキーをそのまま使う。`Footer.tsx` の `isEn` を `locale !== "ja"` に替えれば、各言語の辞書の値が出る。キーの実名は実装時に `Footer.tsx` で確認する
 
 ## 7. hreflang・sitemap・metadata の一般化
@@ -343,7 +343,7 @@ export function buildMetadata(options: BuildMetadataOptions, locale: Locale = "j
 
 - `listId` は `useId()`。`pathname` は `usePathname()`。クエリと hash は引き継がない（今と同じ）
 - 一覧の順は `LOCALES` の順で固定。言語ごとに並べ替えない
-- 表示名は自称（Deutsch、Português (Brasil) など）。国旗の絵文字、地球アイコン、pill は使わない（[ui-ux-spec 1.6](./ui-ux-spec.md#16-aiっぽさを避ける方針)）。ボタンの見た目は今の `langLink` と同じ文字リンク風。開閉の印は CSS の小さな三角（border で描く）
+- 表示名は自称（Deutsch、Português (Brasil) など）。国旗の絵文字、地球アイコン、pill は使わない（[ui-ux-spec 1.6](./ui-ux-spec.md#16-aiっぽさを避ける方針)）。ボタンの見た目は文字リンク風（旧 `.langLink` に合わせた。旧クラスは M9 で削除）。開閉の印は CSS の小さな三角（border で描く）
 - 一覧は `position: absolute` でボタンの右端にそろえて下に開く。背景はサーフェス色、1px の枠線。幅は「Português (Brasil)」が 1 行に収まる最小幅
 - 遷移は別ルートレイアウトへの移動で full reload になるので、`next/link` ではなく `a` を使う（今と同じ）
 - JS が無いと一覧は開かない。リンクは HTML に残るのでクローラは辿れる。これは許容する

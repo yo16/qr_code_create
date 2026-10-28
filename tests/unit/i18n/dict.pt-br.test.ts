@@ -30,10 +30,9 @@ const SAME_VALUE_ALLOWED = new Set<string>([
   "utm_source",
   "utm_medium",
   "utm_campaign",
-  // 英語と同形の語（ポルトガル語でも Blog / Logo）と、自言語名（日本語）
+  // 英語と同形の語（ポルトガル語でも Blog / Logo）
   "Blog",
   "Logo: {fileName}",
-  "日本語",
 ]);
 
 const looksLikeUrlOrDomain = (v: string) =>
@@ -44,9 +43,9 @@ describe("pt-br 辞書の文字種", () => {
     expect(ptLeaves.length).toBeGreaterThan(150);
   });
 
-  it("仮名・漢字を含む葉は common.languageSwitch.label の「日本語」だけ", () => {
+  it("仮名・漢字を含む葉が無い（例外なし）", () => {
     const withJa = ptLeaves.filter((l) => JAPANESE.test(l.value)).map((l) => `${l.key}: ${l.value}`);
-    expect(withJa).toEqual(["common.languageSwitch.label: 日本語"]);
+    expect(withJa).toEqual([]);
   });
 
   it("検出用の正規表現が日本語を拾いポルトガル語を拾わない", () => {

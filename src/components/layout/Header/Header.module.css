@@ -64,25 +64,16 @@
   font-size: var(--font-size-sm);
   color: var(--color-muted);
   text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-.navLink:hover,
-.langLink:hover {
-  color: var(--color-foreground);
-  text-decoration: underline;
-}
-
-.langLink {
-  padding: var(--spacing-sm) 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
-  text-decoration: none;
   white-space: nowrap;
   transition: color var(--transition-fast);
 }
 
-/* 言語切り替え（disclosure）。ボタンは langLink と同じ文字リンク風、一覧は枠線つきの小さなパネル */
+.navLink:hover {
+  color: var(--color-foreground);
+  text-decoration: underline;
+}
+
+/* 言語切り替え（disclosure）。ボタンは文字リンク風、一覧は枠線つきの小さなパネル */
 .langSwitch {
   position: relative;
 }
@@ -124,6 +115,7 @@
   position: absolute;
   top: 100%;
   right: 0;
+  /* header（100）と MobileNav パネル（99）より前に出すため 101 */
   z-index: 101;
   min-width: 10rem;
   margin: 0;
@@ -177,6 +169,7 @@
   background: var(--color-primary);
   border-radius: var(--radius-control);
   text-decoration: none;
+  white-space: nowrap;
   transition: background-color var(--transition-fast);
 }
 

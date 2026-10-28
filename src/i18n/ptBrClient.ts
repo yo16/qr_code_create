@@ -8,10 +8,7 @@ import type { ClientDict } from "./types";
 export const ptBrClient = {
   common: {
     loading: "Carregando",
-    // 設計 10.2 の例外: 切り替えラベルだけは自言語名（日本語）で出す
     languageSwitch: {
-      label: "日本語",
-      hint: " (japonês)",
       buttonLabel: "Idioma",
       listLabel: "Escolha um idioma",
     },

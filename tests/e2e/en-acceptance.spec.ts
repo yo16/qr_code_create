@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { LOCALES } from "../../src/i18n/locales";
 import { LOCALE_CONFIG, TRANSLATED_PATHS } from "../../src/lib/i18n/localeConfig";
 import { localePath } from "../../src/lib/i18n/routes";
+import { openList } from "./helpers/languageSwitch";
 
 /**
  * 英語版の受け入れ（要件 doc/requirements.md 9.6、qr_code_create-01z.7）。
@@ -42,8 +43,7 @@ const pathOf = (href: string | null) => new URL(href ?? "", "http://invalid.inva
 
 /** 言語切り替えのボタンで一覧を開き、hreflang の言語のリンクを選んで遷移を待つ */
 async function clickSwitch(page: Page, hreflang: "ja" | "en", expectedPath: string, expectedLang: "ja" | "en") {
-  const button = page.locator("header button:has(+ ul)");
-  if ((await button.getAttribute("aria-expanded")) !== "true") await button.click();
+  await openList(page);
   await Promise.all([
     page.waitForURL((url) => url.pathname === expectedPath, { timeout: NAV_TIMEOUT }),
     page.locator(`header a[hreflang="${hreflang}"]`).click(),

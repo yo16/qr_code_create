@@ -3,7 +3,6 @@ import { flattenDict, placeholders } from "../../helpers/glossary";
 
 /** de 辞書の品質テスト（qr_code_create-38x.8） */
 const JAPANESE = /[　-〿぀-ゟ゠-ヿ一-鿿＀-￯]/;
-const KANA_EXEMPT_KEYS = new Set(["common.languageSwitch.label"]);
 
 /** キーを問わず、en と同じでよい語（固有名詞、記号、ドイツ語としても正しい語） */
 const SAME_AS_EN_ANY_KEY = new Set<string>([
@@ -29,7 +28,6 @@ const SAME_AS_EN_ANY_KEY = new Set<string>([
 
 /** キーと値の組で許可する、en と同じ文言 */
 const SAME_AS_EN_BY_KEY: Readonly<Record<string, string>> = {
-  "common.languageSwitch.label": "日本語",
   "ui.tabs.listAria": "Tabs",
   "decoration.logo.alt": "Logo: {fileName}",
   "tool.urlInput.placeholder": "https://example.com",
@@ -59,13 +57,9 @@ describe("de 辞書", () => {
     expect([...deByKey.keys()].sort()).toEqual([...enByKey.keys()].sort());
   });
 
-  it("かな・漢字が無い（例外は common.languageSwitch.label のみ）", () => {
-    const offenders = de.filter((l) => !KANA_EXEMPT_KEYS.has(l.key) && JAPANESE.test(l.value));
+  it("かな・漢字が無い（例外なし）", () => {
+    const offenders = de.filter((l) => JAPANESE.test(l.value));
     expect(offenders).toEqual([]);
-  });
-
-  it("例外キー common.languageSwitch.label は日本語の自言語名を持つ", () => {
-    expect(deByKey.get("common.languageSwitch.label")).toBe("日本語");
   });
 
   it("schema.inLanguage が de", () => {

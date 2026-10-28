@@ -16,7 +16,11 @@ import {
   collectLintFailures,
   resolvePython,
   runLint,
+  NON_JA_DIRS,
+  isNonJaPath,
+  loadBaseline,
 } from "../../helpers/yomiyasu";
+import { NON_JA_LOCALES } from "@/i18n/locales";
 
 // 強制テスト（yomiyasuLint.test.ts）自体が、違反を検出し、対象を取りこぼさないことを確かめる。
 // 実記事や実際の baseline.json の中身には依存しない（記事を直して基準から外しても壊れない）。
@@ -90,6 +94,20 @@ describe("yomiyasu lint の検出力", () => {
       const keys = failures.map((m) => m.split(" ")[0]);
 
       expect(keys).toEqual(["src/content/blog/edited-warn.mdx"]);
+    }, 120_000);
+
+    it.each([...NON_JA_LOCALES])("%s/ 配下の warn 内容の記事は失敗に含まれないこと", (l) => {
+      expect(python).not.toBeNull();
+      const root = path.join(tmpDir, `content-${l}`);
+      const abs = path.join(root, l, "guide", "warn.mdx");
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      fs.writeFileSync(abs, read(WARN_SAMPLE) + "う", "utf-8");
+      const failures = collectLintFailures({
+        contentRoot: root,
+        baseline: { ...tempBaseline, files: {} },
+        python: python as string,
+      });
+      expect(failures).toEqual([]);
     }, 120_000);
   });
 
@@ -193,8 +211,62 @@ describe("yomiyasu lint の検出力", () => {
       const ja = listJapaneseArticles();
       expect(ja.filter((p) => p.startsWith("src/content/en/"))).toEqual([]);
       // en/ に .mdx があるなら、除外されて件数が減っていること
-      const enCount = all.filter((p) => p.startsWith("src/content/en/")).length;
+      // M4（設計書 9.2）: es / pt-br / de も増えたので、en を含む ja 以外の全言語の分が減る
+      const enCount = all.filter((p) => NON_JA_DIRS.some((d) => p.startsWith(`src/content/${d}`))).length;
+      expect(enCount).toBeGreaterThan(all.filter((p) => p.startsWith("src/content/en/")).length);
       expect(ja.length).toBe(all.length - enCount);
+    });
+
+    // 設計書 9.2: 除外するディレクトリは NON_JA_LOCALES から作る
+    it("除外するディレクトリが NON_JA_LOCALES と一致すること", () => {
+      expect([...NON_JA_DIRS]).toEqual(NON_JA_LOCALES.map((l) => `${l}/`));
+      const all = listMdx(path.join(ROOT, "src/content"));
+      const ja = listJapaneseArticles();
+      for (const l of NON_JA_LOCALES) {
+        expect(ja.filter((p) => p.startsWith(`src/content/${l}/`))).toEqual([]);
+      }
+      expect(ja.length).toBe(all.filter((p) => !NON_JA_DIRS.some((d) => p.startsWith(`src/content/${d}`))).length);
+    });
+
+    it("src/content 直下の言語っぽいディレクトリは NON_JA_LOCALES に含まれること", () => {
+      // 言語でないディレクトリが黙って除外されるのを防ぐ。逆に、言語ディレクトリの登録漏れで日本語として lint されるのも防ぐ
+      const dirs = fs
+        .readdirSync(path.join(ROOT, "src/content"), { withFileTypes: true })
+        .filter((e) => e.isDirectory())
+        .map((e) => e.name)
+        .filter((n) => /^[a-z]{2}(-[a-z]{2,3})?$/.test(n));
+      expect(dirs.sort()).toEqual([...NON_JA_LOCALES].sort());
+    });
+
+    // 除外ロジック（isNonJaPath）を使わずに、ja の取りこぼしを検出する
+    it("基準（baseline.json）のキーがすべて listJapaneseArticles() に含まれること", () => {
+      const listed = new Set(listJapaneseArticles());
+      const keys = Object.keys(loadBaseline().files);
+      expect(keys.length).toBeGreaterThan(0);
+      expect(keys.filter((k) => !listed.has(k))).toEqual([]);
+    });
+
+    it.each(["guide", "blog", "use-cases"])("src/content/%s の記事が 1 件以上列挙されること", (dir) => {
+      expect(listJapaneseArticles().filter((p) => p.startsWith(`src/content/${dir}/`)).length).toBeGreaterThan(0);
+    });
+
+    it.each([
+      ["es/guide/x.mdx", true],
+      ["pt-br/blog/x.mdx", true],
+      ["de/guide/x.mdx", true],
+      ["en/guide/x.mdx", true],
+      ["src/content/de/guide/x.mdx", true],
+      ["src/content/es/x.mdx", true],
+      ["src/content/guide/x.mdx", false],
+      ["src/content/blog/x.mdx", false],
+      ["designs/x.mdx", false],
+      ["deck/x.mdx", false],
+      ["esports/x.mdx", false],
+      ["es-foo/x.mdx", false],
+      ["src/content/designs/x.mdx", false],
+      ["src/content/esports/x.mdx", false],
+    ])("isNonJaPath(%j) は %s", (rel, expected) => {
+      expect(isNonJaPath(rel)).toBe(expected);
     });
 
     it("日本語記事が 1 件以上列挙されること", () => {

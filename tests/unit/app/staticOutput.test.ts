@@ -7,7 +7,11 @@
 import fs from "fs";
 import path from "path";
 import { en } from "@/i18n/en";
-import { enClient } from "@/i18n/enClient";
+import { LOCALES, NON_JA_LOCALES } from "@/i18n/locales";
+import { LOCALE_CONFIG, TRANSLATED_PATHS } from "@/lib/i18n/localeConfig";
+import { es } from "@/i18n/es";
+import { ptBr } from "@/i18n/ptBr";
+import { de } from "@/i18n/de";
 
 const ROOT = process.cwd();
 const APP = path.join(ROOT, "src", "app");
@@ -23,7 +27,13 @@ const describeBuildOutput =
   REQUIRE_BUILD_OUTPUT || fs.existsSync(BUILD_APP) ? describe : describe.skip;
 
 describeBuildOutput("ビルド成果物の静的 HTML", () => {
-  it.each(["index.html", "en.html", "create.html", "guide/getting-started.html"])(
+  // M4: ja 以外の全言語（NON_JA_LOCALES）の 3 ページも静的 HTML になる
+  it.each([
+    "index.html",
+    "create.html",
+    "guide/getting-started.html",
+    ...NON_JA_LOCALES.flatMap((l) => [`${l}.html`, `${l}/create.html`, `${l}/guide/getting-started.html`]),
+  ])(
     ".next/server/app/%s が存在すること",
     (file) => {
       const full = path.join(BUILD_APP, ...file.split("/"));
@@ -48,6 +58,17 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect(html).toContain("Getting started");
   });
 
+  // 意図（M4）: 全言語のトップ・作成・ガイドの静的 HTML が自分の lang を持つ
+  it.each(
+    NON_JA_LOCALES.flatMap((l) =>
+      ["", "/create", "/guide/getting-started"].map((p) => [`${l}${p}`, l] as [string, (typeof NON_JA_LOCALES)[number]])
+    )
+  )("%s.html が自言語の lang で生成されていること", (rel, l) => {
+    const full = path.join(BUILD_APP, ...`${rel}.html`.split("/"));
+    if (!fs.existsSync(full)) throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    expect(fs.readFileSync(full, "utf8")).toMatch(new RegExp(`<html[^>]*\\slang="${LOCALE_CONFIG[l].htmlLang}"`));
+  });
+
   // 意図: MDX 本文が実際に描画されている（タイトルや CTA など MDX 外の部品だけで素通りしない）。
   // 本文の h2 と、本文中のリンク（ヘッダーや ArticleCta の /en/create はクラス付きなので、
   // クラスなし・本文の文言付きのアンカーで本文由来に限定する）を確かめる
@@ -65,9 +86,8 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
   // ページ側の title にサイト名を入れると、ルートの template で 2 回になる
   it.each([
     ["index.html"],
-    ["en.html"],
     ["create.html"],
-    ["en/create.html"],
+    ...NON_JA_LOCALES.flatMap((l) => [[`${l}.html`], [`${l}/create.html`], [`${l}/guide/getting-started.html`]]),
     ["poster.html"],
     ["guide/getting-started.html"],
     ["faq.html"],
@@ -88,7 +108,7 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
   });
 
   // 意図（qr_code_create-kg5）: HowTo の url（#step-N）の移動先として、ステップ見出しに id が付いて出力される
-  it.each([["guide/getting-started.html"], ["en/guide/getting-started.html"]])(
+  it.each([["guide/getting-started.html"], ...NON_JA_LOCALES.map((l) => [`${l}/guide/getting-started.html`])])(
     "%s に id=step-1〜step-3 の見出しがあること",
     (file) => {
       const full = path.join(BUILD_APP, ...file.split("/"));
@@ -163,7 +183,7 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
   it.each([
     ["use-cases", ["use-cases"], true],
     ["blog", ["blog"], false],
-    ["en/guide", ["en", "guide"], true],
+    ...NON_JA_LOCALES.map((l) => [`${l}/guide`, [l, "guide"], true] as [string, string[], boolean]),
   ] as [string, string[], boolean][])(
     "%s の全件の HTML 本文に、生の ** と strong の入れ子が残っていないこと（script・コードブロックを除く）",
     (_label, relDir, requireStrong) => {
@@ -186,48 +206,61 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     }
   );
 
-  it("en/guide/utm-setup.html が生成されていないこと", () => {
+  it.each(NON_JA_LOCALES)("%s/guide/utm-setup.html が生成されていないこと", (l) => {
     // 対照: ja 側の utm-setup は生成されている（パスの組み立て違いで素通りしない）
     expect(fs.existsSync(path.join(BUILD_APP, "guide", "utm-setup.html"))).toBe(true);
-    expect(fs.existsSync(path.join(BUILD_APP, "en", "guide", "utm-setup.html"))).toBe(false);
+    expect(fs.existsSync(path.join(BUILD_APP, l, "guide", "utm-setup.html"))).toBe(false);
   });
 
   // 意図（M2）: [locale] は ja を受けず、未知の slug も生成しない。/ja と /en/foo は静的 HTML にならない
-  it("ja.html と en/foo.html が生成されていないこと", () => {
-    // 対照: en.html は生成されている（パスの組み立て違いで素通りしない）
-    expect(fs.existsSync(path.join(BUILD_APP, "en.html"))).toBe(true);
+  it.each(NON_JA_LOCALES)("ja.html と %s/foo.html が生成されていないこと", (l) => {
+    // 対照: {locale}.html は生成されている（パスの組み立て違いで素通りしない）
+    expect(fs.existsSync(path.join(BUILD_APP, `${l}.html`))).toBe(true);
     expect(fs.existsSync(path.join(BUILD_APP, "ja.html"))).toBe(false);
-    expect(fs.existsSync(path.join(BUILD_APP, "en", "foo.html"))).toBe(false);
+    expect(fs.existsSync(path.join(BUILD_APP, l, "foo.html"))).toBe(false);
   });
 
   // 意図（qr_code_create-01z.4）: en の文言が Client バンドル（.next/static）に入っていない。
   // en は getDict 経由で Server からだけ読まれ、Client へは RSC ペイロード（HTML 内）で渡る想定。
   // needle は辞書から導出し、Server スライス（hero の説明文）と Client スライス（ボタン・aria-label・ラベル）の両方を含める。
-  const SERVER_NEEDLES = [en.home.hero.description];
-  const CLIENT_NEEDLES = [
-    enClient.tool.download.pngButton,
-    enClient.tool.qrPreview.ariaGenerated,
-    enClient.decoration.caption.textLabel,
-  ];
+  // M4: es / pt-br / de の辞書は en の写しなので needle は en と同じ文字列になる。翻訳後に言語固有の値になる
+  const NEEDLE_DICTS = { en, es, "pt-br": ptBr, de } as const;
+  const SERVER_NEEDLES = NON_JA_LOCALES.map((l) => NEEDLE_DICTS[l].home.hero.description);
+  const CLIENT_NEEDLES = NON_JA_LOCALES.flatMap((l) => [
+    NEEDLE_DICTS[l].tool.download.pngButton,
+    NEEDLE_DICTS[l].tool.qrPreview.ariaGenerated,
+    NEEDLE_DICTS[l].decoration.caption.textLabel,
+  ]);
 
   // 意図: 対照。同じ文字列がサーバー出力の HTML には入っている（needle が正しく、空振りでない）
-  it("対照: needle が .next/server/app の en.html / en/create.html に含まれること", () => {
-    const enHtml = fs.readFileSync(path.join(BUILD_APP, "en.html"), "utf8");
-    const createHtml = fs.readFileSync(path.join(BUILD_APP, "en", "create.html"), "utf8");
-    for (const n of SERVER_NEEDLES) expect(enHtml).toContain(n);
-    for (const n of CLIENT_NEEDLES) expect(createHtml).toContain(n);
+  it.each(NON_JA_LOCALES)("対照: %s の needle が .next/server/app の {locale}.html / {locale}/create.html に含まれること", (l) => {
+    const d = NEEDLE_DICTS[l];
+    const topHtml = fs.readFileSync(path.join(BUILD_APP, `${l}.html`), "utf8");
+    const createHtml = fs.readFileSync(path.join(BUILD_APP, l, "create.html"), "utf8");
+    expect(topHtml).toContain(d.home.hero.description);
+    for (const n of [d.tool.download.pngButton, d.tool.qrPreview.ariaGenerated, d.decoration.caption.textLabel]) {
+      expect(createHtml).toContain(n);
+    }
   });
 
-  // 意図（qr_code_create-01z.7）: 両言語が揃う 6 ページの静的 HTML の head に hreflang が 3 本ずつ出ている。
+  // 意図（qr_code_create-01z.7、M4 で全言語へ）: 全言語が揃う 3 ページ x 5 言語の静的 HTML の head に hreflang が 6 本ずつ出ている。
   // React は属性を hrefLang と出すので、属性名の大文字小文字は無視して照合する
-  const HREFLANG_PAGES: { file: string; ja: string; en: string }[] = [
-    { file: "index.html", ja: "/", en: "/en" },
-    { file: "en.html", ja: "/", en: "/en" },
-    { file: "create.html", ja: "/create", en: "/en/create" },
-    { file: "en/create.html", ja: "/create", en: "/en/create" },
-    { file: "guide/getting-started.html", ja: "/guide/getting-started", en: "/en/guide/getting-started" },
-    { file: "en/guide/getting-started.html", ja: "/guide/getting-started", en: "/en/guide/getting-started" },
-  ];
+  const HREFLANG_KEYS = [...LOCALES.map((l) => LOCALE_CONFIG[l].hreflang), "x-default"].sort();
+  const pathOf = (l: (typeof LOCALES)[number], jaPath: string): string => {
+    const prefix = LOCALE_CONFIG[l].prefix;
+    return jaPath === "/" ? prefix || "/" : `${prefix}${jaPath}`;
+  };
+  const fileOfPath = (pathname: string): string => {
+    if (pathname === "/") return "index.html";
+    return `${pathname.slice(1)}.html`;
+  };
+  const HREFLANG_PAGES = LOCALES.flatMap((self) =>
+    TRANSLATED_PATHS.map((jaPath) => ({
+      file: fileOfPath(pathOf(self, jaPath)),
+      ja: pathOf("ja", jaPath),
+      alternates: Object.fromEntries(LOCALES.map((l) => [LOCALE_CONFIG[l].hreflang, pathOf(l, jaPath)])),
+    }))
+  );
   const readHead = (file: string): string => {
     const full = path.join(BUILD_APP, ...file.split("/"));
     if (!fs.existsSync(full)) {
@@ -250,10 +283,11 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     return out;
   };
 
-  it.each(HREFLANG_PAGES)("$file の head に hreflang が ja / en / x-default の 3 本", ({ file, ja, en }) => {
+  it.each(HREFLANG_PAGES)("$file の head に hreflang が ja / en / es / pt-BR / de / x-default の 6 本", ({ file, ja, alternates }) => {
     const head = readHead(file);
-    expect((head.match(/<link\b[^>]*\bhreflang="/gi) ?? []).length).toBe(3);
-    expect(alternateLinks(head)).toEqual({ ja, en, "x-default": ja });
+    expect((head.match(/<link\b[^>]*\bhreflang="/gi) ?? []).length).toBe(6);
+    expect(Object.keys(alternateLinks(head)).sort()).toEqual(HREFLANG_KEYS);
+    expect(alternateLinks(head)).toEqual({ ...alternates, "x-default": ja });
   });
 
   // 意図: 英語版の無いページの head には hreflang が出ない（ヘッダーの切り替えリンク a[hreflang] は body 側なので数えない）
@@ -272,18 +306,21 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     }
     const xml = fs.readFileSync(full, "utf8");
     const locs = [...xml.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => new URL(m[1]).pathname);
-    expect(locs.filter((p) => /^\/en(\/|$)/.test(p)).sort()).toEqual(
-      ["/en", "/en/create", "/en/guide/getting-started"].sort()
-    );
-    // 6 エントリ × 3 本
-    expect((xml.match(/<xhtml:link rel="alternate" hreflang="/g) ?? []).length).toBe(18);
+    for (const l of NON_JA_LOCALES) {
+      const prefix = LOCALE_CONFIG[l].prefix;
+      expect(locs.filter((p) => p === prefix || p.startsWith(`${prefix}/`)).sort()).toEqual(
+        [prefix, `${prefix}/create`, `${prefix}/guide/getting-started`].sort()
+      );
+    }
+    // 15 エントリ（3 ページ x 5 言語）× 6 本
+    expect((xml.match(/<xhtml:link rel="alternate" hreflang="/g) ?? []).length).toBe(90);
     expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
   });
 
   // 意図: sitemap の xhtml:link と HTML の hreflang が食い違わない。
   // sitemap を <url> 単位で解析し、xhtml:link を持つ 6 件それぞれで
   // (1) 自言語の xhtml:link が loc と一致、(2) 同じページの HTML の hreflang 3 本と一致（new URL().href で正規化）
-  it("sitemap の xhtml:link を持つ 6 件が自言語で loc と一致し、HTML の hreflang 3 本とも一致する", () => {
+  it("sitemap の xhtml:link を持つ 15 件が自言語で loc と一致し、HTML の hreflang 6 本とも一致する", () => {
     const full = path.join(BUILD_APP, "sitemap.xml.body");
     if (!fs.existsSync(full)) {
       throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
@@ -304,18 +341,16 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
 
     // パス → ビルド成果物の HTML
     const fileOf: Record<string, string> = Object.fromEntries(
-      HREFLANG_PAGES.map((p) => {
-        const isEn = p.file.startsWith("en");
-        return [isEn ? p.en : p.ja, p.file];
-      })
+      HREFLANG_PAGES.map((p) => [p.file === "index.html" ? "/" : `/${p.file.replace(/\.html$/, "")}`, p.file])
     );
     expect(entries.map((e) => new URL(e.loc).pathname).sort()).toEqual(Object.keys(fileOf).sort());
 
     for (const { loc, links } of entries) {
       const pathname = new URL(loc).pathname;
-      const self = /^\/en(\/|$)/.test(pathname) ? "en" : "ja";
-      expect({ loc, keys: Object.keys(links).sort() }).toEqual({ loc, keys: ["en", "ja", "x-default"] });
-      expect({ loc, self: links[self] }).toEqual({ loc, self: loc });
+      const self =
+        LOCALES.find((l) => l !== "ja" && (pathname === LOCALE_CONFIG[l].prefix || pathname.startsWith(`${LOCALE_CONFIG[l].prefix}/`))) ?? "ja";
+      expect({ loc, keys: Object.keys(links).sort() }).toEqual({ loc, keys: HREFLANG_KEYS });
+      expect({ loc, self: links[LOCALE_CONFIG[self].hreflang] }).toEqual({ loc, self: loc });
 
       const head = readHead(fileOf[pathname]);
       const htmlLinks: Record<string, string> = {};

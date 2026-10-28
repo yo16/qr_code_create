@@ -2,6 +2,7 @@ import sitemap from "@/app/sitemap";
 import { getGuideSlugList } from "@/lib/content/getGuide";
 import { getUseCaseSlugList } from "@/lib/content/getUseCase";
 import { getBlogSlugList } from "@/lib/content/getBlog";
+import { NON_JA_LOCALES } from "@/i18n/locales";
 import { FEATURE_FLAGS } from "@/lib/constants/features";
 
 // 静的ページ: /, /create, /guide, /use-cases, /blog, /faq, /contact, /privacy, /terms の 9 件
@@ -15,8 +16,9 @@ describe("sitemap", () => {
       const useCaseCount = getUseCaseSlugList().length;
       const blogCount = getBlogSlugList().length;
       // qr_code_create-01z.7: 英語版 /en、/en/create、/en/guide/{slug}（現状 3 件）
-      const enCount = 2 + getGuideSlugList("en").length;
-      expect(enCount).toBe(3);
+      // M4: es / pt-br / de も同じ 3 件ずつ（設計書 11.1）。ja 以外の言語数 x 3
+      const enCount = NON_JA_LOCALES.length * (2 + getGuideSlugList("en").length);
+      expect(enCount).toBe(12);
       const expectedTotal = STATIC_PAGE_COUNT + guideCount + useCaseCount + blogCount + enCount;
       const result = sitemap();
       expect(result).toHaveLength(expectedTotal);

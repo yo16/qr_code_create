@@ -3,6 +3,7 @@ import path from "path";
 import os from "os";
 import crypto from "crypto";
 import matter from "gray-matter";
+import { NON_JA_LOCALES } from "../../src/i18n/locales";
 import { spawnSync } from "child_process";
 
 // yomiyasu lint の強制テスト（yomiyasuLint.test.ts）と検出力のテスト（yomiyasuLintGuard.test.ts）の共通処理
@@ -43,9 +44,17 @@ export function listMdx(dir: string): string[] {
   return result.sort();
 }
 
-/** lint 対象の日本語記事を列挙する。英語版（en/）は対象外 */
+/** lint の対象外にするディレクトリ。ja 以外の言語（NON_JA_LOCALES）から作る（設計書 9.2） */
+export const NON_JA_DIRS: readonly string[] = NON_JA_LOCALES.map((l) => `${l}/`);
+
+/** 相対パス（contentRoot 基準）が ja 以外の言語ディレクトリ配下か */
+export function isNonJaPath(rel: string): boolean {
+  return NON_JA_DIRS.some((d) => rel.startsWith(d) || rel.includes(`src/content/${d}`));
+}
+
+/** lint 対象の日本語記事を列挙する。ja 以外の言語ディレクトリは対象外 */
 export function listJapaneseArticles(contentDir: string = CONTENT_DIR): string[] {
-  return listMdx(contentDir).filter((p) => !/(^|\/)src\/content\/en\//.test(p) && !p.startsWith("en/"));
+  return listMdx(contentDir).filter((p) => !isNonJaPath(p));
 }
 
 /** 基準のキーに付く接頭辞。contentRoot からの相対パスにこれを付けると基準のキーになる */
@@ -78,7 +87,7 @@ export function collectLintFailures(opts: {
   const { contentRoot, baseline, python } = opts;
   const failures: string[] = [];
   for (const rel of listMdxRelative(contentRoot)) {
-    if (rel.startsWith("en/")) continue;
+    if (isNonJaPath(rel)) continue;
     const abs = path.join(contentRoot, ...rel.split("/"));
     const key = `${BASELINE_KEY_PREFIX}${rel}`;
     if (!isLintTarget(baseline, key, fs.readFileSync(abs, "utf-8"))) continue;

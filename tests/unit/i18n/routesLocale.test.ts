@@ -95,3 +95,18 @@ describe("getAlternatePath: 境界（追加）", () => {
     expect(getAlternatePath("/en/create?x=1#a", "ja")).toBe("/create");
   });
 });
+
+describe("M4 の言語での境界", () => {
+  it.each([...NON_JA_LOCALES])("%s: ガイド以外の ja 専用パス /faq は hasVersion が false", (l) => {
+    expect(hasVersion(l, "/faq")).toBe(false);
+  });
+
+  it("/esports は言語 prefix と誤認せず ja のパスとして扱う", () => {
+    expect(splitLocale("/esports")).toEqual({ locale: "ja", jaPath: "/esports" });
+  });
+
+  it("/design と /deck も ja のパスとして扱う", () => {
+    expect(splitLocale("/design")).toEqual({ locale: "ja", jaPath: "/design" });
+    expect(splitLocale("/deck")).toEqual({ locale: "ja", jaPath: "/deck" });
+  });
+});

@@ -24,11 +24,11 @@ const SAME_AS_EN_ALLOWED = new Set([
 ]);
 
 describe("es 辞書の文字種", () => {
-  it("葉に仮名・漢字・全角記号が無い（common.languageSwitch.label を除く）", () => {
+  it("葉に仮名・漢字・全角記号が無い（例外なし）", () => {
     const withJa = esLeaves
       .filter((l) => JAPANESE.test(l.value))
       .map((l) => `${l.key}: ${l.value}`);
-    expect(withJa).toEqual(["common.languageSwitch.label: 日本語"]);
+    expect(withJa).toEqual([]);
   });
 
   it("検出用の正規表現は日本語を拾い、スペイン語（ñ・á・¿）を拾わない", () => {
@@ -58,14 +58,14 @@ describe("es 辞書のメタ情報", () => {
 describe("es 辞書に英語が残っていない", () => {
   it("en と同じ値の葉は許可リストの語だけ", () => {
     const sameAsEn = esLeaves
-      .filter((l) => enByKey.get(l.key) === l.value && l.key !== "common.languageSwitch.label")
+      .filter((l) => enByKey.get(l.key) === l.value)
       .filter((l) => !SAME_AS_EN_ALLOWED.has(l.value))
       .map((l) => `${l.key}: ${l.value}`);
     expect(sameAsEn).toEqual([]);
   });
 
   it("許可リストの語が本当に en と同じ値で現れている（許可リストの空振り防止）", () => {
-    const sameValues = new Set(esLeaves.filter((l) => enByKey.get(l.key) === l.value && l.key !== "common.languageSwitch.label").map((l) => l.value));
+    const sameValues = new Set(esLeaves.filter((l) => enByKey.get(l.key) === l.value).map((l) => l.value));
     expect(sameValues.size).toBeGreaterThan(0);
     for (const v of sameValues) expect(SAME_AS_EN_ALLOWED.has(v)).toBe(true);
   });

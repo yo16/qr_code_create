@@ -6,10 +6,8 @@
 export const jaClient = {
   common: {
     loading: "読み込み中",
-    // 行き先の言語名。hint は読み上げ補足（視覚的に隠す）
+    // 切り替えボタンの読み上げ名と、言語一覧の aria-label（言語名は LOCALE_CONFIG から出す）
     languageSwitch: {
-      label: "EN",
-      hint: " (English)",
       buttonLabel: "言語（Language）",
       listLabel: "言語を選ぶ",
     },

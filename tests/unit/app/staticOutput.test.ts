@@ -223,9 +223,16 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
   // 意図（qr_code_create-01z.4）: en の文言が Client バンドル（.next/static）に入っていない。
   // en は getDict 経由で Server からだけ読まれ、Client へは RSC ペイロード（HTML 内）で渡る想定。
   // needle は辞書から導出し、Server スライス（hero の説明文）と Client スライス（ボタン・aria-label・ラベル）の両方を含める。
-  // M4: es / pt-br / de の辞書は en の写しなので needle は en と同じ文字列になる。翻訳後に言語固有の値になる
+  // M9: es / pt-br / de は翻訳済みで、各言語の Server 側だけにある文言が言語固有の値になる。
+  // 言語ごとに needle を分けて検査するので、どの言語の辞書が Client に混ざったかが分かる
   const NEEDLE_DICTS = { en, es, "pt-br": ptBr, de } as const;
-  const SERVER_NEEDLES = NON_JA_LOCALES.map((l) => NEEDLE_DICTS[l].home.hero.description);
+  const serverNeedlesOf = (l: keyof typeof NEEDLE_DICTS): string[] => [
+    NEEDLE_DICTS[l].home.hero.description,
+    NEEDLE_DICTS[l].home.features.items[0].description,
+    NEEDLE_DICTS[l].footer.japaneseOnlyNote,
+    NEEDLE_DICTS[l].schema.howTo.name,
+  ];
+  const SERVER_NEEDLES = NON_JA_LOCALES.flatMap((l) => serverNeedlesOf(l));
   const CLIENT_NEEDLES = NON_JA_LOCALES.flatMap((l) => [
     NEEDLE_DICTS[l].tool.download.pngButton,
     NEEDLE_DICTS[l].tool.qrPreview.ariaGenerated,
@@ -364,7 +371,7 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     }
   });
 
-  it(".next/static に en 固有の文字列（Server / Client スライスの代表）が無いこと", () => {
+  const staticFiles = (): string[] => {
     const STATIC = path.join(ROOT, ".next", "static");
     if (!fs.existsSync(STATIC)) {
       throw new Error(`${STATIC} がありません。\`npm run build\` 後に実行してください。`);
@@ -375,16 +382,48 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
         if (entry.isDirectory()) return walk(full);
         return /\.(js|html|json|txt)$/.test(entry.name) ? [full] : [];
       });
-    const files = walk(STATIC);
-    expect(files.length).toBeGreaterThan(0);
-    const needles = [...SERVER_NEEDLES, ...CLIENT_NEEDLES];
-    const hits = files.flatMap((file) => {
+    return walk(STATIC);
+  };
+  const hitsFor = (needles: string[]): string[] =>
+    staticFiles().flatMap((file) => {
       const text = fs.readFileSync(file, "utf8");
-      return needles
-        .filter((n) => text.includes(n))
-        .map((n) => `${path.relative(ROOT, file)}: ${n}`);
+      return needles.filter((n) => text.includes(n)).map((n) => `${path.relative(ROOT, file)}: ${n}`);
     });
-    expect(hits).toEqual([]);
+
+  // 意図: 言語固有の needle が、言語の間で重ならず、en とも重ならない（区別して検出できる）
+  it("Server 側の needle が言語ごとに固有で、互いに重ならないこと", () => {
+    // NON_JA_LOCALES は en を含む（en / es / pt-br / de）
+    expect(NON_JA_LOCALES).toContain("en");
+    const all = NON_JA_LOCALES.flatMap((l) => serverNeedlesOf(l));
+    expect(all.filter((n, i) => all.indexOf(n) !== i)).toEqual([]);
+    for (const l of NON_JA_LOCALES.filter((x) => x !== "en")) {
+      for (const n of serverNeedlesOf(l)) expect(serverNeedlesOf("en")).not.toContain(n);
+    }
+  });
+
+  // 意図: 各言語の Server 辞書の文言が Client バンドル（.next/static）に入っていない。言語ごとに別の test にする
+  it.each(NON_JA_LOCALES)("%s: .next/static に %s の Server 側の文言が無いこと", (l) => {
+    expect(staticFiles().length).toBeGreaterThan(0);
+    expect(hitsFor(serverNeedlesOf(l))).toEqual([]);
+  });
+
+  it.each(NON_JA_LOCALES)("%s: .next/static に %s の Client スライスの代表が無いこと", (l) => {
+    const d = NEEDLE_DICTS[l];
+    expect(hitsFor([d.tool.download.pngButton, d.tool.qrPreview.ariaGenerated, d.decoration.caption.textLabel])).toEqual([]);
+  });
+
+  // 異常系（検出の確認）: needle が実際に出力に入っていれば検出される。.next/server/app の HTML（Server 出力）を探索対象にして確かめる
+  it("検出の確認: Server の出力 HTML には各言語の needle が含まれ、含まれる語は検出される", () => {
+    for (const l of NON_JA_LOCALES) {
+      const topHtml = fs.readFileSync(path.join(BUILD_APP, `${l}.html`), "utf8");
+      expect(topHtml).toContain(NEEDLE_DICTS[l].home.hero.description);
+      // 他言語の文言は含まれない（言語を取り違えていない）
+      for (const other of NON_JA_LOCALES.filter((x) => x !== l)) {
+        expect(topHtml).not.toContain(NEEDLE_DICTS[other].home.hero.description);
+      }
+    }
+    expect(SERVER_NEEDLES.length).toBe(NON_JA_LOCALES.length * 4);
+    expect(CLIENT_NEEDLES.length).toBeGreaterThan(0);
   });
 });
 

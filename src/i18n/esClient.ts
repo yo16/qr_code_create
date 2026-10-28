@@ -9,10 +9,7 @@ import type { ClientDict } from "./types";
 export const esClient = {
   common: {
     loading: "Cargando",
-    // 設計 10.2 の例外: 切り替えラベルだけは自言語名（日本語）で出す
     languageSwitch: {
-      label: "日本語",
-      hint: " (japonés)",
       buttonLabel: "Idioma",
       listLabel: "Elige un idioma",
     },

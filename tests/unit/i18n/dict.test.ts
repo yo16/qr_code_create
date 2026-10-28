@@ -94,8 +94,8 @@ describe("Client スライスの値", () => {
 
   // 意図: T2b で Client スライス（common）に追加した文言が存在し、全葉 string であること
   it.each([
-    // M4: 設計書 6.4 のキー buttonLabel / listLabel が増えた
-    ["common.languageSwitch", ["label", "hint", "buttonLabel", "listLabel"]],
+    // 38x.9: 旧キー label / hint は削除済み
+    ["common.languageSwitch", ["buttonLabel", "listLabel"]],
     ["common.mobileMenu", ["open", "close", "cta"]],
     ["common.notFound", ["title", "body", "link"]],
     ["common.comingSoon", ["badge", "noteLine1", "noteLine2", "create", "backToTop"]],

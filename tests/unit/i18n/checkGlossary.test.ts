@@ -120,19 +120,6 @@ describe("checkGlossary", () => {
     expect(failures.some((f) => f.includes("header.cta") && f.includes("日本語の文字"))).toBe(true);
   });
 
-  it("かな検査の例外キー common.languageSwitch.label は日本語でも失敗しない", () => {
-    mockEnOverride = enWith({ "common.languageSwitch.label": "日本語" });
-    const failures = checkGlossary("en", validGlossary());
-    expect(failures.some((f) => f.includes("common.languageSwitch.label") && f.includes("日本語の文字"))).toBe(false);
-  });
-
-  it("かな検査の例外キー以外に日本語を入れると、同じ条件で失敗が出る", () => {
-    mockEnOverride = enWith({ "common.languageSwitch.label": "日本語", "header.cta": "Create a QR code 日本語" });
-    const failures = checkGlossary("en", validGlossary()).filter((f) => f.includes("日本語の文字"));
-    expect(failures.some((f) => f.includes("header.cta"))).toBe(true);
-    expect(failures.some((f) => f.includes("common.languageSwitch.label"))).toBe(false);
-  });
-
   describe("記号のそろい（PNG / SVG / PDF / UTM / URL）", () => {
     it("en の値に PDF があり es の値に無いキーは失敗が出る", () => {
       mockEnOverride = enWith({ "header.cta": "Create a QR code PDF" });

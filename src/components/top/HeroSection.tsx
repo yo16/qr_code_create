@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { Container } from "@/components/layout/Container/Container";
 import { getDict } from "@/i18n/getDict";
 import type { Locale } from "@/i18n/types";
-import { hasEnVersion, localePath } from "@/lib/i18n/routes";
+import { hasVersion, localePath } from "@/lib/i18n/routes";
 import styles from "./HeroSection.module.css";
 
 interface HeroSectionProps {
@@ -13,11 +13,11 @@ interface HeroSectionProps {
 
 export function HeroSection({ locale = "ja" }: HeroSectionProps = {}) {
   const { hero } = getDict(locale).home;
-  // ja は /guide。en は英語のガイド記事ができるまで（EN_AVAILABLE_PATHS に載るまで）出さない
+  // ja は /guide。ほかの言語はガイド記事ができるまで（LOCALE_CONFIG の paths に載るまで）出さない
   const guidePath =
     locale === "ja"
       ? "/guide"
-      : hasEnVersion("/guide/getting-started")
+      : hasVersion(locale, "/guide/getting-started")
         ? localePath(locale, "/guide/getting-started")
         : null;
   return (

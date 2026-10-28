@@ -1,6 +1,6 @@
 import type { ja } from "./ja";
 
-export type Locale = "ja" | "en";
+export type { Locale } from "./locales";
 
 /** 辞書全体の型。ja.ts を正とし、en.ts は `satisfies Dict` で全キーを要求される（T3） */
 export type Dict = typeof ja;

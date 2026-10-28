@@ -4,7 +4,7 @@ import { isNonJaLocale } from "@/i18n/locales";
 import { LOCALE_CONFIG } from "@/lib/i18n/localeConfig";
 import { getGuide, getGuideSlugList } from "@/lib/content/getGuide";
 import { resolveLocale, type LocaleParams } from "@/lib/i18n/params";
-import { buildMetadata, getGuideAlternatePaths } from "@/lib/metadata/buildMetadata";
+import { buildMetadata } from "@/lib/metadata/buildMetadata";
 import { GuideArticlePageView } from "@/components/pages/GuideArticlePageView/GuideArticlePageView";
 
 export const dynamicParams = false;
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: LocaleGuidePageProps): Promis
       title: guide.title,
       description: guide.description,
       path: `${LOCALE_CONFIG[locale].prefix}/guide/${slug}`,
-      alternatePaths: getGuideAlternatePaths(slug),
+      jaPath: `/guide/${slug}`,
     },
     locale
   );

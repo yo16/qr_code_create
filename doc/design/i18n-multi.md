@@ -259,8 +259,13 @@ metadata と sitemap の両方で使う 1 つの関数にする。今の `altern
 
 ```typescript
 /** jaPath を持つ全言語の hreflang → 絶対 URL。ja 以外に 1 つも無ければ undefined */
-export function alternatesFor(jaPath: string): { languages: Record<string, string> } | undefined;
+export function alternatesFor(
+  jaPath: string,
+  options?: { bareRoot?: boolean },
+): { languages: Record<string, string> } | undefined;
 ```
+
+- `bareRoot`（M3 で追加）: ja トップの URL を末尾スラッシュなしの `SITE_URL` にする。metadata の ja トップは `SITE_URL/`、sitemap の ja トップは `SITE_URL` で、どちらも既存テストが固定しているため、sitemap だけが `bareRoot: true` を渡す。表記をそろえるなら別タスクで判断する
 
 - 集合は `LOCALES` のうち `hasVersion(locale, jaPath)` が真の言語すべて。キーは `LOCALE_CONFIG[locale].hreflang`、値は `SITE_URL + localePath(locale, jaPath)`
 - `x-default` は ja の URL

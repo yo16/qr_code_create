@@ -1,5 +1,5 @@
 /**
- * ブラジルポルトガル語辞書（M4 の下書き: 中身は英語の写し。M7 で翻訳する）。Client スライスは ptBrClient.ts。
+ * ブラジルポルトガル語辞書。Client スライスは ptBrClient.ts。
  * 文言の方針は doc/design/i18n-en.md 9 節: 短く具体的、sentence case、感嘆符なし、定型の売り文句なし。
  */
 import { ptBrClient } from "./ptBrClient";
@@ -9,162 +9,162 @@ export const ptBr: Dict = {
   ...ptBrClient,
   header: {
     nav: {
-      home: "Home",
-      guide: "Getting started",
-      // 英語版が無いので en のヘッダーには出ない（Dict のキーを満たすための文言）
-      useCases: "Use cases",
+      home: "Início",
+      guide: "Primeiros passos",
+      // pt-br にはまだ無いページのリンク（Dict のキーを満たすための文言）
+      useCases: "Casos de uso",
       blog: "Blog",
-      faq: "FAQ",
+      faq: "Perguntas frequentes",
     },
     // common.mobileMenu.cta（ptBrClient.ts）と同じ文言にする
-    cta: "Create a QR code",
+    cta: "Criar um QR Code",
   },
   footer: {
-    privacy: "Privacy policy (Japanese)",
-    terms: "Terms of service (Japanese)",
-    faq: "FAQ",
-    contact: "Contact (Japanese)",
-    // /poster の英語版が無いので en のフッターには出ない（Dict のキーを満たすための文言）
-    poster: "Poster maker (Japanese)",
+    privacy: "Política de privacidade (em japonês)",
+    terms: "Termos de uso (em japonês)",
+    faq: "Perguntas frequentes",
+    contact: "Contato (em japonês)",
+    // /poster の pt-br 版が無いので画面には出ない（Dict のキーを満たすための文言）
+    poster: "Criador de pôsteres (em japonês)",
     japaneseOnlyNote:
-      "Our privacy policy and terms of service are available in Japanese only.",
+      "A política de privacidade e os termos de uso estão disponíveis apenas em japonês.",
   },
   home: {
     hero: {
-      // 結合すると「Create QR codes with UTM parameters, free」。<br /> で折り返す
-      headingLine1: "Create QR codes with ",
-      headingLine2: "UTM parameters, free",
+      // 結合すると「Crie QR Codes com parâmetros UTM, grátis」。<br /> で折り返す
+      headingLine1: "Crie QR Codes com ",
+      headingLine2: "parâmetros UTM, grátis",
       description:
-        "Enter a URL, add UTM parameters with guided presets, and download the QR code as PNG, SVG, or PDF. No sign-up.",
-      primaryCta: "Create a QR code",
-      secondaryCta: "Read the guide",
-      note: "Download as PNG, SVG, or PDF. Free.",
-      qrAlt: "QR code that points to the qr-create.jp home page",
-      captionLead: "This QR code points to the following URL.",
+        "Digite uma URL, adicione parâmetros UTM com predefinições guiadas e baixe o QR Code em PNG, SVG ou PDF. Sem cadastro.",
+      primaryCta: "Criar um QR Code",
+      secondaryCta: "Ler o guia",
+      note: "Baixe em PNG, SVG ou PDF. Grátis.",
+      qrAlt: "QR Code que leva à página inicial do qr-create.jp",
+      captionLead: "Este QR Code leva à seguinte URL.",
     },
     features: {
-      heading: "What you can do",
+      heading: "O que você pode fazer",
       items: [
         {
-          title: "UTM parameter guidance",
+          title: "Orientação sobre parâmetros UTM",
           description:
-            "Each field shows examples of what to enter in utm_source and utm_medium. Use the presets by use case to build a URL that Google Analytics can report on.",
+            "Cada campo mostra exemplos do que digitar em utm_source e utm_medium. Use as predefinições por uso para montar uma URL que o Google Analytics consiga relatar.",
         },
         {
-          title: "Decorative frames",
+          title: "Molduras decorativas",
           description:
-            "Combine a frame such as simple, business, elegant, or pop with colors, a logo, and a caption. Export it ready to place on a flyer or poster.",
+            "Combine uma moldura (simples, empresarial, elegante ou pop) com cores, um logo e uma legenda. Exporte pronto para colocar em um folheto ou pôster.",
         },
         {
-          title: "Free, no sign-up",
+          title: "Grátis, sem cadastro",
           description:
-            "No account and no email address. The QR code is made in your browser, and your images and URLs are never stored on this site.",
+            "Sem conta e sem e-mail. O QR Code é criado no seu navegador, e suas imagens e URLs nunca ficam guardadas neste site.",
         },
         {
-          title: "PNG, SVG, and PDF",
+          title: "PNG, SVG e PDF",
           description:
-            "Use PNG for the web and slides, and SVG or PDF for print, where it stays sharp at any size. For PNG you can choose the resolution.",
+            "Use PNG para a web e apresentações, e SVG ou PDF para impressão, onde a imagem continua nítida em qualquer tamanho. No PNG, você escolhe a resolução.",
         },
       ],
     },
     cta: {
-      heading: "From URL to download in four steps",
+      heading: "Da URL ao download em quatro etapas",
       description:
-        "Enter the URL, set the UTM parameters, adjust the design, and download. You are never asked to sign up along the way.",
-      button: "Create a QR code",
+        "Digite a URL, defina os parâmetros UTM, ajuste o design e baixe o arquivo. Em nenhum momento pedimos que você se cadastre.",
+      button: "Criar um QR Code",
     },
   },
   guide: {
     breadcrumb: {
-      ariaLabel: "Breadcrumb",
-      home: "Home",
-      guide: "Guide",
+      ariaLabel: "Trilha de navegação",
+      home: "Início",
+      guide: "Guia",
     },
   },
   meta: {
     root: {
-      title: "QR Code Create - Free QR code generator with UTM parameters",
+      title: "QR Code Create - Gerador de QR Code grátis com parâmetros UTM",
       description:
-        "Create QR codes for free with built-in UTM parameter guidance. Add decorative frames and embed your logo. No sign-up required.",
+        "Crie QR Codes grátis com orientação sobre parâmetros UTM. Adicione molduras decorativas e inclua o seu logo. Sem cadastro.",
     },
     pages: {
       home: {
-        title: "QR Code Create - Free QR code generator with UTM parameters",
+        title: "QR Code Create - Gerador de QR Code grátis com parâmetros UTM",
         description:
-          "Enter a URL, add UTM parameters with guided presets, and download the QR code as PNG, SVG, or PDF. No sign-up.",
+          "Digite uma URL, adicione parâmetros UTM com predefinições guiadas e baixe o QR Code em PNG, SVG ou PDF. Sem cadastro.",
       },
       create: {
-        title: "Create a QR code",
+        title: "Criar um QR Code",
         description:
-          "Enter a URL, add UTM parameters, pick a frame and colors, and download the QR code for free. Track scans in Google Analytics.",
+          "Digite uma URL, adicione parâmetros UTM, escolha uma moldura e as cores, e baixe o QR Code grátis. Acompanhe os acessos no Google Analytics.",
       },
       faq: {
-        title: "FAQ",
+        title: "Perguntas frequentes",
         description:
-          "Answers to common questions about QR Code Create and setting up UTM parameters.",
+          "Respostas para dúvidas comuns sobre o QR Code Create e a configuração de parâmetros UTM.",
       },
       privacy: {
-        title: "Privacy policy",
-        description: "The privacy policy of QR Code Create.",
+        title: "Política de privacidade",
+        description: "A política de privacidade do QR Code Create.",
       },
       terms: {
-        title: "Terms of service",
-        description: "The terms of service of QR Code Create.",
+        title: "Termos de uso",
+        description: "Os termos de uso do QR Code Create.",
       },
       guide: {
-        title: "Guide",
+        title: "Guia",
         description:
-          "Guides on using QR Code Create and getting more out of QR codes.",
+          "Guias para usar o QR Code Create e aproveitar melhor os QR Codes.",
       },
       useCases: {
-        title: "QR codes by use case",
+        title: "QR Codes por caso de uso",
         description:
-          "How to make QR codes for business cards, flyers, posters, and events, with the UTM settings we recommend for each.",
+          "Como criar QR Codes para cartões de visita, folhetos, pôsteres e eventos, com as configurações UTM que recomendamos para cada um.",
       },
       blog: {
         title: "Blog",
         description:
-          "Practical notes on QR code marketing and using UTM parameters.",
+          "Notas práticas sobre marketing com QR Code e o uso de parâmetros UTM.",
       },
     },
   },
   schema: {
-    inLanguage: "en",
+    inLanguage: "pt-BR",
     webApplication: {
       description:
-        "A free QR code generator with UTM parameter guidance. Customize your QR code with decorative frames. No sign-up required.",
+        "Um gerador de QR Code grátis com orientação sobre parâmetros UTM. Personalize o seu QR Code com molduras decorativas. Sem cadastro.",
       featureList: [
-        "QR code generation",
-        "UTM parameter guidance",
-        "Decorative frames (elegant, pop, business)",
-        "Logo embedding",
-        "Color customization",
-        "PNG, SVG, and PDF export",
+        "Geração de QR Code",
+        "Orientação sobre parâmetros UTM",
+        "Molduras decorativas (elegante, pop, empresarial)",
+        "Inclusão de logo",
+        "Personalização de cores",
+        "Exportação em PNG, SVG e PDF",
       ],
     },
     organization: {
-      description: "A free QR code generator with UTM parameter guidance",
+      description: "Um gerador de QR Code grátis com orientação sobre parâmetros UTM",
     },
     howTo: {
-      name: "How to create a QR code with UTM parameters",
+      name: "Como criar um QR Code com parâmetros UTM",
       description:
-        "Steps to create a QR code with UTM parameters for free.",
+        "Etapas para criar um QR Code com parâmetros UTM de graça.",
       steps: [
         {
-          name: "Enter your URL",
-          text: "Enter the URL of the web page you want to turn into a QR code.",
+          name: "Digite a URL",
+          text: "Digite a URL da página que você quer transformar em QR Code.",
         },
         {
-          name: "Add UTM parameters",
-          text: "Set utm_source, utm_medium, and utm_campaign. Follow the guidance and you can measure results in Google Analytics.",
+          name: "Adicione parâmetros UTM",
+          text: "Defina utm_source, utm_medium e utm_campaign. Seguindo a orientação, você poderá medir os resultados no Google Analytics.",
         },
         {
-          name: "Customize the design",
-          text: "Choose a decorative frame, change the colors, add a logo, and set a caption.",
+          name: "Personalize o design",
+          text: "Escolha uma moldura decorativa, mude as cores, adicione um logo e defina uma legenda.",
         },
         {
-          name: "Generate and download the QR code",
-          text: "Check the preview, then download the QR code as PNG, SVG, or PDF.",
+          name: "Gere e baixe o QR Code",
+          text: "Confira a pré-visualização e depois baixe o QR Code em PNG, SVG ou PDF.",
         },
       ],
     },

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ja } from "@/i18n/ja";
 import { getDict } from "@/i18n/getDict";
 import type { Locale } from "@/i18n/types";
+import type { NonJaLocale } from "@/i18n/locales";
 import { hasEnVersion } from "@/lib/i18n/routes";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
@@ -98,3 +99,17 @@ export const PAGE_METADATA_EN = {
   home: { ...pagesEn.home, path: "/en", alternatePaths: ALTERNATE_PATHS.home },
   create: { ...pagesEn.create, path: "/en/create", alternatePaths: ALTERNATE_PATHS.create },
 } as const;
+
+interface LocalePageMetadataSet {
+  home: BuildMetadataOptions;
+  create: BuildMetadataOptions;
+}
+
+/** ja 以外の言語の home / create のメタデータ。M2 では en だけ（言語を足すと、ここが欠けていれば型エラーになる） */
+const LOCALE_PAGE_METADATA: Record<NonJaLocale, LocalePageMetadataSet> = {
+  en: PAGE_METADATA_EN,
+};
+
+export function getLocalePageMetadata(locale: NonJaLocale): LocalePageMetadataSet {
+  return LOCALE_PAGE_METADATA[locale];
+}

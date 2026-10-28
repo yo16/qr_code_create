@@ -23,11 +23,17 @@ describe("ルートレイアウトの分割", () => {
     expect(src).toMatch(/<RootShell\s+locale="ja"/);
   });
 
-  it("src/app/en/layout.tsx が RootShell を locale=\"en\" で使うこと", () => {
-    expect(exists("en", "layout.tsx")).toBe(true);
-    const src = read("en", "layout.tsx");
+  it("src/app/[locale]/layout.tsx が RootShell を検証済みの locale で使うこと", () => {
+    expect(exists("[locale]", "layout.tsx")).toBe(true);
+    const src = read("[locale]", "layout.tsx");
     expect(src).toMatch(/import\s*\{\s*RootShell\s*\}/);
-    expect(src).toMatch(/<RootShell\s+locale="en"/);
+    expect(src).toMatch(/<RootShell\s+locale=\{locale\}/);
+  });
+
+  it("src/app/[locale]/layout.tsx が dynamicParams = false と NON_JA_LOCALES の generateStaticParams を持つこと", () => {
+    const src = read("[locale]", "layout.tsx");
+    expect(src).toMatch(/export\s+const\s+dynamicParams\s*=\s*false/);
+    expect(src).toMatch(/NON_JA_LOCALES\.map/);
   });
 
   // ja / en のメタデータ取り違えを検知する
@@ -37,9 +43,10 @@ describe("ルートレイアウトの分割", () => {
     expect(src).not.toMatch(/rootMetadataEn/);
   });
 
-  it("src/app/en/layout.tsx が rootMetadataEn を metadata にし、rootMetadataJa を使わないこと", () => {
-    const src = read("en", "layout.tsx");
-    expect(src).toMatch(/export\s+const\s+metadata\s*=\s*rootMetadataEn\b/);
+  it("src/app/[locale]/layout.tsx が buildRootMetadata を generateMetadata で使い、rootMetadataJa を使わないこと", () => {
+    const src = read("[locale]", "layout.tsx");
+    expect(src).toMatch(/export\s+async\s+function\s+generateMetadata/);
+    expect(src).toMatch(/buildRootMetadata\(/);
     expect(src).not.toMatch(/rootMetadataJa/);
   });
 });
@@ -89,36 +96,42 @@ describe("global-not-found", () => {
 });
 
 describe("ルートグループごとの not-found", () => {
-  it.each([
-    [["(ja)", "not-found.tsx"], "ja"],
-    [["en", "not-found.tsx"], "en"],
-  ] as const)("src/app/%j が存在し、NotFoundContent を locale=\"%s\" で使うこと", (segments, locale) => {
-    expect(exists(...segments)).toBe(true);
-    expect(read(...segments)).toMatch(new RegExp(`<NotFoundContent\\s+locale="${locale}"`));
+  it("src/app/(ja)/not-found.tsx が存在し、NotFoundContent を locale=\"ja\" で使うこと", () => {
+    expect(exists("(ja)", "not-found.tsx")).toBe(true);
+    expect(read("(ja)", "not-found.tsx")).toMatch(/<NotFoundContent\s+locale="ja"/);
+  });
+
+  it("src/app/[locale]/not-found.tsx が存在し、LocaleNotFound を使うこと", () => {
+    expect(exists("[locale]", "not-found.tsx")).toBe(true);
+    expect(read("[locale]", "not-found.tsx")).toMatch(/<LocaleNotFound\s*\/>/);
+  });
+
+  it("src/app/[locale]/[...rest] の catch-all が無いこと", () => {
+    expect(exists("[locale]", "[...rest]")).toBe(false);
   });
 });
 
 describe("英語版トップ（T3 で本実装）", () => {
   // 仮ページの noindex は T3 で外した。英語の metadata（PAGE_METADATA_EN.home）で出力する
-  it("src/app/en/page.tsx が noindex ではなく、PAGE_METADATA_EN.home と HomePageView(en) を使うこと", () => {
-    expect(exists("en", "page.tsx")).toBe(true);
-    const src = read("en", "page.tsx");
+  it("src/app/[locale]/page.tsx が noindex ではなく、getLocalePageMetadata の home と HomePageView を使うこと", () => {
+    expect(exists("[locale]", "page.tsx")).toBe(true);
+    const src = read("[locale]", "page.tsx");
     expect(src).not.toMatch(/index:\s*false/);
-    expect(src).toMatch(/buildMetadata\(PAGE_METADATA_EN\.home,\s*"en"\)/);
-    expect(src).toMatch(/<HomePageView\s+locale="en"/);
+    expect(src).toMatch(/buildMetadata\(getLocalePageMetadata\(locale\)\.home,\s*locale\)/);
+    expect(src).toMatch(/<HomePageView\s+locale=\{locale\}/);
   });
 
-  it("src/app/en/(tool)/create/page.tsx が CreatePageView(en) を使うこと", () => {
-    expect(exists("en", "(tool)", "create", "page.tsx")).toBe(true);
-    expect(read("en", "(tool)", "create", "page.tsx")).toMatch(
-      /<CreatePageView\s+locale="en"/
+  it("src/app/[locale]/(tool)/create/page.tsx が CreatePageView を使うこと", () => {
+    expect(exists("[locale]", "(tool)", "create", "page.tsx")).toBe(true);
+    expect(read("[locale]", "(tool)", "create", "page.tsx")).toMatch(
+      /<CreatePageView\s+locale=\{locale\}/
     );
   });
 
-  // 意図（qr_code_create-01z.4）: 英語の /create は英語の metadata（PAGE_METADATA_EN.create）で出力する
-  it("src/app/en/(tool)/create/page.tsx が buildMetadata(PAGE_METADATA_EN.create, \"en\") を使い noindex でないこと", () => {
-    const src = read("en", "(tool)", "create", "page.tsx");
-    expect(src).toMatch(/buildMetadata\(PAGE_METADATA_EN\.create,\s*"en"\)/);
+  // 意図（qr_code_create-01z.4）: /{locale}/create は言語別の metadata（create）で出力する
+  it("src/app/[locale]/(tool)/create/page.tsx が buildMetadata(getLocalePageMetadata(locale).create, locale) を使い noindex でないこと", () => {
+    const src = read("[locale]", "(tool)", "create", "page.tsx");
+    expect(src).toMatch(/buildMetadata\(getLocalePageMetadata\(locale\)\.create,\s*locale\)/);
     expect(src).not.toMatch(/PAGE_METADATA\.create/);
     expect(src).not.toMatch(/index:\s*false/);
   });
@@ -138,15 +151,19 @@ describe("ja の [slug] ページは dynamicParams = false（qr_code_create-xjj�
 describe("英語ガイド（T4）", () => {
   // 意図（qr_code_create-01z.5）: 英語ガイドのルートと、ja / en 共通のページ本体の配置
   it.each([
-    [["en", "(marketing)", "layout.tsx"]],
-    [["en", "(marketing)", "guide", "[slug]", "page.tsx"]],
+    [["[locale]", "(marketing)", "layout.tsx"]],
+    [["[locale]", "(marketing)", "guide", "[slug]", "page.tsx"]],
   ])("src/app/%j が存在すること", (segments) => {
     expect(exists(...segments)).toBe(true);
   });
 
-  it("src/app/en/(marketing)/guide/[slug]/page.tsx が GuideArticlePageView を locale=\"en\" で使い、dynamicParams = false", () => {
-    const src = read("en", "(marketing)", "guide", "[slug]", "page.tsx");
-    expect(src).toMatch(/<GuideArticlePageView\s+locale="en"/);
+  it("src/app/en が存在しないこと（[locale] に移した）", () => {
+    expect(exists("en")).toBe(false);
+  });
+
+  it("src/app/[locale]/(marketing)/guide/[slug]/page.tsx が GuideArticlePageView を検証済みの locale で使い、dynamicParams = false", () => {
+    const src = read("[locale]", "(marketing)", "guide", "[slug]", "page.tsx");
+    expect(src).toMatch(/<GuideArticlePageView\s+locale=\{locale\}/);
     expect(src).toMatch(/export\s+const\s+dynamicParams\s*=\s*false/);
   });
 

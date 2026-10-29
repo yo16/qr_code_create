@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
     title: blog.title,
     description: blog.description,
     path: `/blog/${slug}`,
+    article: { publishedTime: blog.date, modifiedTime: blog.updated ?? blog.date },
   });
 }
 
@@ -42,6 +43,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
     description: blog.description,
     slug,
     datePublished: blog.date,
+    dateModified: blog.updated ?? blog.date,
     basePath: "/blog",
   });
 

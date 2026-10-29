@@ -547,6 +547,88 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect(app?.url).toBe(`${SITE}${localePath(l, "/create")}`);
     expect(app?.inLanguage).toBe(LOCALE_CONFIG[l].htmlLang);
   });
+
+  // 意図（qr_code_create-cwq）: 記事の og:type は article で公開日・更新日が付き、BlogPosting に image と dateModified がある。
+  // dateModified は updated ?? date（en・de の getting-started は updated の 2026-10-28）。トップと /create は website
+  const readHtml = (file: string): string => {
+    const full = path.join(BUILD_APP, ...file.split("/"));
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    return fs.readFileSync(full, "utf8");
+  };
+  const metaContent = (html: string, property: string): string | undefined =>
+    html.match(new RegExp(`<meta property="${property}" content="([^"]*)"`))?.[1];
+  const firstSlug = (dir: string): string => {
+    const files = fs.readdirSync(path.join(ROOT, "src", "content", dir)).filter((f) => f.endsWith(".mdx")).sort();
+    return files[0].replace(/\.mdx$/, "");
+  };
+  const ARTICLE_CASES: [string, string][] = [
+    ["guide/getting-started.html", "2026-04-17"],
+    ["guide/utm-setup.html", "2026-04-17"],
+    [`use-cases/${firstSlug("use-cases")}.html`, ""],
+    [`blog/${firstSlug("blog")}.html`, ""],
+    ...NON_JA_LOCALES.map((l): [string, string] => [`${l}/guide/getting-started.html`, "2026-10-28"]),
+  ];
+
+  it.each(ARTICLE_CASES)("%s の og:type が article で、published_time と modified_time があること", (file, modified) => {
+    const html = readHtml(file);
+    expect(metaContent(html, "og:type")).toBe("article");
+    expect(metaContent(html, "article:published_time")).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    const mod = metaContent(html, "article:modified_time");
+    expect(mod).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    if (modified) expect(mod).toBe(modified);
+  });
+
+  it.each(ARTICLE_CASES)("%s の BlogPosting に image と dateModified があること", (file, modified) => {
+    const posting = readJsonLd(file).find((n) => n["@type"] === "BlogPosting") as
+      | (LdNode & { image?: string; dateModified?: string; datePublished?: string; author?: { "@id"?: string; url?: string } })
+      | undefined;
+    expect(posting).toBeDefined();
+    expect(posting?.image).toBe(`${SITE}/images/og/default.png`);
+    expect(posting?.author?.["@id"]).toBe(`${SITE}/#organization`);
+    expect(posting?.author?.url).toBe(SITE);
+    expect(posting?.dateModified).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    if (modified) expect(posting?.dateModified).toBe(modified);
+    else expect(posting?.dateModified).toBe(posting?.datePublished);
+  });
+
+  it.each([
+    "index.html",
+    "create.html",
+    "faq.html",
+    "guide.html",
+    "use-cases.html",
+    "blog.html",
+    ...NON_JA_LOCALES.flatMap((l) => [`${l}.html`, `${l}/create.html`]),
+  ])("%s の og:type が website で、article の日付が無いこと", (file) => {
+    const html = readHtml(file);
+    expect(metaContent(html, "og:type")).toBe("website");
+    expect(metaContent(html, "article:modified_time")).toBeUndefined();
+    expect(metaContent(html, "article:published_time")).toBeUndefined();
+  });
+
+  // use-cases と blog は全 slug で、article・updated なし（dateModified === datePublished）・modified_time === published_time
+  it.each(["use-cases", "blog"])("%s の全記事が article で、更新日が公開日と一致すること", (dir) => {
+    const slugs = fs
+      .readdirSync(path.join(ROOT, "src", "content", dir))
+      .filter((f) => f.endsWith(".mdx"))
+      .map((f) => f.replace(/\.mdx$/, ""));
+    expect(slugs.length).toBeGreaterThan(0);
+    for (const slug of slugs) {
+      const file = `${dir}/${slug}.html`;
+      const html = readHtml(file); // 無ければ fail
+      expect({ file, type: metaContent(html, "og:type") }).toEqual({ file, type: "article" });
+      const published = metaContent(html, "article:published_time");
+      expect(published).toMatch(/^\d{4}-\d{2}-\d{2}/);
+      expect({ file, modified: metaContent(html, "article:modified_time") }).toEqual({ file, modified: published });
+      const posting = readJsonLd(file).find((n) => n["@type"] === "BlogPosting") as
+        | (LdNode & { dateModified?: string; datePublished?: string })
+        | undefined;
+      expect(posting?.datePublished).toBeDefined();
+      expect({ file, dateModified: posting?.dateModified }).toEqual({ file, dateModified: posting?.datePublished });
+    }
+  });
 });
 
 describe("動的レンダリングを招く API を使っていないこと", () => {

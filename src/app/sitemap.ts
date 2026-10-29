@@ -7,6 +7,7 @@ import { NON_JA_LOCALES } from "@/i18n/locales";
 import { localePath } from "@/lib/i18n/routes";
 import { alternatesFor } from "@/lib/seo/alternates";
 import { FEATURE_FLAGS } from "@/lib/constants/features";
+import type { BlogContent, GuideContent, UseCaseContent } from "@/types/content";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
@@ -17,8 +18,7 @@ function alternatesOf(jaPath: string) {
 }
 
 // 記事の lastModified は updated、無ければ date。new Date() は使わない（呼ぶたびに値が変わるため）
-// TODO(cwq): frontmatter に updated を足し、取得関数が updated を返すようにすれば、ここで自動的に拾われる
-function lastModifiedOf(content: { date: string; updated?: string } | null): { lastModified?: string } {
+function lastModifiedOf(content: GuideContent | UseCaseContent | BlogContent | null): { lastModified?: string } {
   const value = content?.updated ?? content?.date;
   return value ? { lastModified: value } : {};
 }

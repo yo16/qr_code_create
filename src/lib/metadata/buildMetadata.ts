@@ -6,6 +6,7 @@ import { LOCALES, type NonJaLocale } from "@/i18n/locales";
 import { LOCALE_CONFIG } from "@/lib/i18n/localeConfig";
 import { hasVersion, localePath } from "@/lib/i18n/routes";
 import { alternatesFor } from "@/lib/seo/alternates";
+import { DEFAULT_OG_IMAGE_PATH } from "@/lib/seo/ogImage";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 const SITE_NAME = "QR Code Create";
@@ -17,13 +18,14 @@ interface BuildMetadataOptions {
   ogImagePath?: string; // public/images/og/ 配下のパス
   noIndex?: boolean;
   jaPath?: string;    // 翻訳のあるページだけ指定（ja 側のパス）。hreflang と alternateLocale を作る
+  article?: { publishedTime: string; modifiedTime: string }; // 記事だけ指定。og:type を article にし、公開日と更新日を付ける
 }
 
 export function buildMetadata(
   options: BuildMetadataOptions,
   locale: Locale = "ja"
 ): Metadata {
-  const { title, description, path, ogImagePath = "/images/og/default.png", noIndex = false, jaPath } = options;
+  const { title, description, path, ogImagePath = DEFAULT_OG_IMAGE_PATH, noIndex = false, jaPath, article } = options;
   const alternates = jaPath ? alternatesFor(jaPath) : undefined;
   const alternateLocales =
     jaPath && alternates
@@ -50,7 +52,9 @@ export function buildMetadata(
       images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
       locale: LOCALE_CONFIG[locale].ogLocale,
       ...(alternates ? { alternateLocale: alternateLocales } : {}),
-      type: "website",
+      ...(article
+        ? { type: "article" as const, publishedTime: article.publishedTime, modifiedTime: article.modifiedTime }
+        : { type: "website" as const }),
     },
     twitter: {
       card: "summary_large_image",

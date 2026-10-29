@@ -2,6 +2,7 @@ import { getDict } from "@/i18n/getDict";
 import type { Locale } from "@/i18n/types";
 import { LOCALE_CONFIG } from "@/lib/i18n/localeConfig";
 import { localePath } from "@/lib/i18n/routes";
+import { DEFAULT_OG_IMAGE_PATH } from "@/lib/seo/ogImage";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
@@ -126,9 +127,12 @@ export function buildBlogPostingSchema(post: {
     "@type": "BlogPosting",
     headline: post.title,
     description: post.description,
+    image: `${SITE_URL}${DEFAULT_OG_IMAGE_PATH}`,
     author: {
       "@type": "Organization",
+      "@id": ORGANIZATION_ID,
       name: "QR Code Create",
+      url: SITE_URL,
     },
     publisher: {
       "@type": "Organization",

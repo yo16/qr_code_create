@@ -98,7 +98,7 @@ describe("全言語が揃う 15 エントリの alternates.languages", () => {
 
 describe("ja のみのページ", () => {
   // 意図: 英語版の無いページに alternates が付かない
-  it.each(["/faq", "/guide", "/guide/utm-setup", "/use-cases", "/blog", "/privacy", "/terms", "/contact"])(
+  it.each(["/faq", "/guide", "/guide/utm-setup", "/use-cases", "/blog", "/contact"])(
     "%s に alternates が無い",
     (path) => {
       const entry = byUrl(sitemap(), `${SITE_URL}${path}`);
@@ -106,6 +106,13 @@ describe("ja のみのページ", () => {
       expect(entry).not.toHaveProperty("alternates");
     }
   );
+});
+
+describe("noindex のページ", () => {
+  // 意図: noindex の /privacy と /terms は sitemap に載らない（alternates の有無以前に、エントリ自体が無い）
+  it.each(["/privacy", "/terms"])("%s が sitemap に無い", (path) => {
+    expect(byUrl(sitemap(), `${SITE_URL}${path}`)).toBeUndefined();
+  });
 });
 
 describe("en エントリの changeFrequency", () => {

@@ -6,7 +6,7 @@ export default defineConfig({
   // 本番ビルド + ポート 3100 の `npm run test:e2e:prod` だけで流す。
   // dev サーバーでは PDF 生成（html2canvas）が遅く、ポート 3000 も別のプロセスと衝突しやすい。
   // 404 の HTML（lang・title・エラー骨組み）も dev と本番で挙動が違うため
-  testIgnore: ["**/poster-flow.spec.ts", "**/create-qr-fit.spec.ts", "**/unknown-slug-404.spec.ts", "**/locale-404-record.spec.ts", "**/multi-locale-pages.spec.ts", "**/not-found-locales.spec.ts", "**/logo-upload.spec.ts"],
+  testIgnore: ["**/poster-flow.spec.ts", "**/create-qr-fit.spec.ts", "**/unknown-slug-404.spec.ts", "**/locale-404-record.spec.ts", "**/multi-locale-pages.spec.ts", "**/not-found-locales.spec.ts", "**/logo-upload.spec.ts", "**/csp-report-only.spec.ts"],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

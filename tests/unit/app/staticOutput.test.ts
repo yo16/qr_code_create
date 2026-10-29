@@ -7,6 +7,7 @@
 import fs from "fs";
 import path from "path";
 import { en } from "@/i18n/en";
+import { ja } from "@/i18n/ja";
 import { LOCALES, NON_JA_LOCALES } from "@/i18n/locales";
 import { LOCALE_CONFIG, TRANSLATED_PATHS } from "@/lib/i18n/localeConfig";
 import { localePath } from "@/lib/i18n/routes";
@@ -628,6 +629,55 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
       expect(posting?.datePublished).toBeDefined();
       expect({ file, dateModified: posting?.dateModified }).toEqual({ file, dateModified: posting?.datePublished });
     }
+  });
+});
+
+// 意図（qr_code_create-av5）: ja のトップと /create の <title>・og:title・meta description が辞書の値で出力され、サイト名が 1 回だけ
+describeBuildOutput("ビルド成果物の ja トップと /create のメタデータ", () => {
+  const decode = (s: string): string =>
+    s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'");
+  const readHtml = (file: string): string => {
+    const full = path.join(BUILD_APP, file);
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    return fs.readFileSync(full, "utf8");
+  };
+  const titleTag = (html: string): string | undefined => {
+    const m = html.match(/<title>([^<]*)<\/title>/);
+    return m ? decode(m[1]) : undefined;
+  };
+  const metaBy = (html: string, attr: "name" | "property", key: string): string | undefined => {
+    const m = html.match(new RegExp(`<meta ${attr}="${key}" content="([^"]*)"`));
+    return m ? decode(m[1]) : undefined;
+  };
+  const occurrences = (text: string, needle: string): number => text.split(needle).length - 1;
+
+  const CASES = [
+    ["index.html", ja.meta.pages.home, ja.meta.pages.home.title],
+    ["create.html", ja.meta.pages.create, `${ja.meta.pages.create.title} | QR Code Create`],
+  ] as const;
+
+  it.each(CASES)("%s の <title> が期待値と一致し、サイト名が 1 回だけであること", (file, _page, expected) => {
+    const title = titleTag(readHtml(file));
+    expect(title).toBe(expected);
+    expect(occurrences(title ?? "", "QR Code Create")).toBe(1);
+  });
+
+  it.each(CASES)("%s の og:title と twitter:title が期待値と一致し、サイト名が 1 回だけであること", (file, _page, expected) => {
+    const html = readHtml(file);
+    const og = metaBy(html, "property", "og:title");
+    const tw = metaBy(html, "name", "twitter:title");
+    expect(og).toBe(expected);
+    expect(tw).toBe(expected);
+    expect(occurrences(og ?? "", "QR Code Create")).toBe(1);
+    expect(occurrences(tw ?? "", "QR Code Create")).toBe(1);
+  });
+
+  it.each(CASES)("%s の meta description と og:description が辞書の値と一致すること", (file, page) => {
+    const html = readHtml(file);
+    expect(metaBy(html, "name", "description")).toBe(page.description);
+    expect(metaBy(html, "property", "og:description")).toBe(page.description);
   });
 });
 

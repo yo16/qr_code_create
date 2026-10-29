@@ -43,7 +43,7 @@ test.describe("html[lang] の切り替え", () => {
 test.describe("ルートメタデータの ja / en 取り違え", () => {
   test("/ の title に日本語の既定タイトルが含まれること", async ({ page }) => {
     await page.goto("/", { timeout: NAV_TIMEOUT });
-    await expect(page).toHaveTitle(/UTMパラメータ付きQRコード生成ツール/);
+    await expect(page).toHaveTitle(/無料のQRコード作成ツール（UTM対応）/);
   });
 
   test("/en の title に英語の既定タイトルが含まれ、日本語を含まないこと", async ({ page }) => {

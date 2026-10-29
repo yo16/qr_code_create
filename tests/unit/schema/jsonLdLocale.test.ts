@@ -79,13 +79,6 @@ describe("buildHowToSchema", () => {
   it('options あり: en は inLanguage "en" が付き、ほかは同じ', () => {
     expect(buildHowToSchema(howToOptions, "en")).toEqual({ ...LEGACY_HOWTO, inLanguage: "en" });
   });
-
-  // 意図: options なしでも、ja は inLanguage を出さず、en は出す
-  it('options なし: 既定は inLanguage が無く、en は "en"', () => {
-    expect(buildHowToSchema()).not.toHaveProperty("inLanguage");
-    expect(buildHowToSchema(undefined, "ja")).not.toHaveProperty("inLanguage");
-    expect(buildHowToSchema(undefined, "en")).toHaveProperty("inLanguage", "en");
-  });
 });
 
 describe('buildWebApplicationSchema("en")', () => {

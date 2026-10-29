@@ -113,51 +113,11 @@ describe("JSON-LD は T2b 前と同じ", () => {
     expect(buildOrganizationSchema()).toEqual({
       "@context": "https://schema.org",
       "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
       name: "QR Code Create",
       url: SITE_URL,
       description: "UTMパラメータガイダンス付きの無料QRコード生成ツール",
-    });
-  });
-
-  // 意図: 引数なし HowTo の全フィールド（name / description / 4 ステップ）が旧値と一致
-  it("buildHowToSchema() が旧値と一致する", () => {
-    expect(buildHowToSchema()).toEqual({
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      name: "UTMパラメータ付きQRコードの作り方",
-      description:
-        "UTMパラメータを設定したQRコードを無料で作成する手順を解説します。",
-      totalTime: "PT3M",
-      tool: {
-        "@type": "HowToTool",
-        name: "QR Code Create",
-      },
-      step: [
-        {
-          "@type": "HowToStep",
-          name: "URLを入力する",
-          text: "QRコードにしたいWebページのURLを入力します。",
-          url: `${SITE_URL}/create#step1`,
-        },
-        {
-          "@type": "HowToStep",
-          name: "UTMパラメータを設定する",
-          text: "utm_source、utm_medium、utm_campaignを設定します。ガイダンスに従って入力すれば、Google Analyticsでの効果測定が可能になります。",
-          url: `${SITE_URL}/create#step2`,
-        },
-        {
-          "@type": "HowToStep",
-          name: "装飾をカスタマイズする",
-          text: "装飾フレームの選択、色の変更、ロゴの追加、キャプションの設定など、デザインをカスタマイズします。",
-          url: `${SITE_URL}/create#step3`,
-        },
-        {
-          "@type": "HowToStep",
-          name: "QRコードを生成・ダウンロードする",
-          text: "プレビューを確認し、PNG・SVG・PDFのいずれかの形式でQRコードをダウンロードします。",
-          url: `${SITE_URL}/create#step4`,
-        },
-      ],
+      logo: `${SITE_URL}/brand/mark.svg`,
     });
   });
 

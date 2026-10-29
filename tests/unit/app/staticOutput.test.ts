@@ -9,6 +9,7 @@ import path from "path";
 import { en } from "@/i18n/en";
 import { LOCALES, NON_JA_LOCALES } from "@/i18n/locales";
 import { LOCALE_CONFIG, TRANSLATED_PATHS } from "@/lib/i18n/localeConfig";
+import { localePath } from "@/lib/i18n/routes";
 import { es } from "@/i18n/es";
 import { ptBr } from "@/i18n/ptBr";
 import { de } from "@/i18n/de";
@@ -490,6 +491,61 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     }
     expect(SERVER_NEEDLES.length).toBe(NON_JA_LOCALES.length * 4);
     expect(CLIENT_NEEDLES.length).toBeGreaterThan(0);
+  });
+
+  // 意図（qr_code_create-gx4）: トップは WebSite と Organization、/create は WebApplication の JSON-LD を出す。
+  // 各 JSON-LD が JSON として壊れていないこと（JSON.parse できること）も確かめる
+  type LdNode = { "@type": string; "@id"?: string; url?: string; inLanguage?: string; publisher?: { "@id": string } };
+  const readJsonLd = (file: string): LdNode[] => {
+    const full = path.join(BUILD_APP, ...file.split("/"));
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const html = fs.readFileSync(full, "utf8");
+    const scripts = Array.from(
+      html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g),
+      (m) => m[1]
+    );
+    return scripts.map((s) => JSON.parse(s) as LdNode);
+  };
+  const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
+  type PageCase = [string, (typeof LOCALES)[number]];
+  const TOP_FILES: PageCase[] = LOCALES.map((l) => [l === "ja" ? "index.html" : `${l}.html`, l]);
+  const CREATE_FILES: PageCase[] = LOCALES.map((l) => [l === "ja" ? "create.html" : `${l}/create.html`, l]);
+  const countOf = (nodes: LdNode[], type: string) => nodes.filter((n) => n["@type"] === type).length;
+
+  it.each(TOP_FILES)("%s の JSON-LD に WebSite と Organization が 1 件ずつあり WebApplication が無いこと", (file) => {
+    const nodes = readJsonLd(file);
+    expect(countOf(nodes, "WebSite")).toBe(1);
+    expect(countOf(nodes, "Organization")).toBe(1);
+    expect(countOf(nodes, "WebApplication")).toBe(0);
+  });
+
+  it.each(TOP_FILES)("%s の WebSite が自言語の url と inLanguage を持つこと", (file, l) => {
+    const site = readJsonLd(file).find((n) => n["@type"] === "WebSite");
+    expect(site?.url).toBe(`${SITE}${localePath(l, "/")}`);
+    expect(site?.inLanguage).toBe(LOCALE_CONFIG[l].htmlLang);
+  });
+
+  it.each(TOP_FILES)("%s の WebSite.publisher.@id と Organization.@id が一致すること", (file) => {
+    const nodes = readJsonLd(file);
+    const site = nodes.find((n) => n["@type"] === "WebSite");
+    const org = nodes.find((n) => n["@type"] === "Organization");
+    expect(org?.["@id"]).toBeTruthy();
+    expect(site?.publisher?.["@id"]).toBe(org?.["@id"]);
+  });
+
+  it.each(CREATE_FILES)("%s の JSON-LD に WebApplication が 1 件あり WebSite と Organization が無いこと", (file) => {
+    const nodes = readJsonLd(file);
+    expect(countOf(nodes, "WebApplication")).toBe(1);
+    expect(countOf(nodes, "WebSite")).toBe(0);
+    expect(countOf(nodes, "Organization")).toBe(0);
+  });
+
+  it.each(CREATE_FILES)("%s の WebApplication が自言語の url と inLanguage を持つこと", (file, l) => {
+    const app = readJsonLd(file).find((n) => n["@type"] === "WebApplication");
+    expect(app?.url).toBe(`${SITE}${localePath(l, "/create")}`);
+    expect(app?.inLanguage).toBe(LOCALE_CONFIG[l].htmlLang);
   });
 });
 

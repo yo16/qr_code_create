@@ -142,6 +142,8 @@ export const ja = {
     organization: {
       description: "UTMパラメータガイダンス付きの無料QRコード生成ツール",
     },
+    // ツールページ用の固定 HowTo は gx4 で廃止。tests/unit/app/staticOutput.test.ts の needle としてだけ使っている。
+    // 消すときは needle と件数も直す。
     howTo: {
       name: "UTMパラメータ付きQRコードの作り方",
       description:

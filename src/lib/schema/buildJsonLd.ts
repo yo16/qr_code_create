@@ -6,6 +6,8 @@ import { localePath } from "@/lib/i18n/routes";
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
+const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+
 export function buildWebApplicationSchema(locale: Locale = "ja") {
   const schema = getDict(locale).schema;
   return {
@@ -43,70 +45,29 @@ export function buildFaqSchema(
   };
 }
 
-export function buildHowToSchema(options?: {
+export function buildHowToSchema(options: {
   name: string;
   description: string;
   steps: { name: string; text: string; url?: string }[];
   totalTime?: string;
 }, locale: Locale = "ja") {
-  const howTo = getDict(locale).schema.howTo;
-  if (options) {
-    return {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      name: options.name,
-      description: options.description,
-      totalTime: options.totalTime ?? "PT3M",
-      ...(locale !== "ja" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
-      tool: {
-        "@type": "HowToTool",
-        name: "QR Code Create",
-      },
-      step: options.steps.map((step) => ({
-        "@type": "HowToStep",
-        name: step.name,
-        text: step.text,
-        ...(step.url ? { url: step.url } : {}),
-      })),
-    };
-  }
   return {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    name: howTo.name,
-    description: howTo.description,
-    totalTime: "PT3M",
+    name: options.name,
+    description: options.description,
+    totalTime: options.totalTime ?? "PT3M",
     ...(locale !== "ja" ? { inLanguage: getDict(locale).schema.inLanguage } : {}),
     tool: {
       "@type": "HowToTool",
       name: "QR Code Create",
     },
-    step: [
-      {
-        "@type": "HowToStep",
-        name: howTo.steps[0].name,
-        text: howTo.steps[0].text,
-        url: `${SITE_URL}/create#step1`,
-      },
-      {
-        "@type": "HowToStep",
-        name: howTo.steps[1].name,
-        text: howTo.steps[1].text,
-        url: `${SITE_URL}/create#step2`,
-      },
-      {
-        "@type": "HowToStep",
-        name: howTo.steps[2].name,
-        text: howTo.steps[2].text,
-        url: `${SITE_URL}/create#step3`,
-      },
-      {
-        "@type": "HowToStep",
-        name: howTo.steps[3].name,
-        text: howTo.steps[3].text,
-        url: `${SITE_URL}/create#step4`,
-      },
-    ],
+    step: options.steps.map((step) => ({
+      "@type": "HowToStep",
+      name: step.name,
+      text: step.text,
+      ...(step.url ? { url: step.url } : {}),
+    })),
   };
 }
 
@@ -131,9 +92,23 @@ export function buildOrganizationSchema(locale: Locale = "ja") {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": ORGANIZATION_ID,
     name: "QR Code Create",
     url: SITE_URL,
+    logo: `${SITE_URL}/brand/mark.svg`,
     description: getDict(locale).schema.organization.description,
+  };
+}
+
+export function buildWebSiteSchema(locale: Locale = "ja") {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${SITE_URL}${localePath(locale, "/")}#website`,
+    name: "QR Code Create",
+    url: `${SITE_URL}${localePath(locale, "/")}`,
+    publisher: { "@id": ORGANIZATION_ID },
+    inLanguage: getDict(locale).schema.inLanguage,
   };
 }
 

@@ -69,20 +69,21 @@ describe("sitemap（モック構成）", () => {
       expect(urls).not.toContain(`${SITE_URL}/`);
     });
 
-    it("noIndex のページ以外は残ること（/create・各言語のトップ・元から noIndex の /privacy は無い）", () => {
+    it("ja のトップを noIndex にすると各言語のトップも無く、/create・/en/create・/contact は残る（元から noIndex の /privacy は無い）", () => {
       const paths = sitemap().map((e) => pathOf(e.url));
+      for (const l of NON_JA_LOCALES) expect(paths).not.toContain(`/${l}`);
       expect(paths).toContain("/create");
-      expect(paths).toContain("/en");
+      expect(paths).toContain("/en/create");
       expect(paths).toContain("/contact");
       expect(paths).not.toContain("/privacy");
       expect(paths).not.toContain("/terms");
     });
 
-    it("ja トップが外れても、件数は 2 件（home・faq）だけ減ること", () => {
-      // 既定（privacy・terms 除外）の静的 8 件 -> 6 件
+    it("件数は ja の 2 件（home・faq）と各言語のトップ（言語数ぶん）だけ減ること", () => {
+      // 既定（privacy・terms 除外）の静的 8 件 -> 6 件。各言語は トップを除いた /create とガイド
       const guide = getGuideSlugList().length;
       const others = guide + getUseCaseSlugList().length + getBlogSlugList().length;
-      const enCount = NON_JA_LOCALES.length * (2 + getGuideSlugList("en").length);
+      const enCount = NON_JA_LOCALES.length * (2 + getGuideSlugList("en").length) - NON_JA_LOCALES.length;
       expect(sitemap()).toHaveLength(6 + others + enCount);
     });
   });

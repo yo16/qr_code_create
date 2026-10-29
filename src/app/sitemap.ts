@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getGuide, getGuideSlugList } from "@/lib/content/getGuide";
-import { PAGE_METADATA } from "@/lib/metadata/buildMetadata";
+import { isIndexedPath } from "@/lib/seo/indexable";
 import { getUseCase, getUseCaseSlugList } from "@/lib/content/getUseCase";
 import { getBlog, getBlogSlugList } from "@/lib/content/getBlog";
 import { NON_JA_LOCALES } from "@/i18n/locales";
@@ -15,13 +15,6 @@ function alternatesOf(jaPath: string) {
   const alternates = alternatesFor(jaPath, { bareRoot: true });
   return alternates ? { alternates } : {};
 }
-
-// noindex のページ（PAGE_METADATA の noIndex）は sitemap に載せない
-const NOINDEX_PATHS: ReadonlySet<string> = new Set(
-  Object.values(PAGE_METADATA)
-    .filter((page) => "noIndex" in page && page.noIndex === true)
-    .map((page) => page.path),
-);
 
 // 記事の lastModified は updated、無ければ date。new Date() は使わない（呼ぶたびに値が変わるため）
 // TODO(cwq): frontmatter に updated を足し、取得関数が updated を返すようにすれば、ここで自動的に拾われる
@@ -59,17 +52,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   // ja 以外の言語。priority は全言語共通（トップ 0.8、create 0.7、ガイド 0.6）
-  const localePages: MetadataRoute.Sitemap = NON_JA_LOCALES.flatMap((locale) => [
-    { url: `${SITE_URL}${localePath(locale, "/")}`, changeFrequency: "weekly" as const, priority: 0.8, ...alternatesOf("/") },
-    { url: `${SITE_URL}${localePath(locale, "/create")}`, changeFrequency: "monthly" as const, priority: 0.7, ...alternatesOf("/create") },
-    ...getGuideSlugList(locale).map((slug) => ({
-      url: `${SITE_URL}${localePath(locale, `/guide/${slug}`)}`,
-      ...lastModifiedOf(getGuide(slug, locale)),
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-      ...alternatesOf(`/guide/${slug}`),
-    })),
-  ]);
+  // noindex は ja 側のパスで決める（llms.txt と同じ）。ja のページを noindex にすると各言語版も載せない
+  const localePages: MetadataRoute.Sitemap = NON_JA_LOCALES.flatMap((locale) =>
+    [
+      { jaPath: "/", changeFrequency: "weekly" as const, priority: 0.8 },
+      { jaPath: "/create", changeFrequency: "monthly" as const, priority: 0.7 },
+      ...getGuideSlugList(locale).map((slug) => ({
+        jaPath: `/guide/${slug}`,
+        ...lastModifiedOf(getGuide(slug, locale)),
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
+      })),
+    ]
+      .filter(({ jaPath }) => isIndexedPath(jaPath))
+      .map(({ jaPath, ...rest }) => ({
+        url: `${SITE_URL}${localePath(locale, jaPath)}`,
+        ...rest,
+        ...alternatesOf(jaPath),
+      })),
+  );
 
   const useCaseSlugs = getUseCaseSlugList();
   const useCasePages: MetadataRoute.Sitemap = useCaseSlugs.map((slug) => ({
@@ -87,8 +88,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  // ja トップの url は末尾スラッシュなし（SITE_URL そのもの）なので、path は "/" に直してから比べる
-  const isIndexed = (entry: { url: string }) => !NOINDEX_PATHS.has(entry.url.slice(SITE_URL.length) || "/");
+  // ja トップの url は末尾スラッシュなし（SITE_URL そのもの）。"" → "/" の扱いは isIndexedPath が持つ
+  const isIndexed = (entry: { url: string }) => isIndexedPath(entry.url.slice(SITE_URL.length));
 
-  return [...staticPages, ...guidePages, ...useCasePages, ...blogPages, ...localePages].filter(isIndexed);
+  return [...[...staticPages, ...guidePages, ...useCasePages, ...blogPages].filter(isIndexed), ...localePages];
 }

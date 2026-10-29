@@ -93,10 +93,43 @@ describe("robots", () => {
       });
     });
 
-    it("ルール総数が7件（* + AIボット6種）であること", () => {
+    it("ルール総数が9件（* + AIボット6種 + OAI-SearchBot + Bingbot）であること", () => {
       const result = robots();
       const rules = Array.isArray(result.rules) ? result.rules : [result.rules];
-      expect(rules).toHaveLength(7);
+      expect(rules).toHaveLength(9);
+    });
+  });
+
+  describe("OAI-SearchBot と Bingbot", () => {
+    const rulesOf = () => {
+      const result = robots();
+      return Array.isArray(result.rules) ? result.rules : [result.rules];
+    };
+
+    it.each(["OAI-SearchBot", "Bingbot"])("%s のルールが1件だけあり、allow が '/' で disallow が無いこと", (bot) => {
+      const matched = rulesOf().filter((r) => r.userAgent === bot);
+      expect(matched).toHaveLength(1);
+      expect(matched[0].allow).toBe("/");
+      expect(matched[0].disallow).toBeUndefined();
+    });
+
+    it("'*' のルールが allow '/' のままで disallow が無いこと", () => {
+      const rule = rulesOf().find((r) => r.userAgent === "*");
+      expect(rule).toEqual({ userAgent: "*", allow: "/" });
+    });
+
+    it("GPTBot のルールが変わっていないこと（allow '/' のみ）", () => {
+      const rule = rulesOf().find((r) => r.userAgent === "GPTBot");
+      expect(rule).toEqual({ userAgent: "GPTBot", allow: "/" });
+    });
+
+    it("userAgent が重複していないこと", () => {
+      const agents = rulesOf().map((r) => r.userAgent);
+      expect(agents.filter((a, i) => agents.indexOf(a) !== i)).toEqual([]);
+    });
+
+    it("Sitemap の行（sitemap.xml）があること", () => {
+      expect(robots().sitemap).toMatch(/^https?:\/\/.+\/sitemap\.xml$/);
     });
   });
 

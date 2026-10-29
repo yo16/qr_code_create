@@ -1,117 +1,183 @@
-import fs from "fs";
-import path from "path";
+import sitemap from "@/app/sitemap";
+import { buildLlmsTxt } from "@/lib/seo/llmsTxt";
+import { LOCALES, NON_JA_LOCALES } from "@/i18n/locales";
+import { LOCALE_CONFIG } from "@/lib/i18n/localeConfig";
+import { FEATURE_FLAGS } from "@/lib/constants/features";
 
-const LLMS_PATH = path.join(process.cwd(), "public", "llms.txt");
+const SITE = "https://qr-create.jp";
+const content = buildLlmsTxt();
 
-describe("llms.txt", () => {
-  it("public/llms.txt ファイルが存在すること", () => {
-    expect(fs.existsSync(LLMS_PATH)).toBe(true);
+function section(text: string, heading: string): string {
+  const start = text.indexOf(`${heading}\n`);
+  expect(start).toBeGreaterThanOrEqual(0);
+  const rest = text.slice(start + heading.length);
+  const next = rest.indexOf("\n## ");
+  return next === -1 ? rest : rest.slice(0, next);
+}
+
+/** Markdown リンク [..](url) の url を全部取り出す */
+function urlsOf(text: string): string[] {
+  return [...text.matchAll(/\]\((https?:\/\/[^)]+)\)/g)].map((m) => m[1]);
+}
+
+const sitemapUrls = sitemap().map((e) => e.url);
+const prefixes = NON_JA_LOCALES.map((l) => LOCALE_CONFIG[l].prefix);
+const isNonJa = (url: string): boolean =>
+  prefixes.some((p) => url === `${SITE}${p}` || url.startsWith(`${SITE}${p}/`));
+
+describe("llms.txt: 基本構造", () => {
+  it("# QR Code Create の見出しと > 要約があること", () => {
+    expect(content).toMatch(/^# QR Code Create$/m);
+    expect(content).toMatch(/^> .+$/m);
   });
 
-  it("必須セクション ## Overview が含まれること", () => {
-    const content = fs.readFileSync(LLMS_PATH, "utf-8");
-    expect(content).toContain("## Overview");
-  });
-
-  it("必須セクション ## Features が含まれること", () => {
-    const content = fs.readFileSync(LLMS_PATH, "utf-8");
-    expect(content).toContain("## Features");
-  });
-
-  it("必須セクション ## Target Users が含まれること", () => {
-    const content = fs.readFileSync(LLMS_PATH, "utf-8");
-    expect(content).toContain("## Target Users");
-  });
-
-  it("必須セクション ## URL が含まれること", () => {
-    const content = fs.readFileSync(LLMS_PATH, "utf-8");
-    expect(content).toContain("## URL");
-  });
-
-  it("サイトURLが記載されていること", () => {
-    const content = fs.readFileSync(LLMS_PATH, "utf-8");
-    expect(content).toMatch(/https?:\/\//);
-  });
-
-  it("QR Code Create のプロダクト名が含まれること", () => {
-    const content = fs.readFileSync(LLMS_PATH, "utf-8");
-    expect(content).toContain("QR Code Create");
-  });
-
-  // --- qr_code_create-ksi: URL の qr-create.jp への修正と主要ページ一覧の追加 ---
-
-  // 意図: 旧 URL https://qr-code-create.vercel.app は現在別の QR 生成サービスを返すため、
-  // AI クローラーに競合を案内しないよう、vercel.app への言及がファイル全体に残っていないことを保証する
-  it("vercel.app を含まないこと", () => {
-    const content = fs.readFileSync(LLMS_PATH, "utf-8");
+  it("サイトURLが記載され、vercel.app を含まないこと", () => {
+    expect(content).toContain(SITE);
     expect(content).not.toContain("vercel.app");
   });
 
-  // 意図: ## URL セクション（次の ## 見出しまで）に正しいサイト URL https://qr-create.jp が記載されていること。
-  // 他セクションのリンクで偶然一致しないよう、URL セクションの範囲だけを対象にする
-  it("## URL セクションに https://qr-create.jp が記載されていること", () => {
-    const content = fs.readFileSync(LLMS_PATH, "utf-8");
-    const start = content.indexOf("## URL");
-    expect(start).toBeGreaterThanOrEqual(0);
-    const rest = content.slice(start + "## URL".length);
-    const nextHeading = rest.search(/\n## /);
-    const urlSection = nextHeading === -1 ? rest : rest.slice(0, nextHeading);
-    expect(urlSection).toContain("https://qr-create.jp");
+  it.each(["## Pages", "## Features", "## Target Users", "## Key Differentiator", "## Language", "## Other languages"])(
+    "%s の節があること",
+    (heading) => {
+      expect(content).toContain(heading);
+    },
+  );
+
+  it.each(["## Overview", "## URL"])("古い節 %s が無いこと", (heading) => {
+    expect(content).not.toContain(heading);
   });
 
-  // 意図: AI クローラーが主要ページを辿れるよう、ページ一覧の ## Pages セクションが存在すること
-  it("## Pages セクションが存在すること", () => {
-    const content = fs.readFileSync(LLMS_PATH, "utf-8");
-    expect(content).toContain("## Pages");
-  });
-
-  // 意図: 主要ページが相対パスではなく qr-create.jp ドメインの絶対 URL で列挙されていること
-  it.each([
-    "https://qr-create.jp/create",
-    "https://qr-create.jp/poster",
-    "https://qr-create.jp/guide",
-    "https://qr-create.jp/guide/getting-started",
-    "https://qr-create.jp/use-cases",
-    "https://qr-create.jp/faq",
-  ])("主要ページの絶対 URL %s が列挙されていること", (url) => {
-    const content = fs.readFileSync(LLMS_PATH, "utf-8");
-    expect(content).toContain(url);
+  it("古い文言 'All pages are written in Japanese' が無いこと", () => {
+    expect(content).not.toContain("All pages are written in Japanese");
   });
 });
 
-// qr_code_create-b4m: /poster の公開に合わせて llms.txt に載せる
-describe("llms.txt の /poster", () => {
-  function section(content: string, heading: string): string {
-    const start = content.indexOf(heading);
-    expect(start).toBeGreaterThanOrEqual(0);
-    const rest = content.slice(start + heading.length);
-    const next = rest.indexOf(String.fromCharCode(10) + "## ");
-    return next === -1 ? rest : rest.slice(0, next);
-  }
+describe("llms.txt: Pages 節", () => {
+  const pages = section(content, "## Pages");
 
-  it("## Pages に /poster の行（絶対 URL と説明）があること", () => {
-    const pages = section(fs.readFileSync(LLMS_PATH, "utf-8"), "## Pages");
-    expect(pages).toMatch(/^- https:\/\/qr-create\.jp\/poster : .+$/m);
+  it.each(["/create", "/guide", "/use-cases", "/blog", "/faq"])(
+    "主要ページ %s の行があり、説明（: .+）が付いていること",
+    (p) => {
+      expect(pages).toMatch(new RegExp(`^- \\[[^\\]]+\\]\\(${SITE}${p}\\): .+$`, "m"));
+    },
+  );
+
+  it("トップの行（末尾スラッシュなしの SITE_URL）があり、説明が付いていること", () => {
+    expect(pages).toMatch(new RegExp(`^- \\[[^\\]]+\\]\\(${SITE}\\): .+$`, "m"));
+    expect(pages).not.toContain(`(${SITE}/)`);
   });
 
-  it("## Features にポスター作成の行があること", () => {
-    const features = section(fs.readFileSync(LLMS_PATH, "utf-8"), "## Features");
-    expect(features).toMatch(/^- Poster maker/m);
+  it("/contact の行があり、説明が付いていること", () => {
+    expect(pages).toMatch(new RegExp(`^- \\[[^\\]]+\\]\\(${SITE}/contact\\): .+$`, "m"));
   });
 
-  it("sitemap の主要な ja ページが ## Pages にすべて載っていること（/poster を含む）", async () => {
-    const { default: sitemap } = await import("@/app/sitemap");
-    const pages = section(fs.readFileSync(LLMS_PATH, "utf-8"), "## Pages");
-    const site = "https://qr-create.jp";
-    const paths = sitemap()
-      .map((entry) => new URL(entry.url).pathname)
-      .filter((p) => !p.startsWith("/en"));
-    // llms.txt に載せる主要ページ（法務系・個別記事は対象外）
-    const main = ["/", "/create", "/poster", "/guide", "/use-cases", "/faq", "/blog"];
-    for (const p of main) {
-      expect(paths).toContain(p);
-      const url = p === "/" ? `${site}/ ` : `${site}${p} `;
-      expect(pages).toContain(url);
+  it("Pages 節の全項目に説明（: .+）が付いていること", () => {
+    const items = pages.split("\n").filter((l) => l.startsWith("- "));
+    expect(items.length).toBeGreaterThan(0);
+    for (const line of items) expect(line).toMatch(/: .+$/);
+  });
+
+  it("機能フラグ true のとき /poster の行に説明があり、Features にポスターの行もあること", () => {
+    expect(FEATURE_FLAGS.posterPage).toBe(true);
+    expect(pages).toMatch(new RegExp(`^- \\[[^\\]]+\\]\\(${SITE}/poster\\): .+$`, "m"));
+    expect(section(content, "## Features")).toMatch(/^- Poster maker/m);
+  });
+
+  it("noindex の /privacy と /terms がどこにも無いこと", () => {
+    expect(content).not.toContain("/privacy");
+    expect(content).not.toContain("/terms");
+  });
+});
+
+describe("llms.txt: sitemap との一致", () => {
+  const llmsUrls = urlsOf(content);
+
+  it("sitemap の ja の URL（noindex は sitemap に無い。例外なし）がすべて llms.txt にあること", () => {
+    const expected = sitemapUrls.filter((u) => !isNonJa(u));
+    // 空振り防止: トップ・create・記事（guide / use-cases / blog）が含まれる
+    expect(expected.length).toBeGreaterThan(10);
+    expect(expected).toEqual(expect.arrayContaining([SITE, `${SITE}/create`]));
+    expect(expected.some((u) => u.includes("/blog/"))).toBe(true);
+    expect(expected.some((u) => u.includes("/use-cases/"))).toBe(true);
+    expect(expected.some((u) => u.includes("/guide/"))).toBe(true);
+    expect(expected.filter((u) => !llmsUrls.includes(u))).toEqual([]);
+  });
+
+  it("sitemap の各言語の URL（トップ、/create、ガイド）がすべて llms.txt にあること", () => {
+    const nonJaUrls = sitemapUrls.filter(isNonJa);
+    expect(nonJaUrls.length).toBe(NON_JA_LOCALES.length * 3);
+    expect(nonJaUrls.filter((u) => !llmsUrls.includes(u))).toEqual([]);
+  });
+
+  it.each(NON_JA_LOCALES)("%s のトップ URL（接頭辞のみ）が llms.txt にあること", (l) => {
+    expect(llmsUrls).toContain(`${SITE}${LOCALE_CONFIG[l].prefix}`);
+  });
+
+  it("llms.txt の URL がすべて sitemap にあること（食い違いの検出）", () => {
+    // 空振り防止: sitemap にない URL を足せば検出される
+    expect(llmsUrls.length).toBeGreaterThan(10);
+    expect(llmsUrls.filter((u) => !sitemapUrls.includes(u))).toEqual([]);
+  });
+
+  it("llms.txt の URL に重複が無いこと", () => {
+    expect(llmsUrls.filter((u, i) => llmsUrls.indexOf(u) !== i)).toEqual([]);
+  });
+
+  it("検出の確認: 存在しない URL は llms.txt に無く、sitemap にも無いこと", () => {
+    expect(llmsUrls).not.toContain(`${SITE}/no-such-page`);
+    expect(sitemapUrls).not.toContain(`${SITE}/no-such-page`);
+  });
+});
+
+describe("llms.txt: Other languages 節", () => {
+  const other = section(content, "## Other languages");
+  const items = other.split("\n").filter((l) => l.startsWith("- "));
+
+  it("項目が 言語数 x 3 ページあること", () => {
+    expect(items).toHaveLength(NON_JA_LOCALES.length * 3);
+  });
+
+  it.each(NON_JA_LOCALES)("%s の項目名が '{nativeName}: {ページ名}' の形であること", (l) => {
+    const { nativeName } = LOCALE_CONFIG[l];
+    const mine = items.filter((line) => line.startsWith(`- [${nativeName}: `));
+    expect(mine).toHaveLength(3);
+    const names = mine.map((line) => line.match(/^- \[[^:]+: ([^\]]+)\]/)?.[1]);
+    expect(names).toEqual(["Top page", "QR code generator", "Getting started"]);
+  });
+
+  it("項目名が ja 側のパスの形（': /'）になっていないこと", () => {
+    for (const line of items) {
+      const title = line.match(/^- \[([^\]]+)\]/)?.[1] ?? "";
+      expect(title).not.toMatch(/: \//);
     }
+  });
+
+  it("各言語の URL が接頭辞付きであること（ja 側のパスを指していない）", () => {
+    for (const l of NON_JA_LOCALES) {
+      const prefix = LOCALE_CONFIG[l].prefix;
+      expect(other).toContain(`(${SITE}${prefix})`);
+      expect(other).toContain(`(${SITE}${prefix}/create)`);
+      expect(other).toContain(`(${SITE}${prefix}/guide/getting-started)`);
+    }
+  });
+});
+
+describe("llms.txt: Language 節", () => {
+  const language = section(content, "## Language");
+
+  it("ja が全ページを持つことを説明していること", () => {
+    expect(LOCALES).toContain("ja");
+    expect(language).toContain(`Japanese (${LOCALE_CONFIG.ja.hreflang})`);
+    expect(language).toMatch(/every page/);
+  });
+
+  it.each(NON_JA_LOCALES)("言語コード %s が挙がっていること", (l) => {
+    expect(language).toContain(l);
+  });
+
+  it("ja 以外は 3 ページ（トップ、/create、/guide/getting-started）だけと説明していること", () => {
+    expect(language).toMatch(/three pages/);
+    expect(language).toContain("/create");
+    expect(language).toContain("/guide/getting-started");
   });
 });

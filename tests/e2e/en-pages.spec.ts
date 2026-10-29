@@ -19,14 +19,12 @@ const ALLOWED_JA_LINKS = ["/privacy", "/terms", "/contact"];
 async function expectNoJapanese(page: Page) {
   // 言語切り替え（qr_code_create-01z.6）の「日本語」だけは意図した日本語なので除く。
   // そのリンクが lang="ja" の切り替えリンクであることも確かめる
-  await expect(page.locator("header a[hreflang]")).toHaveText(
-    new RegExp(`^${enClient.common.languageSwitch.label}`)
-  );
-  await expect(page.locator("header a[hreflang]")).toHaveAttribute("lang", "ja");
+  await expect(page.locator('header a[hreflang="ja"]')).toHaveText("日本語");
+  await expect(page.locator('header a[hreflang="ja"]')).toHaveAttribute("lang", "ja");
   const text = await page.locator("body").innerText();
   const found = text
     .split("\n")
-    .filter((line) => line.trim() !== enClient.common.languageSwitch.label)
+    .filter((line) => line.trim() !== "日本語")
     .filter((line) => JAPANESE.test(line));
   expect(found).toEqual([]);
 }

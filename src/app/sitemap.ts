@@ -2,15 +2,17 @@ import type { MetadataRoute } from "next";
 import { getGuideSlugList } from "@/lib/content/getGuide";
 import { getUseCaseSlugList } from "@/lib/content/getUseCase";
 import { getBlogSlugList } from "@/lib/content/getBlog";
-import { hasEnVersion } from "@/lib/i18n/routes";
+import { NON_JA_LOCALES } from "@/i18n/locales";
+import { localePath } from "@/lib/i18n/routes";
+import { alternatesFor } from "@/lib/seo/alternates";
 import { FEATURE_FLAGS } from "@/lib/constants/features";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
-// 両言語が揃うページの hreflang（ja 側・en 側の両方のエントリに同じものを付ける）
-function languagesFor(jaPath: string, enPath: string) {
-  const ja = jaPath === "/" ? SITE_URL : `${SITE_URL}${jaPath}`;
-  return { languages: { ja, en: `${SITE_URL}${enPath}`, "x-default": ja } };
+// 翻訳のあるページだけ hreflang を付ける（どの言語のエントリにも同じものを付ける）。ja トップの表記は loc に合わせて末尾スラッシュなし
+function alternatesOf(jaPath: string) {
+  const alternates = alternatesFor(jaPath, { bareRoot: true });
+  return alternates ? { alternates } : {};
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -20,8 +22,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     : [];
 
   const staticPages: MetadataRoute.Sitemap = [
-    { url: `${SITE_URL}`, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0, alternates: languagesFor("/", "/en") },
-    { url: `${SITE_URL}/create`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9, alternates: languagesFor("/create", "/en/create") },
+    { url: `${SITE_URL}`, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0, ...alternatesOf("/") },
+    { url: `${SITE_URL}/create`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9, ...alternatesOf("/create") },
     ...posterPages,
     { url: `${SITE_URL}/guide`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/use-cases`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
@@ -38,24 +40,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.7,
-    ...(hasEnVersion(`/guide/${slug}`)
-      ? { alternates: languagesFor(`/guide/${slug}`, `/en/guide/${slug}`) }
-      : {}),
+    ...alternatesOf(`/guide/${slug}`),
   }));
 
-  const enPages: MetadataRoute.Sitemap = [
-    { url: `${SITE_URL}/en`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8, alternates: languagesFor("/", "/en") },
-    { url: `${SITE_URL}/en/create`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7, alternates: languagesFor("/create", "/en/create") },
-    ...getGuideSlugList("en").map((slug) => ({
-      url: `${SITE_URL}/en/guide/${slug}`,
+  // ja 以外の言語。priority は全言語共通（トップ 0.8、create 0.7、ガイド 0.6）
+  const localePages: MetadataRoute.Sitemap = NON_JA_LOCALES.flatMap((locale) => [
+    { url: `${SITE_URL}${localePath(locale, "/")}`, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 0.8, ...alternatesOf("/") },
+    { url: `${SITE_URL}${localePath(locale, "/create")}`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.7, ...alternatesOf("/create") },
+    ...getGuideSlugList(locale).map((slug) => ({
+      url: `${SITE_URL}${localePath(locale, `/guide/${slug}`)}`,
       lastModified: new Date(),
       changeFrequency: "monthly" as const,
       priority: 0.6,
-      ...(hasEnVersion(`/guide/${slug}`)
-        ? { alternates: languagesFor(`/guide/${slug}`, `/en/guide/${slug}`) }
-        : {}),
+      ...alternatesOf(`/guide/${slug}`),
     })),
-  ];
+  ]);
 
   const useCaseSlugs = getUseCaseSlugList();
   const useCasePages: MetadataRoute.Sitemap = useCaseSlugs.map((slug) => ({
@@ -73,5 +72,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...guidePages, ...useCasePages, ...blogPages, ...enPages];
+  return [...staticPages, ...guidePages, ...useCasePages, ...blogPages, ...localePages];
 }

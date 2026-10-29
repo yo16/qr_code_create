@@ -13,6 +13,9 @@ const NL = String.fromCharCode(10);
 describe.each([
   ["ja", "src/content/guide/getting-started.mdx"],
   ["en", "src/content/en/guide/getting-started.mdx"],
+  ["es", "src/content/es/guide/getting-started.mdx"],
+  ["pt-br", "src/content/pt-br/guide/getting-started.mdx"],
+  ["de", "src/content/de/guide/getting-started.mdx"],
 ])("%s の getting-started", (_locale, rel) => {
   const parsed = matter(fs.readFileSync(path.join(process.cwd(), rel), "utf-8"));
   const howto = (parsed.data.howto ?? []) as { name: string }[];

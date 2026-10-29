@@ -2,7 +2,7 @@ import Link from "next/link";
 import { TrackedLink } from "@/components/analytics/TrackedLink";
 import { getDict } from "@/i18n/getDict";
 import type { Locale } from "@/i18n/types";
-import { hasEnVersion, localePath } from "@/lib/i18n/routes";
+import { hasVersion, localePath } from "@/lib/i18n/routes";
 import { Container } from "../Container/Container";
 import { BrandMark } from "./BrandMark";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -15,12 +15,12 @@ interface HeaderProps {
 
 export function Header({ locale = "ja" }: HeaderProps = {}) {
   const { header } = getDict(locale);
-  // en は英語版があるページだけ（Home と、英語ガイドができたら Getting started）
+  // ja 以外はその言語版があるページだけ（Home と、ガイドができたら Getting started）
   const navItems =
-    locale === "en"
+    locale !== "ja"
       ? [
           { href: localePath(locale, "/"), label: header.nav.home },
-          ...(hasEnVersion("/guide/getting-started")
+          ...(hasVersion(locale, "/guide/getting-started")
             ? [
                 {
                   href: localePath(locale, "/guide/getting-started"),

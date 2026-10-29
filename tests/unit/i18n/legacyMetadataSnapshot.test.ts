@@ -23,7 +23,7 @@ describe("PAGE_METADATA は T2b 前と同じ", () => {
           "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
         path: "/",
         // qr_code_create-01z.7 で追加（hreflang 用。設計 10.1 の 3 で認めた変更）
-        alternatePaths: { ja: "/", en: "/en" },
+        jaPath: "/",
       },
       create: {
         // qr_code_create-176 で意図して変更: サイト名はルートの title template が 1 回付けるので、ページ側からは外した
@@ -32,7 +32,7 @@ describe("PAGE_METADATA は T2b 前と同じ", () => {
           "URLを入力するだけ。UTMパラメータと装飾フレームでマーケティング効果を最大化するQRコードを無料で作成できます。",
         path: "/create",
         // qr_code_create-01z.7 で追加（hreflang 用。設計 10.1 の 3 で認めた変更）
-        alternatePaths: { ja: "/create", en: "/en/create" },
+        jaPath: "/create",
       },
       faq: {
         title: "よくある質問",

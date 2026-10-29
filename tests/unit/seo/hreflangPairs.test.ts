@@ -16,15 +16,16 @@ jest.mock("@/components/pages/GuideArticlePageView/GuideArticlePageView", () => 
 }));
 
 import { metadata as jaHome } from "@/app/(ja)/page";
-import { metadata as enHome } from "@/app/en/page";
+import { generateMetadata as enHomeMetadata } from "@/app/[locale]/page";
 import { metadata as jaCreate } from "@/app/(ja)/(tool)/create/page";
-import { metadata as enCreate } from "@/app/en/(tool)/create/page";
+import { generateMetadata as enCreateMetadata } from "@/app/[locale]/(tool)/create/page";
 import { generateMetadata as jaGuideMetadata } from "@/app/(ja)/(marketing)/guide/[slug]/page";
-import { generateMetadata as enGuideMetadata } from "@/app/en/(marketing)/guide/[slug]/page";
+import { generateMetadata as enGuideMetadata } from "@/app/[locale]/(marketing)/guide/[slug]/page";
 import { metadata as jaFaq } from "@/app/(ja)/(marketing)/faq/page";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 
+const enParams = { params: Promise.resolve({ locale: "en" }) };
 const guideParams = (slug: string) => ({ params: Promise.resolve({ slug }) });
 
 async function loadPairs(): Promise<
@@ -34,19 +35,19 @@ async function loadPairs(): Promise<
     {
       name: "home",
       ja: jaHome,
-      en: enHome,
+      en: await enHomeMetadata(enParams),
       expected: { ja: `${SITE_URL}/`, en: `${SITE_URL}/en` },
     },
     {
       name: "create",
       ja: jaCreate,
-      en: enCreate,
+      en: await enCreateMetadata(enParams),
       expected: { ja: `${SITE_URL}/create`, en: `${SITE_URL}/en/create` },
     },
     {
       name: "getting-started",
       ja: await jaGuideMetadata(guideParams("getting-started")),
-      en: await enGuideMetadata(guideParams("getting-started")),
+      en: await enGuideMetadata({ params: Promise.resolve({ locale: "en", slug: "getting-started" }) }),
       expected: {
         ja: `${SITE_URL}/guide/getting-started`,
         en: `${SITE_URL}/en/guide/getting-started`,
@@ -57,10 +58,18 @@ async function loadPairs(): Promise<
 
 describe("3 組 6 ページの hreflang 相互参照", () => {
   // 意図: 各組の ja / en が同じ 3 URL（ja / en / x-default=ja）を出す
-  it("各ページの languages が組ごとに同じ 3 URL", async () => {
+  it("各ページの languages が組ごとに同じ 6 URL", async () => {
     const pairs = await loadPairs();
     for (const { name, ja, en, expected } of pairs) {
-      const want = { ja: expected.ja, en: expected.en, "x-default": expected.ja };
+      // 設計書 11.1 / 7.1: ja・en・x-default の値は変えず、es / pt-BR / de のキーを足す（M4）
+      const want = {
+        ja: expected.ja,
+        en: expected.en,
+        es: expected.en.replace("/en", "/es"),
+        "pt-BR": expected.en.replace("/en", "/pt-br"),
+        de: expected.en.replace("/en", "/de"),
+        "x-default": expected.ja,
+      };
       expect({ name, lang: "ja", languages: ja.alternates?.languages }).toEqual({ name, lang: "ja", languages: want });
       expect({ name, lang: "en", languages: en.alternates?.languages }).toEqual({ name, lang: "en", languages: want });
     }
@@ -82,11 +91,12 @@ describe("3 組 6 ページの hreflang 相互参照", () => {
   });
 
   // 意図: og:locale と og:locale:alternate が言語ごとに逆になる
-  it("ja は og ja_JP + alternate en_US、en は en_US + alternate ja_JP", async () => {
+  // M4: alternateLocale に es_ES / pt_BR / de_DE が増える（設計書 7.1）
+  it("ja は og ja_JP + alternate en_US ほか、en は en_US + alternate ja_JP ほか", async () => {
     const pairs = await loadPairs();
     for (const { ja, en } of pairs) {
-      expect(ja.openGraph).toMatchObject({ locale: "ja_JP", alternateLocale: ["en_US"] });
-      expect(en.openGraph).toMatchObject({ locale: "en_US", alternateLocale: ["ja_JP"] });
+      expect(ja.openGraph).toMatchObject({ locale: "ja_JP", alternateLocale: ["en_US", "es_ES", "pt_BR", "de_DE"] });
+      expect(en.openGraph).toMatchObject({ locale: "en_US", alternateLocale: ["ja_JP", "es_ES", "pt_BR", "de_DE"] });
     }
   });
 });

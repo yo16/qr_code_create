@@ -64,22 +64,88 @@
   font-size: var(--font-size-sm);
   color: var(--color-muted);
   text-decoration: none;
+  white-space: nowrap;
   transition: color var(--transition-fast);
 }
 
-.navLink:hover,
-.langLink:hover {
+.navLink:hover {
   color: var(--color-foreground);
   text-decoration: underline;
 }
 
-.langLink {
+/* 言語切り替え（disclosure）。ボタンは文字リンク風、一覧は枠線つきの小さなパネル */
+.langSwitch {
+  position: relative;
+}
+
+.langButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
   padding: var(--spacing-sm) 0;
+  font: inherit;
   font-size: var(--font-size-sm);
   color: var(--color-muted);
-  text-decoration: none;
+  background: none;
+  border: 0;
+  cursor: pointer;
   white-space: nowrap;
   transition: color var(--transition-fast);
+}
+
+.langButton:hover {
+  color: var(--color-foreground);
+  text-decoration: underline;
+}
+
+/* 開閉の印: border で描く小さな三角 */
+.chevron {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+}
+
+.langButton[aria-expanded="true"] .chevron {
+  transform: rotate(180deg);
+}
+
+.langList {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  /* header（100）と MobileNav パネル（99）より前に出すため 101 */
+  z-index: 101;
+  min-width: 10rem;
+  margin: 0;
+  padding: var(--spacing-xs) 0;
+  list-style: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.langList[hidden] {
+  display: none;
+}
+
+.langItem {
+  display: block;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-foreground);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.langItem:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.langItem[aria-current="true"] {
+  font-weight: var(--font-weight-bold);
 }
 
 .srOnly {
@@ -103,6 +169,7 @@
   background: var(--color-primary);
   border-radius: var(--radius-control);
   text-decoration: none;
+  white-space: nowrap;
   transition: background-color var(--transition-fast);
 }
 

@@ -14,10 +14,16 @@ const byUrl = (entries: Entry[], url: string) => entries.find((e) => e.url === u
 
 // 両言語が揃う 3 組（ja の loc、en の loc、期待する languages）
 const PAIRS = [
-  { ja: `${SITE_URL}`, en: `${SITE_URL}/en` },
-  { ja: `${SITE_URL}/create`, en: `${SITE_URL}/en/create` },
-  { ja: `${SITE_URL}/guide/getting-started`, en: `${SITE_URL}/en/guide/getting-started` },
+  { ja: `${SITE_URL}`, en: `${SITE_URL}/en`, rest: { es: `${SITE_URL}/es`, "pt-BR": `${SITE_URL}/pt-br`, de: `${SITE_URL}/de` } },
+  { ja: `${SITE_URL}/create`, en: `${SITE_URL}/en/create`, rest: { es: `${SITE_URL}/es/create`, "pt-BR": `${SITE_URL}/pt-br/create`, de: `${SITE_URL}/de/create` } },
+  {
+    ja: `${SITE_URL}/guide/getting-started`,
+    en: `${SITE_URL}/en/guide/getting-started`,
+    rest: { es: `${SITE_URL}/es/guide/getting-started`, "pt-BR": `${SITE_URL}/pt-br/guide/getting-started`, de: `${SITE_URL}/de/guide/getting-started` },
+  },
 ];
+// M4（設計書 11.1）: es / pt-BR / de のキーとエントリを足す。ja / en / x-default の値は変えない
+const ALL_URLS = PAIRS.flatMap((p) => [p.ja, p.en, ...Object.values(p.rest)]);
 
 describe("sitemap の英語版", () => {
   // 意図: en のエントリは /en、/en/create、/en/guide/getting-started の 3 件だけ
@@ -51,18 +57,19 @@ describe("sitemap の英語版", () => {
   });
 });
 
-describe("両言語が揃う 6 エントリの alternates.languages", () => {
-  // 意図: ja 側・en 側の両方に、同じ ja / en / x-default の 3 キーが付く（x-default = ja）
-  it.each(PAIRS)("$ja と $en に同じ 3 キー", ({ ja, en }) => {
+describe("全言語が揃う 15 エントリの alternates.languages", () => {
+  // 意図: 全言語のエントリに、同じ 6 キーが付く（x-default = ja）
+  it.each(PAIRS)("$ja と $en に同じ 6 キー", ({ ja, en, rest }) => {
     const entries = sitemap();
-    const want = { languages: { ja, en, "x-default": ja } };
+    const want = { languages: { ja, en, ...rest, "x-default": ja } };
     const jaEntry = byUrl(entries, ja);
     const enEntry = byUrl(entries, en);
     expect(jaEntry).toBeDefined();
     expect(enEntry).toBeDefined();
     expect(jaEntry?.alternates).toEqual(want);
     expect(enEntry?.alternates).toEqual(want);
-    expect(Object.keys(jaEntry?.alternates?.languages ?? {}).sort()).toEqual(["en", "ja", "x-default"]);
+    for (const url of Object.values(rest)) expect(byUrl(entries, url)?.alternates).toEqual(want);
+    expect(Object.keys(jaEntry?.alternates?.languages ?? {}).sort()).toEqual(["de", "en", "es", "ja", "pt-BR", "x-default"]);
   });
 
   // 意図: 自己参照。各エントリの loc が自分の言語の alternates と同じ文字列
@@ -79,13 +86,13 @@ describe("両言語が揃う 6 エントリの alternates.languages", () => {
     expect(home.alternates?.languages).toMatchObject({ ja: SITE_URL, "x-default": SITE_URL });
   });
 
-  // 意図: alternates を持つエントリはこの 6 件だけ
-  it("alternates を持つエントリはちょうど 6 件", () => {
+  // 意図: alternates を持つエントリはこの 15 件だけ
+  it("alternates を持つエントリはちょうど 15 件", () => {
     const withAlternates = sitemap()
       .filter((e) => e.alternates !== undefined)
       .map((e) => e.url)
       .sort();
-    expect(withAlternates).toEqual(PAIRS.flatMap((p) => [p.ja, p.en]).sort());
+    expect(withAlternates).toEqual([...ALL_URLS].sort());
   });
 });
 

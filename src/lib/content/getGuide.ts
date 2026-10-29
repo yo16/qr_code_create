@@ -5,11 +5,11 @@ import type { GuideContent, GuideFrontmatter } from "@/types/content";
 import type { Locale } from "@/i18n/types";
 import { isValidSlug } from "./isValidSlug";
 
-/** ja → src/content/guide、en → src/content/en/guide */
+/** ja → src/content/guide、ほか → src/content/{locale}/guide */
 function contentDir(locale: Locale): string {
-  return locale === "en"
-    ? path.join(process.cwd(), "src/content/en/guide")
-    : path.join(process.cwd(), "src/content/guide");
+  return locale === "ja"
+    ? path.join(process.cwd(), "src/content/guide")
+    : path.join(process.cwd(), "src/content", locale, "guide");
 }
 
 export function getGuide(slug: string, locale: Locale = "ja"): GuideContent | null {

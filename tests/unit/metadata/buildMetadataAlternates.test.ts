@@ -1,7 +1,5 @@
 import {
-  ALTERNATE_PATHS,
   buildMetadata,
-  getGuideAlternatePaths,
   PAGE_METADATA,
   PAGE_METADATA_EN,
 } from "@/lib/metadata/buildMetadata";
@@ -17,7 +15,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 type Og = { locale?: string; alternateLocale?: string | string[] };
 const og = (m: ReturnType<typeof buildMetadata>) => m.openGraph as Og;
 
-describe("alternatePaths なし", () => {
+describe("jaPath なし", () => {
   const opts = { title: "t", description: "d", path: "/faq" };
 
   // 意図: 片方の言語にしか無いページは hreflang も alternateLocale も出さない（ja / en とも）
@@ -29,40 +27,45 @@ describe("alternatePaths なし", () => {
   });
 });
 
-describe("alternatePaths あり", () => {
-  const alternatePaths = { ja: "/create", en: "/en/create" };
+describe("jaPath あり", () => {
+  const jaPath = "/create";
 
   // 意図: languages は ja / en / x-default の 3 キーだけで、x-default は ja を指す
-  it.each(["ja", "en"] as const)("%s: languages が 3 キーで x-default = ja", (locale) => {
+  // M4（設計書 7.1 / 11.1）: es / pt-BR / de のキーが増えて 6 キー。ja / en / x-default の値は変えない
+  it.each(["ja", "en"] as const)("%s: languages が 6 キーで x-default = ja", (locale) => {
     const meta = buildMetadata(
-      { title: "t", description: "d", path: locale === "ja" ? "/create" : "/en/create", alternatePaths },
+      { title: "t", description: "d", path: locale === "ja" ? "/create" : "/en/create", jaPath },
       locale
     );
     const languages = meta.alternates?.languages as Record<string, string>;
-    expect(Object.keys(languages).sort()).toEqual(["en", "ja", "x-default"]);
+    expect(Object.keys(languages).sort()).toEqual(["de", "en", "es", "ja", "pt-BR", "x-default"]);
     expect(languages).toEqual({
       ja: `${SITE_URL}/create`,
       en: `${SITE_URL}/en/create`,
+      es: `${SITE_URL}/es/create`,
+      "pt-BR": `${SITE_URL}/pt-br/create`,
+      de: `${SITE_URL}/de/create`,
       "x-default": `${SITE_URL}/create`,
     });
   });
 
   // 意図: canonical は各言語の自己 URL（相手言語や x-default に寄せない）
   it("canonical が自己 URL", () => {
-    const jaMeta = buildMetadata({ title: "t", description: "d", path: "/create", alternatePaths }, "ja");
-    const enMeta = buildMetadata({ title: "t", description: "d", path: "/en/create", alternatePaths }, "en");
+    const jaMeta = buildMetadata({ title: "t", description: "d", path: "/create", jaPath }, "ja");
+    const enMeta = buildMetadata({ title: "t", description: "d", path: "/en/create", jaPath }, "en");
     expect(jaMeta.alternates?.canonical).toBe(`${SITE_URL}/create`);
     expect(enMeta.alternates?.canonical).toBe(`${SITE_URL}/en/create`);
   });
 
   // 意図: og:locale は自分、og:locale:alternate は相手
   it("ja は locale ja_JP / alternateLocale en_US、en はその逆", () => {
-    const jaMeta = buildMetadata({ title: "t", description: "d", path: "/create", alternatePaths }, "ja");
-    const enMeta = buildMetadata({ title: "t", description: "d", path: "/en/create", alternatePaths }, "en");
+    const jaMeta = buildMetadata({ title: "t", description: "d", path: "/create", jaPath }, "ja");
+    const enMeta = buildMetadata({ title: "t", description: "d", path: "/en/create", jaPath }, "en");
     expect(og(jaMeta).locale).toBe("ja_JP");
-    expect(og(jaMeta).alternateLocale).toEqual(["en_US"]);
+    // M4: alternateLocale に es_ES / pt_BR / de_DE が増える
+    expect(og(jaMeta).alternateLocale).toEqual(["en_US", "es_ES", "pt_BR", "de_DE"]);
     expect(og(enMeta).locale).toBe("en_US");
-    expect(og(enMeta).alternateLocale).toEqual(["ja_JP"]);
+    expect(og(enMeta).alternateLocale).toEqual(["ja_JP", "es_ES", "pt_BR", "de_DE"]);
   });
 
   // 意図: ja ホームの URL 表記。canonical と languages.ja / x-default は同じ文字列（SITE_URL + "/"）
@@ -84,54 +87,58 @@ describe("alternatePaths あり", () => {
   });
 });
 
-describe("ALTERNATE_PATHS と PAGE_METADATA", () => {
-  // 意図: 3 ページの対応パスの値
-  it("home / create の対応パス", () => {
-    expect(ALTERNATE_PATHS).toEqual({
-      home: { ja: "/", en: "/en" },
-      create: { ja: "/create", en: "/en/create" },
-    });
+describe("jaPath と PAGE_METADATA", () => {
+  // 意図: 3 ページの jaPath の値
+  it("home / create の jaPath", () => {
+    expect(PAGE_METADATA.home.jaPath).toBe("/");
+    expect(PAGE_METADATA.create.jaPath).toBe("/create");
   });
 
-  // 意図: ja / en の両方の PAGE_METADATA が同じ alternatePaths を持つ（相互参照の前提）
-  it("PAGE_METADATA と PAGE_METADATA_EN の home / create が同じ alternatePaths", () => {
-    expect(PAGE_METADATA.home.alternatePaths).toEqual(ALTERNATE_PATHS.home);
-    expect(PAGE_METADATA.create.alternatePaths).toEqual(ALTERNATE_PATHS.create);
-    expect(PAGE_METADATA_EN.home.alternatePaths).toEqual(ALTERNATE_PATHS.home);
-    expect(PAGE_METADATA_EN.create.alternatePaths).toEqual(ALTERNATE_PATHS.create);
+  // 意図: ja / en の両方の PAGE_METADATA が同じ jaPath を持つ（相互参照の前提）
+  it("PAGE_METADATA と PAGE_METADATA_EN の home / create が同じ jaPath", () => {
+    expect(PAGE_METADATA_EN.home.jaPath).toEqual(PAGE_METADATA.home.jaPath);
+    expect(PAGE_METADATA_EN.create.jaPath).toEqual(PAGE_METADATA.create.jaPath);
   });
 
-  // 意図: 英語版の無いページには alternatePaths が無い
-  it("PAGE_METADATA の home / create 以外のキーに alternatePaths が無い", () => {
+  // 意図: 英語版の無いページには jaPath が無い
+  it("PAGE_METADATA の home / create 以外のキーに jaPath が無い", () => {
     const others = Object.entries(PAGE_METADATA).filter(([key]) => key !== "home" && key !== "create");
     expect(others.length).toBeGreaterThan(0);
     for (const [key, page] of others) {
-      expect({ key, has: "alternatePaths" in page }).toEqual({ key, has: false });
+      expect({ key, has: "jaPath" in page }).toEqual({ key, has: false });
     }
   });
 });
 
-describe("getGuideAlternatePaths", () => {
-  // 意図: 英語版のある slug だけ値を返す
-  it("getting-started は ja / en の対応パス", () => {
-    expect(getGuideAlternatePaths("getting-started")).toEqual({
-      ja: "/guide/getting-started",
-      en: "/en/guide/getting-started",
+describe("ガイドの jaPath", () => {
+  const guideMeta = (slug: string) =>
+    buildMetadata({ title: "t", description: "d", path: `/guide/${slug}`, jaPath: `/guide/${slug}` }, "ja");
+
+  // 意図: 英語版のある slug だけ hreflang が出る
+  it("getting-started は ja / en / x-default", () => {
+    expect(guideMeta("getting-started").alternates?.languages).toEqual({
+      ja: `${SITE_URL}/guide/getting-started`,
+      en: `${SITE_URL}/en/guide/getting-started`,
+      // M4: es / pt-BR / de のキーを足す（設計書 11.1）
+      es: `${SITE_URL}/es/guide/getting-started`,
+      "pt-BR": `${SITE_URL}/pt-br/guide/getting-started`,
+      de: `${SITE_URL}/de/guide/getting-started`,
+      "x-default": `${SITE_URL}/guide/getting-started`,
     });
   });
 
-  // 意図: ja にしか無い slug、存在しない slug、空文字は undefined
-  it.each(["utm-setup", "no-such-slug", ""])("%s は undefined", (slug) => {
-    expect(getGuideAlternatePaths(slug)).toBeUndefined();
+  // 意図: ja にしか無い slug、存在しない slug は languages を出さない
+  it.each(["utm-setup", "no-such-slug"])("%s は languages が無い", (slug) => {
+    expect(guideMeta(slug).alternates).not.toHaveProperty("languages");
   });
 
-  // 意図: ja の全ガイドのうち、対応パスが定義されるのは getting-started だけ
+  // 意図: ja の全ガイドのうち、hreflang が出るのは getting-started だけ
   // （ja ガイドを増やしたときに、英語版の無い slug へ hreflang が出ないことを固定する）
-  it("ja の全 slug のうち getGuideAlternatePaths が定義されるのは getting-started だけ", () => {
+  it("ja の全 slug のうち languages が出るのは getting-started だけ", () => {
     const slugs = getGuideSlugList();
     expect(slugs.length).toBeGreaterThan(1);
     expect(slugs).toContain("getting-started");
-    const defined = slugs.filter((slug) => getGuideAlternatePaths(slug) !== undefined);
+    const defined = slugs.filter((slug) => guideMeta(slug).alternates?.languages !== undefined);
     expect(defined).toEqual(["getting-started"]);
   });
 });

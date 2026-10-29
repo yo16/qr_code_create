@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { ja } from "@/i18n/ja";
 import { getDict } from "@/i18n/getDict";
 import type { Locale } from "@/i18n/types";
-import { hasEnVersion } from "@/lib/i18n/routes";
+import { LOCALES, type NonJaLocale } from "@/i18n/locales";
+import { LOCALE_CONFIG } from "@/lib/i18n/localeConfig";
+import { hasVersion, localePath } from "@/lib/i18n/routes";
+import { alternatesFor } from "@/lib/seo/alternates";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
 const SITE_NAME = "QR Code Create";
@@ -13,29 +16,19 @@ interface BuildMetadataOptions {
   path: string;       // 例: "/", "/faq", "/guide/utm-parameters"
   ogImagePath?: string; // public/images/og/ 配下のパス
   noIndex?: boolean;
-  alternatePaths?: { ja: string; en: string }; // 両言語が揃うページだけ指定
+  jaPath?: string;    // 翻訳のあるページだけ指定（ja 側のパス）。hreflang と alternateLocale を作る
 }
-
-/** 3 ページ（home / create / getting-started）の ja/en 対応パス */
-export const ALTERNATE_PATHS = {
-  home: { ja: "/", en: "/en" },
-  create: { ja: "/create", en: "/en/create" },
-} as const;
-
-/** ガイド記事の alternatePaths。英語版がある slug だけ返す */
-export function getGuideAlternatePaths(slug: string): { ja: string; en: string } | undefined {
-  return hasEnVersion(`/guide/${slug}`)
-    ? { ja: `/guide/${slug}`, en: `/en/guide/${slug}` }
-    : undefined;
-}
-
-const OG_LOCALES: Record<Locale, string> = { ja: "ja_JP", en: "en_US" };
 
 export function buildMetadata(
   options: BuildMetadataOptions,
   locale: Locale = "ja"
 ): Metadata {
-  const { title, description, path, ogImagePath = "/images/og/default.png", noIndex = false, alternatePaths } = options;
+  const { title, description, path, ogImagePath = "/images/og/default.png", noIndex = false, jaPath } = options;
+  const alternates = jaPath ? alternatesFor(jaPath) : undefined;
+  const alternateLocales =
+    jaPath && alternates
+      ? LOCALES.filter((l) => l !== locale && hasVersion(l, jaPath)).map((l) => LOCALE_CONFIG[l].ogLocale)
+      : [];
   const url = `${SITE_URL}${path}`;
   const imageUrl = `${SITE_URL}${ogImagePath}`;
   // title はテンプレート（layout の title.template）でサイト名が 1 回付く。
@@ -47,15 +40,7 @@ export function buildMetadata(
     description,
     alternates: {
       canonical: url,
-      ...(alternatePaths
-        ? {
-            languages: {
-              ja: `${SITE_URL}${alternatePaths.ja}`,
-              en: `${SITE_URL}${alternatePaths.en}`,
-              "x-default": `${SITE_URL}${alternatePaths.ja}`,
-            },
-          }
-        : {}),
+      ...(alternates ? { languages: alternates.languages } : {}),
     },
     openGraph: {
       title: socialTitle,
@@ -63,8 +48,8 @@ export function buildMetadata(
       url,
       siteName: SITE_NAME,
       images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
-      locale: OG_LOCALES[locale],
-      ...(alternatePaths ? { alternateLocale: [OG_LOCALES[locale === "ja" ? "en" : "ja"]] } : {}),
+      locale: LOCALE_CONFIG[locale].ogLocale,
+      ...(alternates ? { alternateLocale: alternateLocales } : {}),
       type: "website",
     },
     twitter: {
@@ -81,8 +66,8 @@ export function buildMetadata(
 const pages = ja.meta.pages;
 
 export const PAGE_METADATA = {
-  home: { ...pages.home, path: "/", alternatePaths: ALTERNATE_PATHS.home },
-  create: { ...pages.create, path: "/create", alternatePaths: ALTERNATE_PATHS.create },
+  home: { ...pages.home, path: "/", jaPath: "/" },
+  create: { ...pages.create, path: "/create", jaPath: "/create" },
   faq: { ...pages.faq, path: "/faq" },
   privacy: { ...pages.privacy, path: "/privacy", noIndex: true },
   terms: { ...pages.terms, path: "/terms", noIndex: true },
@@ -91,10 +76,19 @@ export const PAGE_METADATA = {
   blog: { ...pages.blog, path: "/blog" },
 } as const;
 
-// 英語版（home と create だけ）。使うときは buildMetadata(PAGE_METADATA_EN.home, "en")
-const pagesEn = getDict("en").meta.pages;
+interface LocalePageMetadataSet {
+  home: BuildMetadataOptions;
+  create: BuildMetadataOptions;
+}
 
-export const PAGE_METADATA_EN = {
-  home: { ...pagesEn.home, path: "/en", alternatePaths: ALTERNATE_PATHS.home },
-  create: { ...pagesEn.create, path: "/en/create", alternatePaths: ALTERNATE_PATHS.create },
-} as const;
+/** ja 以外の言語の home / create のメタデータ。使うときは buildMetadata(getLocalePageMetadata(locale).home, locale) */
+export function getLocalePageMetadata(locale: NonJaLocale): LocalePageMetadataSet {
+  const pagesLocale = getDict(locale).meta.pages;
+  return {
+    home: { ...pagesLocale.home, path: localePath(locale, "/"), jaPath: "/" },
+    create: { ...pagesLocale.create, path: localePath(locale, "/create"), jaPath: "/create" },
+  };
+}
+
+// 既存テスト用に残す
+export const PAGE_METADATA_EN = getLocalePageMetadata("en");

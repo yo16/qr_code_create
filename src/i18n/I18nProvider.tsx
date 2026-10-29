@@ -14,9 +14,9 @@ interface I18nProviderProps {
 }
 
 export function I18nProvider({ locale, messages, children }: I18nProviderProps) {
-  if (locale !== "ja" && !messages && process.env.NODE_ENV !== "production") {
-    console.warn(
-      `[i18n] I18nProvider: locale="${locale}" ですが messages が未指定です。ja の文言が表示されます。getClientMessages(locale) の結果を渡してください。`
+  if (locale !== "ja" && !messages) {
+    throw new Error(
+      `[i18n] I18nProvider: locale="${locale}" ですが messages が未指定です。getClientMessages(locale) の結果を渡してください。`
     );
   }
   return (

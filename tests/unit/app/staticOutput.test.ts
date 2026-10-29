@@ -324,6 +324,32 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
   });
 
+  // 意図: noindex の /privacy と /terms は sitemap に載らず、lastmod は記事（guide・use-cases・blog）にだけある
+  it("sitemap.xml.body に /privacy・/terms の loc が無く、lastmod が記事にだけある", () => {
+    const full = path.join(BUILD_APP, "sitemap.xml.body");
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const xml = fs.readFileSync(full, "utf8");
+    const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map((m) => {
+      const loc = m[1].match(/<loc>([^<]*)<\/loc>/);
+      if (!loc) throw new Error(`<loc> の無い <url>: ${m[1]}`);
+      const lastmod = m[1].match(/<lastmod>([^<]*)<\/lastmod>/);
+      return { pathname: new URL(loc[1]).pathname, lastmod: lastmod ? lastmod[1] : null };
+    });
+    expect(entries.length).toBeGreaterThan(0);
+    const pathnames = entries.map((e) => e.pathname);
+    expect(pathnames).not.toContain("/privacy");
+    expect(pathnames).not.toContain("/terms");
+    const isArticle = (p: string) => /\/(guide|use-cases|blog)\/[^/]+$/.test(p);
+    const articles = entries.filter((e) => isArticle(e.pathname));
+    const fixed = entries.filter((e) => !isArticle(e.pathname));
+    expect(articles.length).toBeGreaterThan(0);
+    expect(fixed.length).toBeGreaterThan(0);
+    for (const e of articles) expect(e.lastmod).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    for (const e of fixed) expect({ path: e.pathname, lastmod: e.lastmod }).toEqual({ path: e.pathname, lastmod: null });
+  });
+
   // 意図: sitemap の xhtml:link と HTML の hreflang が食い違わない。
   // sitemap を <url> 単位で解析し、xhtml:link を持つ 6 件それぞれで
   // (1) 自言語の xhtml:link が loc と一致、(2) 同じページの HTML の hreflang 3 本と一致（new URL().href で正規化）

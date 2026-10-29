@@ -47,6 +47,8 @@ export const jaClient = {
     },
     fileUpload: {
       sizeExceeded: "ファイルサイズが上限（{max}KB）を超えています。",
+      unsupportedType: "対応していない形式のファイルです。",
+      convertFailed: "画像を読み込めませんでした。別のファイルをお試しください。",
       dropZoneAria: "{label}。クリックまたはドラッグ&ドロップでファイルを選択",
       previewAlt: "プレビュー",
       dropText: "クリックまたはドラッグ&ドロップ",

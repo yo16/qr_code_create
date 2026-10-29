@@ -46,6 +46,8 @@ export const ptBrClient = {
     },
     fileUpload: {
       sizeExceeded: "O arquivo é maior que o limite de {max} KB.",
+      unsupportedType: "Este formato de arquivo não é compatível.",
+      convertFailed: "Não foi possível ler a imagem. Tente outro arquivo.",
       dropZoneAria: "{label}. Clique ou arraste e solte para escolher um arquivo",
       previewAlt: "Pré-visualização",
       dropText: "Clique ou arraste e solte",

@@ -13,7 +13,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: ["poster-flow.spec.ts", "create-qr-fit.spec.ts", "blog-utm-on-off-fit.spec.ts", "unknown-slug-404.spec.ts", "locale-404-record.spec.ts", "multi-locale-pages.spec.ts", "not-found-locales.spec.ts"],
+  testMatch: ["poster-flow.spec.ts", "create-qr-fit.spec.ts", "blog-utm-on-off-fit.spec.ts", "unknown-slug-404.spec.ts", "locale-404-record.spec.ts", "multi-locale-pages.spec.ts", "not-found-locales.spec.ts", "logo-upload.spec.ts"],
   fullyParallel: false,
   workers: 1,
   retries: 0,

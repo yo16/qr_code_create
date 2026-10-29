@@ -397,6 +397,46 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     }
   });
 
+  // 意図（qr_code_create-79i）: llms.txt は route（force-static）から出力され、public/llms.txt は無い。
+  // robots.txt には OAI-SearchBot が明示される
+  describe("llms.txt と robots.txt", () => {
+    const readBuilt = (file: string): string => {
+      const full = path.join(BUILD_APP, file);
+      if (!fs.existsSync(full)) {
+        throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+      }
+      return fs.readFileSync(full, "utf8");
+    };
+
+    it("llms.txt.body があり、.meta の content-type が text/plain であること", () => {
+      expect(readBuilt("llms.txt.body").length).toBeGreaterThan(0);
+      const meta = JSON.parse(readBuilt("llms.txt.meta")) as { headers?: Record<string, string> };
+      expect(meta.headers?.["content-type"]).toMatch(/^text\/plain/);
+    });
+
+    it("llms.txt.body に各言語のトップ URL があり、古い文言が無いこと", () => {
+      const body = readBuilt("llms.txt.body");
+      const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
+      for (const l of NON_JA_LOCALES) expect(body).toContain(`(${site}${LOCALE_CONFIG[l].prefix})`);
+      expect(body).not.toContain("All pages are written in Japanese");
+      expect(body).not.toContain("## Overview");
+      expect(body).not.toContain("## URL");
+      expect(body).not.toContain("/privacy");
+      expect(body).not.toContain("/terms");
+    });
+
+    it("robots.txt.body に User-Agent: OAI-SearchBot があること", () => {
+      const body = readBuilt("robots.txt.body");
+      expect(body).toMatch(/^User-Agent: OAI-SearchBot$/m);
+      expect(body).toMatch(/^User-Agent: \*$/m);
+      expect(body).toMatch(/^Allow: \/$/m);
+    });
+
+    it("public/llms.txt が無いこと（route に置き換わった）", () => {
+      expect(fs.existsSync(path.join(ROOT, "public", "llms.txt"))).toBe(false);
+    });
+  });
+
   const staticFiles = (): string[] => {
     const STATIC = path.join(ROOT, ".next", "static");
     if (!fs.existsSync(STATIC)) {

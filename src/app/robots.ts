@@ -13,6 +13,16 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "GPTBot",
         allow: "/",
       },
+      // OAI-SearchBot は ChatGPT 検索の索引用、Bingbot は Bing / Copilot 用。トークン名で指定する
+      // 出典: OpenAI「Overview of OpenAI Crawlers」https://developers.openai.com/api/docs/bots （2026-10-29 確認）
+      {
+        userAgent: "OAI-SearchBot",
+        allow: "/",
+      },
+      {
+        userAgent: "Bingbot",
+        allow: "/",
+      },
       {
         userAgent: "ChatGPT-User",
         allow: "/",

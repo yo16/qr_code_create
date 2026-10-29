@@ -46,6 +46,8 @@ export const enClient = {
     },
     fileUpload: {
       sizeExceeded: "The file is larger than the {max} KB limit.",
+      unsupportedType: "This file format is not supported.",
+      convertFailed: "The image could not be read. Please try another file.",
       dropZoneAria: "{label}. Click or drag and drop to choose a file",
       previewAlt: "Preview",
       dropText: "Click or drag and drop",

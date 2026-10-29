@@ -47,6 +47,8 @@ export const esClient = {
     },
     fileUpload: {
       sizeExceeded: "El archivo supera el límite de {max} KB.",
+      unsupportedType: "Este formato de archivo no es compatible.",
+      convertFailed: "No se pudo leer la imagen. Prueba con otro archivo.",
       dropZoneAria: "{label}. Haz clic o arrastra y suelta para elegir un archivo",
       previewAlt: "Vista previa",
       dropText: "Haz clic o arrastra y suelta",

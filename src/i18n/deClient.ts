@@ -47,6 +47,8 @@ export const deClient = {
     },
     fileUpload: {
       sizeExceeded: "Die Datei ist größer als das Limit von {max} KB.",
+      unsupportedType: "Dieses Dateiformat wird nicht unterstützt.",
+      convertFailed: "Das Bild konnte nicht gelesen werden. Bitte versuche eine andere Datei.",
       dropZoneAria: "{label}. Klicken oder per Drag-and-drop eine Datei auswählen",
       previewAlt: "Vorschau",
       dropText: "Klicken oder per Drag-and-drop",

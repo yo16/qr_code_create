@@ -26,7 +26,7 @@ jest.mock("@/lib/content/getGuide", () => {
     getGuide: (slug: string, locale: "ja" | "en" | "es" | "pt-br" | "de" = "ja") => {
       const base = actual.getGuide(slug, locale);
       if (base && slug === "getting-started") {
-        return { ...base, date: "2020-01-01", ...(locale === "ja" ? { updated: "2026-05-05" } : {}) };
+        return { ...base, date: "2020-01-01", ...{ updated: locale === "ja" ? "2026-05-05" : undefined } };
       }
       return base;
     },

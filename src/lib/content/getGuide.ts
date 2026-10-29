@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import type { GuideContent, GuideFrontmatter } from "@/types/content";
 import type { Locale } from "@/i18n/types";
 import { isValidSlug } from "./isValidSlug";
+import { requireIsoDate, toIsoDate } from "./toIsoDate";
 
 /** ja → src/content/guide、ほか → src/content/{locale}/guide */
 function contentDir(locale: Locale): string {
@@ -25,7 +26,8 @@ export function getGuide(slug: string, locale: Locale = "ja"): GuideContent | nu
     slug,
     title: frontmatter.title,
     description: frontmatter.description,
-    date: frontmatter.date,
+    date: requireIsoDate(frontmatter.date, filePath),
+    updated: toIsoDate(frontmatter.updated),
     order: frontmatter.order,
     howto: frontmatter.howto,
     content,

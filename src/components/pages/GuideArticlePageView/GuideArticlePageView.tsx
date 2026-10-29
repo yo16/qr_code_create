@@ -30,6 +30,7 @@ export function GuideArticlePageView({ locale, slug, guide }: GuideArticlePageVi
       description: guide.description,
       slug,
       datePublished: guide.date,
+      dateModified: guide.updated ?? guide.date,
       ...(isNonJa ? { basePath: `${prefix}/guide` } : {}),
     },
     locale

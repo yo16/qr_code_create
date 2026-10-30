@@ -3,6 +3,7 @@ import path from "path";
 import matter from "gray-matter";
 import type { UseCaseContent, UseCaseFrontmatter } from "@/types/content";
 import { isValidSlug } from "./isValidSlug";
+import { requireIsoDate, toIsoDate } from "./toIsoDate";
 
 const CONTENT_DIR = path.join(process.cwd(), "src/content/use-cases");
 
@@ -19,7 +20,8 @@ export function getUseCase(slug: string): UseCaseContent | null {
     slug,
     title: frontmatter.title,
     description: frontmatter.description,
-    date: frontmatter.date,
+    date: requireIsoDate(frontmatter.date, filePath),
+    updated: toIsoDate(frontmatter.updated),
     order: frontmatter.order,
     utmSource: frontmatter.utmSource,
     preset: frontmatter.preset,

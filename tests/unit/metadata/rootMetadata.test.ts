@@ -2,11 +2,12 @@
 // src/lib/metadata/rootMetadata.ts に移した。日本語版は分割前と同じ値であることを固定する。
 import { rootMetadataJa, rootMetadataEn } from "@/lib/metadata/rootMetadata";
 
-// 旧値の出典: 分割前の src/app/layout.tsx（コミット f572393 時点）の `export const metadata`
-const OLD_JA_TITLE_DEFAULT = "QR Code Create - UTMパラメータ付きQRコード生成ツール";
-const OLD_JA_TITLE_TEMPLATE = "%s | QR Code Create";
-const OLD_JA_DESCRIPTION =
-  "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。";
+// 期待値の出典: qr_code_create-av5 で検索語に合わせて更新した ja のルート title.default と description。
+// template は分割前（src/app/layout.tsx、コミット f572393 時点）から不変。
+const EXPECTED_JA_TITLE_DEFAULT = "無料のQRコード作成ツール（UTM対応） | QR Code Create";
+const EXPECTED_JA_TITLE_TEMPLATE = "%s | QR Code Create";
+const EXPECTED_JA_DESCRIPTION =
+  "UTMパラメータ付きのQRコードを無料で作れるツールです。印刷物ごとに、どこで読み取られたかを測れます。会員登録は不要です。";
 // metadataBase の期待値は実装と同じ式で作らず、値を直書きする（同語反復を避ける）
 const DEFAULT_SITE_URL_HREF = "https://qr-create.jp/";
 const SITE_URL_KEY = "NEXT_PUBLIC_SITE_URL";
@@ -53,12 +54,12 @@ describe("metadataBase", () => {
 describe("rootMetadataJa", () => {
   it("title.default と title.template が分割前と同じであること", () => {
     const title = rootMetadataJa.title as TitleObject;
-    expect(title.default).toBe(OLD_JA_TITLE_DEFAULT);
-    expect(title.template).toBe(OLD_JA_TITLE_TEMPLATE);
+    expect(title.default).toBe(EXPECTED_JA_TITLE_DEFAULT);
+    expect(title.template).toBe(EXPECTED_JA_TITLE_TEMPLATE);
   });
 
   it("description が分割前と同じであること", () => {
-    expect(rootMetadataJa.description).toBe(OLD_JA_DESCRIPTION);
+    expect(rootMetadataJa.description).toBe(EXPECTED_JA_DESCRIPTION);
   });
 });
 
@@ -79,7 +80,7 @@ describe("rootMetadataEn", () => {
 
   it("title.default と description が日本語版と異なること", () => {
     const title = rootMetadataEn.title as TitleObject;
-    expect(title.default).not.toBe(OLD_JA_TITLE_DEFAULT);
-    expect(rootMetadataEn.description).not.toBe(OLD_JA_DESCRIPTION);
+    expect(title.default).not.toBe(EXPECTED_JA_TITLE_DEFAULT);
+    expect(rootMetadataEn.description).not.toBe(EXPECTED_JA_DESCRIPTION);
   });
 });

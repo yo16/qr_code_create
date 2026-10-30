@@ -14,6 +14,26 @@ interface FileUploadProps {
   error?: string;
 }
 
+/**
+ * accept（MIME・"type/*"・拡張子のカンマ区切り）を許可リストとして検査する。
+ * ドラッグ&ドロップでは accept が効かないため、ここで再検査する。
+ */
+function isAcceptedFile(file: File, accept?: string): boolean {
+  if (!accept) return true;
+  const tokens = accept
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (tokens.length === 0) return true;
+  const type = file.type.toLowerCase();
+  const name = file.name.toLowerCase();
+  return tokens.some((token) => {
+    if (token.startsWith(".")) return name.endsWith(token);
+    if (token.endsWith("/*")) return type.startsWith(token.slice(0, -1));
+    return type === token;
+  });
+}
+
 export function FileUpload({
   label,
   accept,
@@ -33,6 +53,12 @@ export function FileUpload({
   const displayError = error ?? internalError;
 
   const processFile = (file: File) => {
+    if (!isAcceptedFile(file, accept)) {
+      setInternalError(t.unsupportedType);
+      setSelectedFileName(null);
+      onFileSelect(null);
+      return;
+    }
     if (maxSizeKB && file.size > maxSizeKB * 1024) {
       setInternalError(formatMessage(t.sizeExceeded, { max: maxSizeKB }));
       setSelectedFileName(null);

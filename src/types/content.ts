@@ -7,6 +7,7 @@ export interface GuideFrontmatter {
   title: string;
   description: string;
   date: string; // ISO date "YYYY-MM-DD"
+  updated?: string; // 更新日 "YYYY-MM-DD"。無ければ date を使う
   order?: number;
   howto?: HowToStepInput[]; // HowTo構造化データ用ステップ
 }
@@ -23,6 +24,7 @@ export interface UseCaseFrontmatter {
   title: string;
   description: string;
   date: string; // ISO date "YYYY-MM-DD"
+  updated?: string; // 更新日 "YYYY-MM-DD"。無ければ date を使う
   order?: number;
   utmSource?: string; // 推奨utm_source値
   preset?: string; // おすすめ装飾プリセットID
@@ -40,6 +42,7 @@ export interface BlogFrontmatter {
   title: string;
   description: string;
   date: string; // ISO date "YYYY-MM-DD"
+  updated?: string; // 更新日 "YYYY-MM-DD"。無ければ date を使う
   category?: string; // qr-marketing, utm-tips, story 等
 }
 

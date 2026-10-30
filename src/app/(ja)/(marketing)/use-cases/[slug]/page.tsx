@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: UseCasePageProps): Promise<Me
     title: useCase.title,
     description: useCase.description,
     path: `/use-cases/${slug}`,
+    article: { publishedTime: useCase.date, modifiedTime: useCase.updated ?? useCase.date },
   });
 }
 
@@ -44,6 +45,7 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
     description: useCase.description,
     slug,
     datePublished: useCase.date,
+    dateModified: useCase.updated ?? useCase.date,
     basePath: "/use-cases",
   });
 

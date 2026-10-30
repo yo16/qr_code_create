@@ -113,7 +113,9 @@ describe("GuideArticlePageView locale=en", () => {
     expect(all).toHaveLength(3);
     const text = JSON.stringify(all);
     expect(text).not.toMatch(JAPANESE);
-    expect(text.split(SITE_URL).slice(1).filter((rest) => !rest.startsWith("/en"))).toEqual([]);
+    // /en 始まりのほか、言語に依らない組織の @id・サイトのルート URL・OG 画像（BlogPosting の author / image）は許す
+    const allowed = /^(\/en(\/|"|#)|\/#organization|\/images\/og\/default\.png|")/;
+    expect(text.split(SITE_URL).slice(1).filter((rest) => !allowed.test(rest))).toEqual([]);
   });
 
   // 意図: 本文の後の CTA が英語版ツール /en/create を指す
@@ -182,7 +184,8 @@ describe("GuideArticlePageView locale=ja（抽出前の page.tsx と同じ出力
       "@type": "BlogPosting",
       headline: guide.title,
       description: guide.description,
-      author: { "@type": "Organization", name: "QR Code Create" },
+      image: `${SITE_URL}/images/og/default.png`,
+      author: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "QR Code Create", url: SITE_URL },
       publisher: { "@type": "Organization", name: "QR Code Create" },
       datePublished: "2026-04-17",
       dateModified: "2026-04-17",

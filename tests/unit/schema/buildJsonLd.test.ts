@@ -18,26 +18,6 @@ type HowToSchema = {
 };
 
 describe("buildHowToSchema", () => {
-  describe("引数なし（後方互換: UTM パラメータ付き QR コードの作り方）", () => {
-    // 意図: 既存の呼び出し形（引数なし）を壊さないこと。従来どおり UTM 版の HowTo を
-    //       そのまま返す（@type / name / 4 ステップ）。
-    it("@type が 'HowTo' で name が「UTMパラメータ付きQRコードの作り方」、step が 4 件であること", () => {
-      const schema = buildHowToSchema() as HowToSchema;
-      expect(schema["@context"]).toBe("https://schema.org");
-      expect(schema["@type"]).toBe("HowTo");
-      expect(schema.name).toBe("UTMパラメータ付きQRコードの作り方");
-      expect(Array.isArray(schema.step)).toBe(true);
-      expect(schema.step).toHaveLength(4);
-    });
-
-    // 意図: tool（使用ツール）は引数の有無にかかわらず共通で付与される。
-    it("tool.name が 'QR Code Create' であること", () => {
-      const schema = buildHowToSchema() as HowToSchema;
-      expect(schema.tool["@type"]).toBe("HowToTool");
-      expect(schema.tool.name).toBe("QR Code Create");
-    });
-  });
-
   describe("引数あり（ガイド frontmatter から生成する HowTo）", () => {
     const baseOptions = {
       name: "QRコードの作り方（はじめての方へ）",

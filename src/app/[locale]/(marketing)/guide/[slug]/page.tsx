@@ -30,6 +30,7 @@ export async function generateMetadata({ params }: LocaleGuidePageProps): Promis
       description: guide.description,
       path: `${LOCALE_CONFIG[locale].prefix}/guide/${slug}`,
       jaPath: `/guide/${slug}`,
+      article: { publishedTime: guide.date, modifiedTime: guide.updated ?? guide.date },
     },
     locale
   );

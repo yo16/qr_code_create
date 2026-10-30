@@ -80,20 +80,22 @@ export const ja = {
   },
   meta: {
     root: {
-      title: "QR Code Create - UTMパラメータ付きQRコード生成ツール",
+      // root.title はテンプレートが効かない既定値なので、サイト名を自分で 1 回含める
+      title: "無料のQRコード作成ツール（UTM対応） | QR Code Create",
       description:
-        "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
+        "UTMパラメータ付きのQRコードを無料で作れるツールです。印刷物ごとに、どこで読み取られたかを測れます。会員登録は不要です。",
     },
     pages: {
+      // home だけは template が効かないセグメントなので、サイト名を自分で 1 回含める。他の pages.* は含めない
       home: {
-        title: "QR Code Create - UTMパラメータ付きQRコード生成ツール",
+        title: "無料のQRコード作成ツール（UTM対応） | QR Code Create",
         description:
-          "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
+          "UTMパラメータ付きのQRコードを無料で作れるツールです。印刷物ごとに、どこで読み取られたかを測れます。会員登録は不要です。",
       },
       create: {
-        title: "QRコード生成",
+        title: "QRコードを無料で作成（UTM対応）",
         description:
-          "URLを入力するだけ。UTMパラメータと装飾フレームでマーケティング効果を最大化するQRコードを無料で作成できます。",
+          "URLを入れるだけで、QRコードを無料で作成できます。UTMパラメータの設定や、色・ロゴ・フレームの装飾にも対応。PNG・SVG・PDFで保存できます。",
       },
       faq: {
         title: "よくある質問",
@@ -142,6 +144,8 @@ export const ja = {
     organization: {
       description: "UTMパラメータガイダンス付きの無料QRコード生成ツール",
     },
+    // ツールページ用の固定 HowTo は gx4 で廃止。tests/unit/app/staticOutput.test.ts の needle としてだけ使っている。
+    // 消すときは needle と件数も直す。
     howTo: {
       name: "UTMパラメータ付きQRコードの作り方",
       description:

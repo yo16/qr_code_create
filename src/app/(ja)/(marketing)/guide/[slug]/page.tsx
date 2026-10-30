@@ -23,6 +23,7 @@ export async function generateMetadata({ params }: GuidePageProps): Promise<Meta
     description: guide.description,
     path: `/guide/${slug}`,
     jaPath: `/guide/${slug}`,
+    article: { publishedTime: guide.date, modifiedTime: guide.updated ?? guide.date },
   });
 }
 

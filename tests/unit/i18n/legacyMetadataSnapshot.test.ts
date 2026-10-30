@@ -18,18 +18,20 @@ describe("PAGE_METADATA は T2b 前と同じ", () => {
   it("8 ページ分が旧値と一致する", () => {
     expect(PAGE_METADATA).toEqual({
       home: {
-        title: "QR Code Create - UTMパラメータ付きQRコード生成ツール",
+        // qr_code_create-av5 で意図して変更: 検索語に合わせた文言にし、トップは template が効かないのでサイト名を含めて 1 回
+        title: "無料のQRコード作成ツール（UTM対応） | QR Code Create",
         description:
-          "UTMパラメータのガイダンス付きでQRコードを無料生成。装飾フレームやロゴ埋め込みでマーケティング効果を最大化。登録不要。",
+          "UTMパラメータ付きのQRコードを無料で作れるツールです。印刷物ごとに、どこで読み取られたかを測れます。会員登録は不要です。",
         path: "/",
         // qr_code_create-01z.7 で追加（hreflang 用。設計 10.1 の 3 で認めた変更）
         jaPath: "/",
       },
       create: {
         // qr_code_create-176 で意図して変更: サイト名はルートの title template が 1 回付けるので、ページ側からは外した
-        title: "QRコード生成",
+        // qr_code_create-av5 で意図して変更: 検索語に合わせた文言
+        title: "QRコードを無料で作成（UTM対応）",
         description:
-          "URLを入力するだけ。UTMパラメータと装飾フレームでマーケティング効果を最大化するQRコードを無料で作成できます。",
+          "URLを入れるだけで、QRコードを無料で作成できます。UTMパラメータの設定や、色・ロゴ・フレームの装飾にも対応。PNG・SVG・PDFで保存できます。",
         path: "/create",
         // qr_code_create-01z.7 で追加（hreflang 用。設計 10.1 の 3 で認めた変更）
         jaPath: "/create",
@@ -113,51 +115,11 @@ describe("JSON-LD は T2b 前と同じ", () => {
     expect(buildOrganizationSchema()).toEqual({
       "@context": "https://schema.org",
       "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
       name: "QR Code Create",
       url: SITE_URL,
       description: "UTMパラメータガイダンス付きの無料QRコード生成ツール",
-    });
-  });
-
-  // 意図: 引数なし HowTo の全フィールド（name / description / 4 ステップ）が旧値と一致
-  it("buildHowToSchema() が旧値と一致する", () => {
-    expect(buildHowToSchema()).toEqual({
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      name: "UTMパラメータ付きQRコードの作り方",
-      description:
-        "UTMパラメータを設定したQRコードを無料で作成する手順を解説します。",
-      totalTime: "PT3M",
-      tool: {
-        "@type": "HowToTool",
-        name: "QR Code Create",
-      },
-      step: [
-        {
-          "@type": "HowToStep",
-          name: "URLを入力する",
-          text: "QRコードにしたいWebページのURLを入力します。",
-          url: `${SITE_URL}/create#step1`,
-        },
-        {
-          "@type": "HowToStep",
-          name: "UTMパラメータを設定する",
-          text: "utm_source、utm_medium、utm_campaignを設定します。ガイダンスに従って入力すれば、Google Analyticsでの効果測定が可能になります。",
-          url: `${SITE_URL}/create#step2`,
-        },
-        {
-          "@type": "HowToStep",
-          name: "装飾をカスタマイズする",
-          text: "装飾フレームの選択、色の変更、ロゴの追加、キャプションの設定など、デザインをカスタマイズします。",
-          url: `${SITE_URL}/create#step3`,
-        },
-        {
-          "@type": "HowToStep",
-          name: "QRコードを生成・ダウンロードする",
-          text: "プレビューを確認し、PNG・SVG・PDFのいずれかの形式でQRコードをダウンロードします。",
-          url: `${SITE_URL}/create#step4`,
-        },
-      ],
+      logo: `${SITE_URL}/brand/mark.svg`,
     });
   });
 

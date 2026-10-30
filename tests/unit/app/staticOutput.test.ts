@@ -7,8 +7,10 @@
 import fs from "fs";
 import path from "path";
 import { en } from "@/i18n/en";
+import { ja } from "@/i18n/ja";
 import { LOCALES, NON_JA_LOCALES } from "@/i18n/locales";
 import { LOCALE_CONFIG, TRANSLATED_PATHS } from "@/lib/i18n/localeConfig";
+import { localePath } from "@/lib/i18n/routes";
 import { es } from "@/i18n/es";
 import { ptBr } from "@/i18n/ptBr";
 import { de } from "@/i18n/de";
@@ -324,6 +326,32 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
   });
 
+  // 意図: noindex の /privacy と /terms は sitemap に載らず、lastmod は記事（guide・use-cases・blog）にだけある
+  it("sitemap.xml.body に /privacy・/terms の loc が無く、lastmod が記事にだけある", () => {
+    const full = path.join(BUILD_APP, "sitemap.xml.body");
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const xml = fs.readFileSync(full, "utf8");
+    const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map((m) => {
+      const loc = m[1].match(/<loc>([^<]*)<\/loc>/);
+      if (!loc) throw new Error(`<loc> の無い <url>: ${m[1]}`);
+      const lastmod = m[1].match(/<lastmod>([^<]*)<\/lastmod>/);
+      return { pathname: new URL(loc[1]).pathname, lastmod: lastmod ? lastmod[1] : null };
+    });
+    expect(entries.length).toBeGreaterThan(0);
+    const pathnames = entries.map((e) => e.pathname);
+    expect(pathnames).not.toContain("/privacy");
+    expect(pathnames).not.toContain("/terms");
+    const isArticle = (p: string) => /\/(guide|use-cases|blog)\/[^/]+$/.test(p);
+    const articles = entries.filter((e) => isArticle(e.pathname));
+    const fixed = entries.filter((e) => !isArticle(e.pathname));
+    expect(articles.length).toBeGreaterThan(0);
+    expect(fixed.length).toBeGreaterThan(0);
+    for (const e of articles) expect(e.lastmod).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    for (const e of fixed) expect({ path: e.pathname, lastmod: e.lastmod }).toEqual({ path: e.pathname, lastmod: null });
+  });
+
   // 意図: sitemap の xhtml:link と HTML の hreflang が食い違わない。
   // sitemap を <url> 単位で解析し、xhtml:link を持つ 6 件それぞれで
   // (1) 自言語の xhtml:link が loc と一致、(2) 同じページの HTML の hreflang 3 本と一致（new URL().href で正規化）
@@ -369,6 +397,46 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
       }
       expect({ loc, htmlLinks }).toEqual({ loc, htmlLinks: links });
     }
+  });
+
+  // 意図（qr_code_create-79i）: llms.txt は route（force-static）から出力され、public/llms.txt は無い。
+  // robots.txt には OAI-SearchBot が明示される
+  describe("llms.txt と robots.txt", () => {
+    const readBuilt = (file: string): string => {
+      const full = path.join(BUILD_APP, file);
+      if (!fs.existsSync(full)) {
+        throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+      }
+      return fs.readFileSync(full, "utf8");
+    };
+
+    it("llms.txt.body があり、.meta の content-type が text/plain であること", () => {
+      expect(readBuilt("llms.txt.body").length).toBeGreaterThan(0);
+      const meta = JSON.parse(readBuilt("llms.txt.meta")) as { headers?: Record<string, string> };
+      expect(meta.headers?.["content-type"]).toMatch(/^text\/plain/);
+    });
+
+    it("llms.txt.body に各言語のトップ URL があり、古い文言が無いこと", () => {
+      const body = readBuilt("llms.txt.body");
+      const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
+      for (const l of NON_JA_LOCALES) expect(body).toContain(`(${site}${LOCALE_CONFIG[l].prefix})`);
+      expect(body).not.toContain("All pages are written in Japanese");
+      expect(body).not.toContain("## Overview");
+      expect(body).not.toContain("## URL");
+      expect(body).not.toContain("/privacy");
+      expect(body).not.toContain("/terms");
+    });
+
+    it("robots.txt.body に User-Agent: OAI-SearchBot があること", () => {
+      const body = readBuilt("robots.txt.body");
+      expect(body).toMatch(/^User-Agent: OAI-SearchBot$/m);
+      expect(body).toMatch(/^User-Agent: \*$/m);
+      expect(body).toMatch(/^Allow: \/$/m);
+    });
+
+    it("public/llms.txt が無いこと（route に置き換わった）", () => {
+      expect(fs.existsSync(path.join(ROOT, "public", "llms.txt"))).toBe(false);
+    });
   });
 
   const staticFiles = (): string[] => {
@@ -424,6 +492,192 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     }
     expect(SERVER_NEEDLES.length).toBe(NON_JA_LOCALES.length * 4);
     expect(CLIENT_NEEDLES.length).toBeGreaterThan(0);
+  });
+
+  // 意図（qr_code_create-gx4）: トップは WebSite と Organization、/create は WebApplication の JSON-LD を出す。
+  // 各 JSON-LD が JSON として壊れていないこと（JSON.parse できること）も確かめる
+  type LdNode = { "@type": string; "@id"?: string; url?: string; inLanguage?: string; publisher?: { "@id": string } };
+  const readJsonLd = (file: string): LdNode[] => {
+    const full = path.join(BUILD_APP, ...file.split("/"));
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    const html = fs.readFileSync(full, "utf8");
+    const scripts = Array.from(
+      html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g),
+      (m) => m[1]
+    );
+    return scripts.map((s) => JSON.parse(s) as LdNode);
+  };
+  const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://qr-create.jp";
+  type PageCase = [string, (typeof LOCALES)[number]];
+  const TOP_FILES: PageCase[] = LOCALES.map((l) => [l === "ja" ? "index.html" : `${l}.html`, l]);
+  const CREATE_FILES: PageCase[] = LOCALES.map((l) => [l === "ja" ? "create.html" : `${l}/create.html`, l]);
+  const countOf = (nodes: LdNode[], type: string) => nodes.filter((n) => n["@type"] === type).length;
+
+  it.each(TOP_FILES)("%s の JSON-LD に WebSite と Organization が 1 件ずつあり WebApplication が無いこと", (file) => {
+    const nodes = readJsonLd(file);
+    expect(countOf(nodes, "WebSite")).toBe(1);
+    expect(countOf(nodes, "Organization")).toBe(1);
+    expect(countOf(nodes, "WebApplication")).toBe(0);
+  });
+
+  it.each(TOP_FILES)("%s の WebSite が自言語の url と inLanguage を持つこと", (file, l) => {
+    const site = readJsonLd(file).find((n) => n["@type"] === "WebSite");
+    expect(site?.url).toBe(`${SITE}${localePath(l, "/")}`);
+    expect(site?.inLanguage).toBe(LOCALE_CONFIG[l].htmlLang);
+  });
+
+  it.each(TOP_FILES)("%s の WebSite.publisher.@id と Organization.@id が一致すること", (file) => {
+    const nodes = readJsonLd(file);
+    const site = nodes.find((n) => n["@type"] === "WebSite");
+    const org = nodes.find((n) => n["@type"] === "Organization");
+    expect(org?.["@id"]).toBeTruthy();
+    expect(site?.publisher?.["@id"]).toBe(org?.["@id"]);
+  });
+
+  it.each(CREATE_FILES)("%s の JSON-LD に WebApplication が 1 件あり WebSite と Organization が無いこと", (file) => {
+    const nodes = readJsonLd(file);
+    expect(countOf(nodes, "WebApplication")).toBe(1);
+    expect(countOf(nodes, "WebSite")).toBe(0);
+    expect(countOf(nodes, "Organization")).toBe(0);
+  });
+
+  it.each(CREATE_FILES)("%s の WebApplication が自言語の url と inLanguage を持つこと", (file, l) => {
+    const app = readJsonLd(file).find((n) => n["@type"] === "WebApplication");
+    expect(app?.url).toBe(`${SITE}${localePath(l, "/create")}`);
+    expect(app?.inLanguage).toBe(LOCALE_CONFIG[l].htmlLang);
+  });
+
+  // 意図（qr_code_create-cwq）: 記事の og:type は article で公開日・更新日が付き、BlogPosting に image と dateModified がある。
+  // dateModified は updated ?? date（en・de の getting-started は updated の 2026-10-28）。トップと /create は website
+  const readHtml = (file: string): string => {
+    const full = path.join(BUILD_APP, ...file.split("/"));
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    return fs.readFileSync(full, "utf8");
+  };
+  const metaContent = (html: string, property: string): string | undefined =>
+    html.match(new RegExp(`<meta property="${property}" content="([^"]*)"`))?.[1];
+  const firstSlug = (dir: string): string => {
+    const files = fs.readdirSync(path.join(ROOT, "src", "content", dir)).filter((f) => f.endsWith(".mdx")).sort();
+    return files[0].replace(/\.mdx$/, "");
+  };
+  const ARTICLE_CASES: [string, string][] = [
+    ["guide/getting-started.html", "2026-04-17"],
+    ["guide/utm-setup.html", "2026-04-17"],
+    [`use-cases/${firstSlug("use-cases")}.html`, ""],
+    [`blog/${firstSlug("blog")}.html`, ""],
+    ...NON_JA_LOCALES.map((l): [string, string] => [`${l}/guide/getting-started.html`, "2026-10-28"]),
+  ];
+
+  it.each(ARTICLE_CASES)("%s の og:type が article で、published_time と modified_time があること", (file, modified) => {
+    const html = readHtml(file);
+    expect(metaContent(html, "og:type")).toBe("article");
+    expect(metaContent(html, "article:published_time")).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    const mod = metaContent(html, "article:modified_time");
+    expect(mod).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    if (modified) expect(mod).toBe(modified);
+  });
+
+  it.each(ARTICLE_CASES)("%s の BlogPosting に image と dateModified があること", (file, modified) => {
+    const posting = readJsonLd(file).find((n) => n["@type"] === "BlogPosting") as
+      | (LdNode & { image?: string; dateModified?: string; datePublished?: string; author?: { "@id"?: string; url?: string } })
+      | undefined;
+    expect(posting).toBeDefined();
+    expect(posting?.image).toBe(`${SITE}/images/og/default.png`);
+    expect(posting?.author?.["@id"]).toBe(`${SITE}/#organization`);
+    expect(posting?.author?.url).toBe(SITE);
+    expect(posting?.dateModified).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    if (modified) expect(posting?.dateModified).toBe(modified);
+    else expect(posting?.dateModified).toBe(posting?.datePublished);
+  });
+
+  it.each([
+    "index.html",
+    "create.html",
+    "faq.html",
+    "guide.html",
+    "use-cases.html",
+    "blog.html",
+    ...NON_JA_LOCALES.flatMap((l) => [`${l}.html`, `${l}/create.html`]),
+  ])("%s の og:type が website で、article の日付が無いこと", (file) => {
+    const html = readHtml(file);
+    expect(metaContent(html, "og:type")).toBe("website");
+    expect(metaContent(html, "article:modified_time")).toBeUndefined();
+    expect(metaContent(html, "article:published_time")).toBeUndefined();
+  });
+
+  // use-cases と blog は全 slug で、article・updated なし（dateModified === datePublished）・modified_time === published_time
+  it.each(["use-cases", "blog"])("%s の全記事が article で、更新日が公開日と一致すること", (dir) => {
+    const slugs = fs
+      .readdirSync(path.join(ROOT, "src", "content", dir))
+      .filter((f) => f.endsWith(".mdx"))
+      .map((f) => f.replace(/\.mdx$/, ""));
+    expect(slugs.length).toBeGreaterThan(0);
+    for (const slug of slugs) {
+      const file = `${dir}/${slug}.html`;
+      const html = readHtml(file); // 無ければ fail
+      expect({ file, type: metaContent(html, "og:type") }).toEqual({ file, type: "article" });
+      const published = metaContent(html, "article:published_time");
+      expect(published).toMatch(/^\d{4}-\d{2}-\d{2}/);
+      expect({ file, modified: metaContent(html, "article:modified_time") }).toEqual({ file, modified: published });
+      const posting = readJsonLd(file).find((n) => n["@type"] === "BlogPosting") as
+        | (LdNode & { dateModified?: string; datePublished?: string })
+        | undefined;
+      expect(posting?.datePublished).toBeDefined();
+      expect({ file, dateModified: posting?.dateModified }).toEqual({ file, dateModified: posting?.datePublished });
+    }
+  });
+});
+
+// 意図（qr_code_create-av5）: ja のトップと /create の <title>・og:title・meta description が辞書の値で出力され、サイト名が 1 回だけ
+describeBuildOutput("ビルド成果物の ja トップと /create のメタデータ", () => {
+  const decode = (s: string): string =>
+    s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'");
+  const readHtml = (file: string): string => {
+    const full = path.join(BUILD_APP, file);
+    if (!fs.existsSync(full)) {
+      throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    }
+    return fs.readFileSync(full, "utf8");
+  };
+  const titleTag = (html: string): string | undefined => {
+    const m = html.match(/<title>([^<]*)<\/title>/);
+    return m ? decode(m[1]) : undefined;
+  };
+  const metaBy = (html: string, attr: "name" | "property", key: string): string | undefined => {
+    const m = html.match(new RegExp(`<meta ${attr}="${key}" content="([^"]*)"`));
+    return m ? decode(m[1]) : undefined;
+  };
+  const occurrences = (text: string, needle: string): number => text.split(needle).length - 1;
+
+  const CASES = [
+    ["index.html", ja.meta.pages.home, ja.meta.pages.home.title],
+    ["create.html", ja.meta.pages.create, `${ja.meta.pages.create.title} | QR Code Create`],
+  ] as const;
+
+  it.each(CASES)("%s の <title> が期待値と一致し、サイト名が 1 回だけであること", (file, _page, expected) => {
+    const title = titleTag(readHtml(file));
+    expect(title).toBe(expected);
+    expect(occurrences(title ?? "", "QR Code Create")).toBe(1);
+  });
+
+  it.each(CASES)("%s の og:title と twitter:title が期待値と一致し、サイト名が 1 回だけであること", (file, _page, expected) => {
+    const html = readHtml(file);
+    const og = metaBy(html, "property", "og:title");
+    const tw = metaBy(html, "name", "twitter:title");
+    expect(og).toBe(expected);
+    expect(tw).toBe(expected);
+    expect(occurrences(og ?? "", "QR Code Create")).toBe(1);
+    expect(occurrences(tw ?? "", "QR Code Create")).toBe(1);
+  });
+
+  it.each(CASES)("%s の meta description と og:description が辞書の値と一致すること", (file, page) => {
+    const html = readHtml(file);
+    expect(metaBy(html, "name", "description")).toBe(page.description);
+    expect(metaBy(html, "property", "og:description")).toBe(page.description);
   });
 });
 

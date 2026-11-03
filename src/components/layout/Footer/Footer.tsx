@@ -41,14 +41,14 @@ export function Footer({ locale = "ja" }: FooterProps = {}) {
               <Link href="/contact">{footer.contact}</Link>
             </div>
           )}
-          <p className={styles.copyright}>
-            &copy; {new Date().getFullYear()} QR Code Create
-          </p>
           <p className={styles.credit}>
-            Built by{" "}
-            <a href="https://smallpiece.jp/?utm_source=qr-code-create&utm_medium=referral&utm_content=footer" target="_blank" rel="noopener noreferrer">
-              Small Piece
-            </a>
+            <span>&copy; {new Date().getFullYear()} QR Code Create</span>{" "}
+            <span>
+              Built by{" "}
+              <a href="https://smallpiece.jp/?utm_source=qr-code-create&utm_medium=referral&utm_content=footer" target="_blank" rel="noopener noreferrer">
+                Small Piece
+              </a>
+            </span>
           </p>
         </div>
       </Container>

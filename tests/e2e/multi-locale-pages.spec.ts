@@ -328,3 +328,23 @@ test.describe("レイアウト（横スクロール・ヘッダー）", () => {
     }
   });
 });
+
+test.describe("フッターの Small Piece リンク", () => {
+  for (const locale of LOCALES) {
+    const self = localePath(locale, "/");
+    // 意図: 全言語のトップで、UTM 付きの外部リンクが 1 件だけあり、安全な属性が付く
+    test(`${self}: Small Piece リンクが UTM 付きで新しいタブ・noopener noreferrer`, async ({ page }) => {
+      await page.goto(self, { timeout: NAV_TIMEOUT });
+      const link = page.locator('footer a[href^="https://smallpiece.jp/"]');
+      await expect(link).toHaveCount(1);
+      await expect(link).toHaveAttribute(
+        "href",
+        "https://smallpiece.jp/?utm_source=qr-code-create&utm_medium=referral&utm_content=footer"
+      );
+      await expect(link).toHaveAttribute("target", "_blank");
+      const rel = ((await link.getAttribute("rel")) ?? "").split(/\s+/);
+      expect(rel).toContain("noopener");
+      expect(rel).toContain("noreferrer");
+    });
+  }
+});

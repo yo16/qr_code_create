@@ -46,7 +46,7 @@ export function Footer({ locale = "ja" }: FooterProps = {}) {
           </p>
           <p className={styles.credit}>
             Built by{" "}
-            <a href="https://smallpiece.jp/?utm_source=qr-create&utm_medium=referral&utm_campaign=footer_credit" target="_blank" rel="noopener noreferrer">
+            <a href="https://smallpiece.jp/?utm_source=qr-code-create&utm_medium=referral&utm_content=footer" target="_blank" rel="noopener noreferrer">
               Small Piece
             </a>
           </p>

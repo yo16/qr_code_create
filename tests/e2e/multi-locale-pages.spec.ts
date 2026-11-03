@@ -348,3 +348,35 @@ test.describe("フッターの Small Piece リンク", () => {
     });
   }
 });
+
+// qr_code_create-9ck 意図: コピーライトと Built by が 1 つの段落で 1 行に収まり、横にはみ出さない
+test.describe("フッターのコピーライトと Built by は 1 行", () => {
+  for (const locale of LOCALES) {
+    const self = localePath(locale, "/");
+    for (const width of [1280, 390, 320]) {
+      test(`${self} 幅${width}: コピーライトと Built by が同じ段落の 1 行に並ぶ`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 800 });
+        await page.goto(self, { timeout: NAV_TIMEOUT });
+        const p = page.locator('footer a[href^="https://smallpiece.jp/"]').locator("xpath=ancestor::p[1]");
+        await expect(p).toHaveCount(1);
+        await expect(p).toContainText("QR Code Create");
+        const m = await p.evaluate((el) => {
+          const r = document.createRange();
+          r.selectNodeContents(el);
+          const tops = new Set<number>();
+          for (const rect of Array.from(r.getClientRects())) {
+            if (rect.width > 0 && rect.height > 0) tops.add(Math.round(rect.top));
+          }
+          const box = el.getBoundingClientRect();
+          const cs = getComputedStyle(el);
+          const fs = parseFloat(cs.fontSize);
+          const lh = cs.lineHeight === "normal" ? fs * 1.2 : parseFloat(cs.lineHeight);
+          return { lineTops: tops.size, height: box.height, lh, right: r.getBoundingClientRect().right, vw: document.documentElement.clientWidth };
+        });
+        expect(m.height).toBeLessThanOrEqual(m.lh * 1.5);
+        expect(m.lineTops).toBe(1);
+        expect(m.right).toBeLessThanOrEqual(m.vw);
+      });
+    }
+  }
+});

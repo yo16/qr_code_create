@@ -38,4 +38,35 @@ describe.each([...LOCALES])("Footer の Small Piece リンク locale=%s", (local
     const { container } = render(<Footer locale={locale} />);
     expect(container).toHaveTextContent("Built by Small Piece");
   });
+
+  // qr_code_create-9ck 意図: コピーライトと Built by を 1 つの段落にまとめ、1 段で並べる
+  it("1 段: リンクを含む段落に QR Code Create と Built by Small Piece の両方が入る", () => {
+    render(<Footer locale={locale} />);
+    const p = screen.getByRole("link", { name: "Small Piece" }).closest("p");
+    expect(p).not.toBeNull();
+    expect(p).toHaveTextContent("QR Code Create");
+    expect(p).toHaveTextContent("Built by Small Piece");
+  });
+
+  // 意図: 中黒でつながず、コピーライトと Built by を別の要素に分ける（区切りは余白）
+  it("1 段: 中黒でつながず、コピーライトと Built by を別の要素に分ける", () => {
+    render(<Footer locale={locale} />);
+    const p = screen.getByRole("link", { name: "Small Piece" }).closest("p");
+    expect(p).not.toBeNull();
+    const text = p?.textContent ?? "";
+    expect(text).not.toContain("·");
+    expect(text).not.toContain("・");
+    expect(p?.children).toHaveLength(2);
+    expect(p?.children[0].textContent).toBe(`© ${new Date().getFullYear()} QR Code Create`);
+    expect(p?.children[1].textContent).toBe("Built by Small Piece");
+    // 読み上げで語がくっつかないよう、間に空白がある
+    expect(text).toMatch(/QR Code Create\s+Built by/);
+  });
+
+  // 意図: 年は直書きせず現在の年を使う
+  it("1 段: 段落に現在の年を使った © が含まれる", () => {
+    render(<Footer locale={locale} />);
+    const text = screen.getByRole("link", { name: "Small Piece" }).closest("p")?.textContent ?? "";
+    expect(text).toContain(`© ${new Date().getFullYear()} QR Code Create`);
+  });
 });

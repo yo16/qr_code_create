@@ -36,14 +36,13 @@
   margin-bottom: var(--spacing-sm);
 }
 
-.copyright {
+.credit {
   font-size: var(--font-size-xs);
   color: var(--color-muted);
 }
 
-.credit {
-  font-size: var(--font-size-xs);
-  color: var(--color-muted);
+.credit span:first-child {
+  margin-inline-end: var(--spacing-md);
 }
 
 .credit a {

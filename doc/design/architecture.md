@@ -63,6 +63,7 @@ QR Code Create は Next.js App Router ベースの**フロントエンド完結�
 | MDXレンダリング | next-mdx-remote | 5.x | MDXコンテンツのレンダリング |
 | GFM拡張 | remark-gfm | 4.x | テーブル・打ち消し線等のGFM構文対応 |
 | フォント | next/font (Noto Sans JP) | - | Webフォント最適化 |
+| 外部サービス | - | - | 一覧は [8.4](#84-外部のインフラサービス) |
 | アナリティクス | GA4 (gtag.js) | - | イベントトラッキング |
 | デプロイ | Vercel | - | ホスティング・CDN |
 | リンター | ESLint + Prettier | - | コード品質 |
@@ -414,6 +415,38 @@ Preview deploy (PR時) / Production deploy (main マージ時)
 |---|---|---|
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | GA4 測定ID | Vercel Environment Variables |
 | `NEXT_PUBLIC_SITE_URL` | サイトURL（OGP等で使用） | Vercel Environment Variables |
+
+### 8.4 外部のインフラサービス
+
+サーバー・DB・認証は持たないが、次の外部サービスに依存している（2026-11-06 にコード、設定、DNS、本番のレスポンスヘッダーで確認）。
+
+#### 本番の配信と運用
+
+| サービス | 用途 | 根拠（確認した場所） |
+|---|---|---|
+| Vercel | ホスティング、CDN、ビルド、環境変数の保管。main への push で本番デプロイ、PR でプレビューデプロイ | 本番レスポンスの `Server: Vercel`、`X-Vercel-Id: hnd1::…`（東京リージョンのエッジ）。A レコード `216.198.79.1`。[8.2](#82-デプロイフロー)・[8.3](#83-環境変数) |
+| Google Cloud DNS | `qr-create.jp` の権威 DNS | NS レコードが `ns-cloud-c1〜c4.googledomains.com`。ドメインの登録事業者（レジストラ）はリポジトリからは分からない |
+| GitHub | ソースコードの管理。Vercel のデプロイの起点 | `git remote`（`github.com:yo16/qr_code_create`） |
+
+#### ブラウザから通信する先
+
+| サービス | 用途 | 根拠（確認した場所） |
+|---|---|---|
+| Google Analytics 4（gtag.js） | アクセス解析とコンバージョン計測（`qr_downloaded` など）。`NEXT_PUBLIC_GA_MEASUREMENT_ID` があるときだけ読み込む | `src/components/layout/RootShell/RootShell.tsx`、`src/lib/analytics/events.ts`。通信先は `www.googletagmanager.com`、`*.google-analytics.com`、`*.analytics.google.com`、`stats.g.doubleclick.net`（`src/lib/security/csp.ts`） |
+| フォームメーラー（form-mailer.jp） | 問い合わせフォーム（`/contact`）の送信先。フォームは外部サービスの確認画面へ POST する | `src/app/(ja)/(marketing)/contact/page.tsx` の `action="https://ssl.form-mailer.jp/…"`。CSP の `form-action` |
+
+外部へ送る通信先を増やすときは、`src/lib/security/csp.ts` の CSP と、プライバシーポリシー（`/privacy`）を合わせて直す。
+
+#### ビルド時と開発時だけ使うもの
+
+| サービス | 用途 | 根拠（確認した場所） |
+|---|---|---|
+| Google Fonts | Noto Sans JP をビルド時に取得し、自サイトから配信する（`next/font/google`）。ブラウザは Google Fonts に通信しない | `RootShell.tsx`。CSP の `font-src` は `'self' data:` のみ |
+| npm レジストリ | 依存パッケージの取得 | `package.json`、`package-lock.json` |
+| Google Analytics Data API（GCP プロジェクト） | 開発者が GA4 の数値を取得する（analytics-mcp、`/ga-conversion-report`）。サイトの動作には関係しない | `.claude/commands/ga-conversion-report.md` |
+| Google Search Console | 検索流入の確認（運用で参照） | `doc/design/i18n-multi.md` |
+
+QR コードの生成、画像・PDF の書き出し、ロゴの読み込みはすべてブラウザ内で行い、外部サービスへは送らない。
 
 ---
 

@@ -45,9 +45,9 @@ describe("buildMetadata の article 引数", () => {
 });
 
 describe("記事ページの generateMetadata", () => {
-  it("ja の getting-started は article で modifiedTime が date（2026-04-17）であること", async () => {
+  it("ja の getting-started は article で modifiedTime が updated（2026-11-10）、publishedTime が date（2026-04-17）であること", async () => {
     const m = await jaGuideMeta({ params: Promise.resolve({ slug: "getting-started" }) });
-    expect(og(m)).toMatchObject({ type: "article", publishedTime: "2026-04-17", modifiedTime: "2026-04-17" });
+    expect(og(m)).toMatchObject({ type: "article", publishedTime: "2026-04-17", modifiedTime: "2026-11-10" });
   });
 
   it("ja の全ガイドが article で、modifiedTime が updated ?? date であること", async () => {

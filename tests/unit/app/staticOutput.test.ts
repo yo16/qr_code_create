@@ -6,6 +6,7 @@
 // ビルド成果物のブロックは .next/server/app が無ければ skip（REQUIRE_BUILD_OUTPUT=1 なら fail）。
 import fs from "fs";
 import path from "path";
+import matter from "gray-matter";
 import { en } from "@/i18n/en";
 import { ja } from "@/i18n/ja";
 import { LOCALES, NON_JA_LOCALES } from "@/i18n/locales";
@@ -564,9 +565,14 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     const files = fs.readdirSync(path.join(ROOT, "src", "content", dir)).filter((f) => f.endsWith(".mdx")).sort();
     return files[0].replace(/\.mdx$/, "");
   };
+  const isoDay = (v: unknown): string => (v instanceof Date ? v.toISOString() : String(v)).slice(0, 10);
+  const expectedModified = (dir: string, slug: string): string => {
+    const fm = matter(fs.readFileSync(path.join(ROOT, "src", "content", dir, `${slug}.mdx`), "utf-8")).data;
+    return isoDay(fm.updated ?? fm.date);
+  };
   const ARTICLE_CASES: [string, string][] = [
-    ["guide/getting-started.html", "2026-04-17"],
-    ["guide/utm-setup.html", "2026-04-17"],
+    ["guide/getting-started.html", expectedModified("guide", "getting-started")],
+    ["guide/utm-setup.html", expectedModified("guide", "utm-setup")],
     [`use-cases/${firstSlug("use-cases")}.html`, ""],
     [`blog/${firstSlug("blog")}.html`, ""],
     ...NON_JA_LOCALES.map((l): [string, string] => [`${l}/guide/getting-started.html`, "2026-10-28"]),
@@ -609,8 +615,8 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect(metaContent(html, "article:published_time")).toBeUndefined();
   });
 
-  // use-cases と blog は全 slug で、article・updated なし（dateModified === datePublished）・modified_time === published_time
-  it.each(["use-cases", "blog"])("%s の全記事が article で、更新日が公開日と一致すること", (dir) => {
+  // use-cases と blog は全 slug で、article・更新日が frontmatter の updated（なければ date）と一致する
+  it.each(["use-cases", "blog"])("%s の全記事が article で、更新日が updated（なければ公開日）と一致すること", (dir) => {
     const slugs = fs
       .readdirSync(path.join(ROOT, "src", "content", dir))
       .filter((f) => f.endsWith(".mdx"))
@@ -622,12 +628,14 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
       expect({ file, type: metaContent(html, "og:type") }).toEqual({ file, type: "article" });
       const published = metaContent(html, "article:published_time");
       expect(published).toMatch(/^\d{4}-\d{2}-\d{2}/);
-      expect({ file, modified: metaContent(html, "article:modified_time") }).toEqual({ file, modified: published });
+      const fm = matter(fs.readFileSync(path.join(ROOT, "src", "content", dir, `${slug}.mdx`), "utf-8")).data;
+      const expected = isoDay(fm.updated ?? fm.date);
+      expect({ file, modified: metaContent(html, "article:modified_time") }).toEqual({ file, modified: expected });
       const posting = readJsonLd(file).find((n) => n["@type"] === "BlogPosting") as
         | (LdNode & { dateModified?: string; datePublished?: string })
         | undefined;
       expect(posting?.datePublished).toBeDefined();
-      expect({ file, dateModified: posting?.dateModified }).toEqual({ file, dateModified: posting?.datePublished });
+      expect({ file, dateModified: posting?.dateModified }).toEqual({ file, dateModified: expected });
     }
   });
 });

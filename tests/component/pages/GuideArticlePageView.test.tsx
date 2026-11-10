@@ -188,7 +188,7 @@ describe("GuideArticlePageView locale=ja（抽出前の page.tsx と同じ出力
       author: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "QR Code Create", url: SITE_URL },
       publisher: { "@type": "Organization", name: "QR Code Create" },
       datePublished: "2026-04-17",
-      dateModified: "2026-04-17",
+      dateModified: "2026-11-10",
       mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/guide/getting-started` },
       inLanguage: "ja",
     });

@@ -35,9 +35,10 @@ describe("getting-started の updated（実ファイル）", () => {
     expect(guide?.updated).toBe("2026-10-28");
   });
 
-  it("ja は updated が無く、date が 2026-04-17 であること", () => {
+  // 意図: ja は lint を通して基準から外したため updated を持つ（他の ja ガイドは基準に残るので持たない）
+  it("ja は updated が 2026-11-10 で、date が 2026-04-17 であること", () => {
     const guide = getGuide("getting-started", "ja");
-    expect(guide?.updated).toBeUndefined();
+    expect(guide?.updated).toBe("2026-11-10");
     expect(guide?.date).toBe("2026-04-17");
   });
 });
@@ -58,13 +59,13 @@ describe("ガイド: 取得関数の値が生の frontmatter と一致するこ�
     }
   });
 
-  it("updated を持つガイドは 4 言語の getting-started だけであること", () => {
+  it("updated を持つガイドは全言語の getting-started だけであること", () => {
     const withUpdated = LOCALES.flatMap((l) =>
       getGuideSlugList(l)
         .filter((slug) => getGuide(slug, l)?.updated !== undefined)
         .map((slug) => `${l}/${slug}`)
     );
-    expect(withUpdated.sort()).toEqual(NON_JA_LOCALES.map((l) => `${l}/getting-started`).sort());
+    expect(withUpdated.sort()).toEqual(LOCALES.map((l) => `${l}/getting-started`).sort());
   });
 });
 

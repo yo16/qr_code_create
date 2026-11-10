@@ -24,6 +24,9 @@ function expectedDate(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+/** updated を持つ use-cases（基準から外した記事）。それ以外は未定義であること */
+const UPDATED_USE_CASES: Record<string, string> = { poster: "2026-11-10" };
+
 const guideDir = (l: Locale) => (l === "ja" ? ["guide"] : [l, "guide"]);
 
 describe("getting-started の updated（実ファイル）", () => {
@@ -32,9 +35,10 @@ describe("getting-started の updated（実ファイル）", () => {
     expect(guide?.updated).toBe("2026-10-28");
   });
 
-  it("ja は updated が無く、date が 2026-04-17 であること", () => {
+  // 意図: ja は lint を通して基準から外したため updated を持つ（他の ja ガイドは基準に残るので持たない）
+  it("ja は updated が 2026-11-10 で、date が 2026-04-17 であること", () => {
     const guide = getGuide("getting-started", "ja");
-    expect(guide?.updated).toBeUndefined();
+    expect(guide?.updated).toBe("2026-11-10");
     expect(guide?.date).toBe("2026-04-17");
   });
 });
@@ -55,13 +59,15 @@ describe("ガイド: 取得関数の値が生の frontmatter と一致するこ�
     }
   });
 
-  it("updated を持つガイドは 4 言語の getting-started だけであること", () => {
+  it("updated を持つガイドは全言語の getting-started と ja の utm-parameters だけであること", () => {
     const withUpdated = LOCALES.flatMap((l) =>
       getGuideSlugList(l)
         .filter((slug) => getGuide(slug, l)?.updated !== undefined)
         .map((slug) => `${l}/${slug}`)
     );
-    expect(withUpdated.sort()).toEqual(NON_JA_LOCALES.map((l) => `${l}/getting-started`).sort());
+    expect(withUpdated.sort()).toEqual(
+      [...LOCALES.map((l) => `${l}/getting-started`), "ja/utm-parameters"].sort()
+    );
   });
 });
 
@@ -77,7 +83,10 @@ describe("use-cases と blog: 取得関数の値が生の frontmatter と一致�
         date: expectedDate(raw.date),
         updated: expectedDate(raw.updated),
       });
-      expect(uc?.updated).toBeUndefined();
+      // 意図: yomiyasu 基準（tests/fixtures/yomiyasu-baseline.json）に残る記事は、
+      // 編集するとハッシュが外れて lint が必須になるため updated を足さない。
+      // lint を通して基準から外した記事だけ updated を持てる（ここに追記する）。
+      expect(uc?.updated).toBe(UPDATED_USE_CASES[slug]);
     }
   });
 

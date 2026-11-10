@@ -66,10 +66,10 @@ describe("buildBlogPostingSchema", () => {
 });
 
 describe("記事ページの BlogPosting", () => {
-  it("ja の getting-started は dateModified が date（2026-04-17）で、image と author が付くこと", async () => {
+  it("ja の getting-started は dateModified が updated（2026-11-10）で、image と author が付くこと", async () => {
     const { container } = render((await GuidePage({ params: Promise.resolve({ slug: "getting-started" }) })) as React.ReactElement);
     const p = blogPostingOf(container);
-    expect(p.dateModified).toBe("2026-04-17");
+    expect(p.dateModified).toBe("2026-11-10");
     expect(p.image).toBe(`${SITE_URL}${DEFAULT_OG_IMAGE_PATH}`);
     expect(p.author?.["@id"]).toBe(`${SITE_URL}/#organization`);
     expect(p.author?.url).toBe(SITE_URL);
@@ -92,6 +92,13 @@ describe("記事ページの BlogPosting", () => {
     const p = blogPostingOf(container);
     expect(p.dateModified).toBe(u?.updated ?? u?.date);
     expect(p.image).toBe(`${SITE_URL}${DEFAULT_OG_IMAGE_PATH}`);
+  });
+
+  it("use-cases/poster の BlogPosting は dateModified が updated（2026-11-10）で datePublished と異なること", async () => {
+    const { container } = render((await UseCasePage({ params: Promise.resolve({ slug: "poster" }) })) as React.ReactElement);
+    const p = blogPostingOf(container);
+    expect(p.dateModified).toBe("2026-11-10");
+    expect(p.datePublished).toBe("2026-04-17");
   });
 
   it("blog のページで dateModified が updated ?? date で渡ること", async () => {

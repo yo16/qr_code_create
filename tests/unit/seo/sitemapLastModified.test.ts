@@ -14,8 +14,8 @@ describe("sitemap の getting-started の lastModified（実データ）", () =>
     expect(lastModifiedOf(`${LOCALE_CONFIG[l].prefix}/guide/getting-started`)).toBe("2026-10-28");
   });
 
-  it("ja は 2026-04-17 であること", () => {
-    expect(lastModifiedOf("/guide/getting-started")).toBe("2026-04-17");
+  it("ja は updated の 2026-11-10 であること", () => {
+    expect(lastModifiedOf("/guide/getting-started")).toBe("2026-11-10");
   });
 
   it("記事以外（/create）には lastModified が付かないこと", () => {

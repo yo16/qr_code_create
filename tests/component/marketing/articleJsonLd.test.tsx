@@ -94,6 +94,13 @@ describe("記事ページの BlogPosting", () => {
     expect(p.image).toBe(`${SITE_URL}${DEFAULT_OG_IMAGE_PATH}`);
   });
 
+  it("use-cases/poster の BlogPosting は dateModified が updated（2026-11-10）で datePublished と異なること", async () => {
+    const { container } = render((await UseCasePage({ params: Promise.resolve({ slug: "poster" }) })) as React.ReactElement);
+    const p = blogPostingOf(container);
+    expect(p.dateModified).toBe("2026-11-10");
+    expect(p.datePublished).toBe("2026-04-17");
+  });
+
   it("blog のページで dateModified が updated ?? date で渡ること", async () => {
     const slug = getBlogSlugList()[0];
     const b = getBlog(slug);

@@ -59,13 +59,15 @@ describe("ガイド: 取得関数の値が生の frontmatter と一致するこ�
     }
   });
 
-  it("updated を持つガイドは全言語の getting-started だけであること", () => {
+  it("updated を持つガイドは全言語の getting-started と ja の utm-parameters だけであること", () => {
     const withUpdated = LOCALES.flatMap((l) =>
       getGuideSlugList(l)
         .filter((slug) => getGuide(slug, l)?.updated !== undefined)
         .map((slug) => `${l}/${slug}`)
     );
-    expect(withUpdated.sort()).toEqual(LOCALES.map((l) => `${l}/getting-started`).sort());
+    expect(withUpdated.sort()).toEqual(
+      [...LOCALES.map((l) => `${l}/getting-started`), "ja/utm-parameters"].sort()
+    );
   });
 });
 

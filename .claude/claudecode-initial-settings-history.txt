@@ -1,2 +1,3 @@
 # claudecode-initial-settings の導入記録。Claude Code への指示ではない。
 smallpiece-link@v1 2026-11-03
+service-readme@v1 2026-11-10

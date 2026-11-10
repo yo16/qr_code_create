@@ -66,8 +66,8 @@
 | E1 | 2026-11-10 | GSC に正規 URL のサイトマップを送り直す | 実施済み・結果待ち | 2026-11-24、12-08 |
 | E2 | 2026-11-10 | URL 検査からインデックス登録をリクエストする（対照群あり） | 実施済み・結果待ち | 2026-11-17、11-24 |
 | E3 | 未着手 | Bing Webmaster Tools に登録し、サイトマップを送る | ユーザーのサインイン待ち | 登録の 2 週間後 |
-| E4 | 2026-11-10 | 順位のわりに CTR が低いページの title と description を直す（/use-cases/poster） | dev 反映済み・本番反映待ち | 本番反映の 4 週間後 |
-| E5 | 2026-11-10 | 引用されやすい形に記事を直す（getting-started に定義文・FAQ・更新日、utm-parameters の書き直し） | dev 反映済み・本番反映待ち | 本番反映の 4 週間後 |
+| E4 | 2026-11-10 | 順位のわりに CTR が低いページの title と description を直す（/use-cases/poster） | 本番反映済み（main c9089dc）・結果待ち | 2026-12-08 |
+| E5 | 2026-11-10 | 引用されやすい形に記事を直す（getting-started に定義文・FAQ・更新日、utm-parameters の書き直し） | 本番反映済み（main c9089dc）・結果待ち | 2026-12-08 |
 | E6 | 未着手 | サイト外での告知（AlternativeTo、Zenn、Show HN、X など） | アカウントの確認待ち | 投稿の 1 週間後と 4 週間後 |
 
 ### E1: 正規 URL のサイトマップを送り直す
@@ -98,7 +98,8 @@
 - 基準値: 表示 208、クリック 1、CTR 0.5%、平均掲載順位 7.0（2026-08-08〜11-07）
 - 測る項目: GSC の検索パフォーマンスで、ページを /use-cases/poster に絞った CTR と掲載順位。比べる期間は、本番反映の前の 4 週間と後の 4 週間。順位が大きく動いたときは、CTR の変化を title の効果とは言い切らない
 - 対照: ほかの use-cases（title は変えていない）の CTR の動き
-- 結果: （本番反映の 4 週間後に記入）
+- 本番反映: 2026-11-10（main c9089dc）。本番で title、article:modified_time、sitemap の lastmod が 2026-11-10 になったことを確認した
+- 結果: （2026-12-08 に記入）
 
 ### E5: 引用されやすい形に記事を直す
 - 仮説: 定義文、表、手順、よくある質問のある記事は、検索の強調スニペットや AI の回答に引用されやすい。着地の多い 2 本を直せば、表示回数と AI 経由の流入が増える。
@@ -109,8 +110,9 @@
   - getting-started: 表示 27、クリック 1、順位 6.3
   - utm-parameters: 上位 10 ページに入っていない
   - GA4 の AI Assistant: 10 セッション（90 日）
-- 測る項目: 2 ページの表示回数とクリック、GA4 の AI Assistant と Unassigned のセッション数と着地ページ、AI への定点質問（下の 5 節）で名前が挙がるか
-- 結果: （本番反映の 4 週間後に記入）
+- 測る項目: 2 ページの表示回数とクリック、GA4 の AI Assistant と Unassigned のセッション数と着地ページ、AI への定点質問（4 節）で名前が挙がるか
+- 本番反映: 2026-11-10（main c9089dc）。本番で 2 ページの定義文・よくある質問・GA4 の手順の節と、更新日 2026-11-10 を確認した
+- 結果: （2026-12-08 に記入）
 
 ## 4. AI への定点質問（月 1 回）
 
@@ -129,9 +131,19 @@ AI の回答に名前が出るかを、毎月同じ質問で確かめる。ChatG
   4. Do QR codes expire? How do I make one that never expires?
   5. Free tool to create a QR code with a logo and download it as SVG or PDF
 
-| 日付 | 言及された AI | 引用 URL | メモ |
-|---|---|---|---|
-| （初回は未実施） | | | |
+### 2026-11-10（初回。E4・E5 の本番反映の直後で、反映の影響はまだ出ていない時点）
+
+| 質問 | Perplexity（ログアウト） | Google の AI による概要 |
+|---|---|---|
+| 日本語 1（UTM 付き QR のツール） | 言及あり。最初の候補として「QR Code Create」と qr-create.jp | 「無料 UTMパラメータ付き QRコード 作成 ツール」で検索。AI による概要に引用あり。通常の結果でも上位 |
+| 日本語 2（チラシごとの計測） | 言及なし。引用は ato-co、revenuescope、circulateqr、qr-build など | 未実施 |
+| 日本語 3（登録不要・透かしなし） | 言及なし。挙がったのは QRCode Monkey、QR Code Harbor、QRStuff、MamePress、QR.tools | 未実施 |
+| 日本語 4（有効期限） | 言及なし。引用は sakutto、qr-code-generator など | 未実施 |
+| 日本語 5（SVG・PDF で保存） | 言及なし。挙がったのは AriaQR、QR-Build、Toolz.dev、QRSansar | 未実施 |
+| 英語 1〜5 | 測れなかった。ログアウトの状態で数問聞くと「Sign up and repeat your request.」とだけ返る | 英語 1 は「free QR code generator with UTM parameters」で検索。AI による概要は出ず、上位は FlyB、Brand Armor AI、Clicky など。qr-create.jp は見える範囲になし |
+
+- 分かったこと: 「UTM 付き QR を無料で作るツール」という、このサイトの差別化の軸そのものの質問では、日本語で名前が挙がる。周辺の質問（計測の方法、有効期限、保存形式）では挙がらない。英語ではまだ存在感がない。
+- 測り方の学び: Perplexity はログアウトのままだと数問で回答を止める。次回からは、日本語 5 問を先に聞き、英語は Google の AI による概要と ChatGPT で測る。
 
 ## 5. 開発の進め方で得た学び（集客の施策を実装するとき）
 - 記事の文言を変える施策は、`npm run build` のあとに `npm test` を流す。ビルド成果物を検査するテスト（staticOutput）は、成果物がないと飛ばされる。E4 ではテストを先に流したため、更新日の不一致を見逃し、E5a で見つけて直した。

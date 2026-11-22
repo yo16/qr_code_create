@@ -25,7 +25,7 @@ function expectedDate(value: unknown): string | undefined {
 }
 
 /** updated を持つ use-cases（基準から外した記事）。それ以外は未定義であること */
-const UPDATED_USE_CASES: Record<string, string> = { poster: "2026-11-10" };
+const UPDATED_USE_CASES: Record<string, string> = { poster: "2026-11-10", signage: "2026-11-22" };
 
 const guideDir = (l: Locale) => (l === "ja" ? ["guide"] : [l, "guide"]);
 

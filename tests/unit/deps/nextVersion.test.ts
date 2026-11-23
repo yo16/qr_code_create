@@ -2,7 +2,11 @@ import fs from "fs";
 import path from "path";
 
 /**
- * Next.js 16.4.2 以上への更新を担保するテスト（qr_code_create-4j0）。
+ * Next.js 16.4.5 以上への更新を担保するテスト（qr_code_create-4j0、qr_code_create-g33）。
+ *
+ * 下限の履歴: 4j0 で 16.4.2、g33 で 16.4.5 に引き上げた。
+ * npm audit が next 16.0.0〜16.4.4 に moderate の勧告 7 件を出し、修正版は 16.4.5 以上のため。
+ * g33 では実際の指定を 16.4.6 に上げている。
  *
  * 外部パッケージ（semver 等）に依存せず、fs と path だけで
  * package.json / package-lock.json を読み取り、バージョン文字列を数値比較する。
@@ -13,7 +17,7 @@ const PACKAGE_JSON_PATH = path.join(ROOT_DIR, "package.json");
 const PACKAGE_LOCK_PATH = path.join(ROOT_DIR, "package-lock.json");
 
 /** 本タスクで要求する Next.js の最低バージョン */
-const REQUIRED_NEXT_VERSION = "16.4.2";
+const REQUIRED_NEXT_VERSION = "16.4.5";
 
 type PackageJson = {
   dependencies?: Record<string, string>;
@@ -84,6 +88,29 @@ describe("Next.js 依存バージョン（qr_code_create-4j0）", () => {
       expect(compareVersions("16.4.10", "16.4.2")).toBeGreaterThan(0);
       expect(compareVersions("17.0.0", "16.4.2")).toBeGreaterThan(0);
     });
+
+    it("下限 16.4.5 の境界で、16.4.4 は下回り 16.4.5 以上は通ること", () => {
+      expect(compareVersions("16.4.4", REQUIRED_NEXT_VERSION)).toBeLessThan(0);
+      expect(compareVersions("^16.4.2", REQUIRED_NEXT_VERSION)).toBeLessThan(0);
+      expect(compareVersions("16.4.5", REQUIRED_NEXT_VERSION)).toBe(0);
+      expect(
+        compareVersions("16.4.6", REQUIRED_NEXT_VERSION),
+      ).toBeGreaterThan(0);
+      expect(
+        compareVersions("^16.4.6", REQUIRED_NEXT_VERSION),
+      ).toBeGreaterThan(0);
+      expect(
+        compareVersions("16.5.0", REQUIRED_NEXT_VERSION),
+      ).toBeGreaterThan(0);
+      expect(
+        compareVersions("17.0.0", REQUIRED_NEXT_VERSION),
+      ).toBeGreaterThan(0);
+    });
+
+    it("桁数が違う版を文字列比較でなく数値で比べること", () => {
+      expect(compareVersions("16.4.10", "16.4.9")).toBeGreaterThan(0);
+      expect(compareVersions("16.4.9", "16.4.10")).toBeLessThan(0);
+    });
   });
 
   describe("package.json", () => {
@@ -128,6 +155,25 @@ describe("Next.js 依存バージョン（qr_code_create-4j0）", () => {
       expect(lockedNextVersion).toBeDefined();
       expect(
         compareVersions(lockedNextVersion as string, REQUIRED_NEXT_VERSION),
+      ).toBeGreaterThanOrEqual(0);
+    });
+
+    it("eslint-config-next の解決版が next の解決版と同じであること", () => {
+      const lockedNext = packageLock.packages?.["node_modules/next"]?.version;
+      const lockedEslintConfig =
+        packageLock.packages?.["node_modules/eslint-config-next"]?.version;
+      expect(lockedNext).toBeDefined();
+      expect(lockedEslintConfig).toBe(lockedNext);
+    });
+  });
+
+  describe("インストール済みの node_modules", () => {
+    it(`node_modules/next の版が ${REQUIRED_NEXT_VERSION} 以上であること`, () => {
+      const installed = readJson<{ version: string }>(
+        path.join(ROOT_DIR, "node_modules", "next", "package.json"),
+      );
+      expect(
+        compareVersions(installed.version, REQUIRED_NEXT_VERSION),
       ).toBeGreaterThanOrEqual(0);
     });
   });

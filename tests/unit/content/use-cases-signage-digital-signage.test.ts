@@ -32,7 +32,9 @@ function findNumericClaims(text: string): string[] {
     .replace(/`[^`]*`/g, "") // コード表記（utm_content など）
     .replace(/\b\d+x\b/g, "") // ツールの選択肢の倍率
     .replace(/[0-9０-９]+枚/g, "") // 「1枚」
-    .replace(/十分/g, ""); // 「十分に」は数値の目安ではない
+    // 「十分な余白」は数値の目安ではない。除くのは、前に数詞がなく、後ろが「に」「な」「です」「で」「だ」「か」「、」「。」
+    // または文字列の終わりの「十分」だけ。「三十分」「数十分」「十分間」「十分ごと」「十分後」などは除かない
+    .replace(/(?<![0-9０-９一二三四五六七八九十百千万数])十分(?=に|な|です|で|だ|か|、|。|$)/g, "");
   const found: string[] = [];
   found.push(...(rest.match(/[0-9０-９]/g) ?? []));
   found.push(
@@ -43,10 +45,50 @@ function findNumericClaims(text: string): string[] {
   return found;
 }
 
-// /create か /guide/ で始まらないリンク先を返す。
+// リンク先をすべて拾う。インライン（タイトル付き含む）、参照定義、自動リンク、素の URL。
+// 同じリンクを二重に数えないよう、拾った箇所は順に取り除く。
+function extractLinkTargets(text: string): string[] {
+  const targets: string[] = [];
+  let rest = text.replace(/`[^`]*`/g, " "); // コードスパンの中はリンクではない
+  const take = (re: RegExp) => {
+    rest = rest.replace(re, (...args: unknown[]) => {
+      targets.push(args[1] as string);
+      return " ";
+    });
+  };
+  take(/\]\(\s*<?([^)\s>]*)>?(?:\s+(?:"[^"]*"|'[^']*'))?\s*\)/g);
+  take(/^[ ]{0,3}\[[^\]]+\]:\s*<?([^\s>]+)>?.*$/gm);
+  take(/<([a-zA-Z][a-zA-Z0-9+.-]*:[^>\s]*)>/g);
+  take(/(https?:\/\/[^\s<>)\]"']+)/g);
+  return targets;
+}
+
+// /create（ちょうど、または ? # が続く）か /guide/ で始まるリンク先だけを許す。
+function isAllowedLink(l: string): boolean {
+  return l === "/create" || /^\/create[?#]/.test(l) || l.startsWith("/guide/");
+}
+
+// 許されないリンク先を返す。
 function findBadLinks(text: string): string[] {
-  const targets = [...text.matchAll(/\]\(([^)\s]*)\)/g)].map((m) => m[1]);
-  return targets.filter((l) => !(l.startsWith("/create") || l.startsWith("/guide/")));
+  return extractLinkTargets(text).filter((l) => !isAllowedLink(l));
+}
+
+const FEATURE_WORDS = ["自動", "一括", "予約", "スケジュール", "配信", "連携", "管理画面", "ダッシュボード", "アップロード", "同期"];
+
+// ツールにない機能を主張している文を返す（文単位）。
+// 否定で終わる文と、サイネージ側の説明の文は許す。ただし主語がこのツールの文は許さない。
+function findFeatureClaims(text: string): string[] {
+  const sentences = text
+    .split(/。|\n/)
+    .map((s) => s.trim().replace(/[」』）)\s]+$/, ""))
+    .filter((s) => s.length > 0);
+  return sentences.filter((s) => {
+    if (!FEATURE_WORDS.some((w) => s.includes(w))) return false;
+    if (/(ません|ない)$/.test(s)) return false;
+    const toolSubject = /(このツール|QR Code Create|本ツール|QRコード作成ツール|当ツール|当サイト|このサービス|本サービス)/.test(s);
+    const signageSide = /(サイネージ側|配信システム|表示システム)/.test(s);
+    return toolSubject || !signageSide;
+  });
 }
 
 function hasRawAnchor(text: string): boolean {
@@ -65,16 +107,25 @@ function hashExistingBody(content: string): string {
   return crypto.createHash("sha256").update(rest.join("\n")).digest("hex");
 }
 
-const lines = body.split("\n");
-const headingLines = lines.filter((l) => /^#{2,3} /.test(l));
-
-function extractSection(): string {
-  const start = lines.findIndex((l) => l === NEW_HEADING);
-  if (start < 0) return "";
-  let end = lines.findIndex((l, i) => i > start && /^## /.test(l));
-  if (end < 0) end = lines.length;
-  return lines.slice(start + 1, end).join("\n");
+function splitLines(content: string): string[] {
+  return content.replace(/\r\n/g, "\n").split("\n");
 }
+
+function extractHeadingLines(content: string = body): string[] {
+  return splitLines(content).filter((l) => /^#{2,3} /.test(l));
+}
+
+function extractSection(content: string = body): string {
+  const ls = splitLines(content);
+  const start = ls.findIndex((l) => l === NEW_HEADING);
+  if (start < 0) return "";
+  let end = ls.findIndex((l, i) => i > start && /^## /.test(l));
+  if (end < 0) end = ls.length;
+  return ls.slice(start + 1, end).join("\n");
+}
+
+const lines = splitLines(body);
+const headingLines = extractHeadingLines();
 const section = extractSection();
 
 describe("signage.mdx の節の位置", () => {
@@ -185,7 +236,7 @@ describe("節に書かれた UI の呼び名が実在すること", () => {
 });
 
 describe("節の中のリンク先が実在すること", () => {
-  const links = [...section.matchAll(/\]\((\/[^)\s]*)\)/g)].map((m) => m[1]);
+  const links = extractLinkTargets(section).filter((l) => l.startsWith("/"));
 
   it("内部リンクが 1 つ以上あり、/create がページとして存在すること", () => {
     expect(links.length).toBeGreaterThan(0);
@@ -203,7 +254,7 @@ describe("節の中のリンク先が実在すること", () => {
   });
 
   it("すべてのリンク先が /create か /guide/ で始まること（外部・相対リンクがない）", () => {
-    const all = [...section.matchAll(/\]\(([^)\s]*)\)/g)].map((m) => m[1]);
+    const all = extractLinkTargets(section);
     expect(all.length).toBeGreaterThan(0);
     expect(findBadLinks(section)).toEqual([]);
   });
@@ -216,14 +267,14 @@ describe("節の中のリンク先が実在すること", () => {
 });
 
 describe("検査ロジックが違反を実際に検出すること（負のテスト）", () => {
-  it.each(["3秒", "数秒", "２メートル", "三秒", "数メートル", "約10分", "二倍", "5割"])(
+  it.each(["3秒", "数秒", "２メートル", "三秒", "数メートル", "約10分", "二倍", "5割", "三十分", "数十分", "十分間", "約十分間", "十分ごと", "十分おき", "十分後"])(
     "数値の目安「%s」を違反として検出する",
     (s) => {
       expect(findNumericClaims(`この画面は${s}ほど表示します。`).length).toBeGreaterThan(0);
     }
   );
 
-  it.each(["4x", "1枚ずつ", "一定の時間", "十分に取る", "`utm_content` を変える", "「出力解像度」を「4x」にする"])(
+  it.each(["4x", "1枚ずつ", "一定の時間", "十分に取る", "十分な余白", "`utm_content` を変える", "「出力解像度」を「4x」にする"])(
     "許容する表現「%s」は違反にしない",
     (s) => {
       expect(findNumericClaims(s)).toEqual([]);
@@ -235,12 +286,71 @@ describe("検査ロジックが違反を実際に検出すること（負のテ�
     "[x](guide/download-formats)",
     "[x](/poster)",
     "[x](http://example.com/create)",
+    '[x](/poster "t")',
+    "[id]: https://example.com",
+    "<https://example.com>",
+    "https://example.com",
+    "[x](/create-foo)",
+    "[x](/createx)",
   ])("許されないリンク「%s」を検出する", (s) => {
     expect(findBadLinks(s)).toHaveLength(1);
   });
 
-  it.each(["[x](/create)", "[x](/guide/download-formats)"])("許されるリンク「%s」は検出しない", (s) => {
+  it.each([
+    "[x](/create)",
+    "[x](/guide/download-formats)",
+    "[x](/create?utm=1)",
+    "[x](/create#step1)",
+    '[x](/create "t")',
+    '[x](/guide/download-formats "t")',
+  ])("許されるリンク「%s」は検出しない", (s) => {
     expect(findBadLinks(s)).toEqual([]);
+  });
+
+  it.each(["QRコードを自動で配信します。", "スケジュールを予約できます。", "このツールはサイネージ側と連携して自動で配信します。", "QR Code Createがサイネージの配信を管理画面から同期します。", "サイネージの画面に自動で配信できます。", "QRコード作成ツールが、サイネージ側の配信スケジュールへ自動で同期します。"])(
+    "ツールの機能の主張「%s」を違反として検出する",
+    (s) => {
+      expect(findFeatureClaims(s)).toHaveLength(1);
+    }
+  );
+
+  it.each(["配信の予約機能はありません。", "サイネージ側の配信スケジュールに合わせて表示します。", "一括で差し替える機能はない。", "自動での配信には対応していません。"])(
+    "否定やサイネージ側の説明「%s」は違反にしない",
+    (s) => {
+      expect(findFeatureClaims(s)).toEqual([]);
+    }
+  );
+
+  it.each([
+    ["/guide", false],
+    ["/guide/", true],
+    ["//example.com/create", false],
+    ["/create/", false],
+    ["/CREATE", false],
+  ])("isAllowedLink(%s) は %s", (l, expected) => {
+    expect(isAllowedLink(l)).toBe(expected);
+  });
+
+  it.each(["サイネージの表示位置を決めます。", "ツールで SVG をダウンロードします。"])(
+    "禁止語を含まない文「%s」は違反にしない",
+    (s) => {
+      expect(findFeatureClaims(s)).toEqual([]);
+    }
+  );
+
+  it("空の文字列では findFeatureClaims が空の配列を返す", () => {
+    expect(findFeatureClaims("")).toEqual([]);
+  });
+
+  it("コードスパンの中の URL はリンクとして拾わない", () => {
+    expect(extractLinkTargets("`https://example.com` と `[x](/poster)`")).toEqual([]);
+  });
+
+  it("CRLF の本文でも見出しの位置の検査と節の抽出が同じ結果になる", () => {
+    const crlf = body.replace(/\r?\n/g, "\r\n");
+    expect(extractHeadingLines(crlf)).toEqual(headingLines);
+    expect(extractSection(crlf)).toBe(section);
+    expect(extractSection(crlf).length).toBeGreaterThan(0);
   });
 
   it.each(['<a href="/create">x</a>', "href=/create"])("生のアンカー「%s」を検出する", (s) => {
@@ -253,7 +363,7 @@ describe("検査ロジックが違反を実際に検出すること（負のテ�
   });
 
   it("改行が CRLF でも同じハッシュになる", () => {
-    expect(hashExistingBody(body.replace(/\n/g, "\r\n"))).toBe(EXISTING_BODY_SHA256);
+    expect(hashExistingBody(body.replace(/\r?\n/g, "\r\n"))).toBe(EXISTING_BODY_SHA256);
   });
 });
 
@@ -282,10 +392,7 @@ describe("節がやってはいけないことをしていないこと", () => {
   });
 
   it("ツールにない機能を主張する語がない", () => {
-    const words = ["自動", "一括", "予約", "スケジュール", "配信", "連携", "管理画面", "ダッシュボード", "アップロード", "同期"];
-    for (const w of words) {
-      expect(section).not.toContain(w);
-    }
+    expect(findFeatureClaims(section)).toEqual([]);
   });
 
   it("機能がないという否定が 1 つはある", () => {

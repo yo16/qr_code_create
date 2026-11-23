@@ -41,6 +41,8 @@ alwaysApply: true
 3. **テスト結果を必ず判定させる**: `frontend-test-judge`または`backend-test-judge`のAgent呼び出しを省略しないこと
 4. **テストOKなしにステップ8に進まない**: テストジャッジがOKを出すまで、タスク完了(ステップ8)に進んではならない
 
+最終のテスト実行（/dev-task のステップ6）は `npm run test:built` で行う。ビルドしてから、`REQUIRE_BUILD_OUTPUT=1` で jest を流すので、ビルド成果物の検査（`tests/unit/app/staticOutput.test.ts`）が skip されず、古い成果物で落ちることもない。`npm test` だけを流すのは、作業の途中の確認に限る。
+
 ## 違反時の対応
 
 このルールに違反してタスクを完了した場合、そのタスクの完了は無効とする。テストを実施し直すこと。

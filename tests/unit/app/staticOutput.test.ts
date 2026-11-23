@@ -148,6 +148,23 @@ describeBuildOutput("ビルド成果物の静的 HTML", () => {
     expect(html).toContain("<strong>utm_content</strong>");
   });
 
+  // 意図（qr_code_create-8hf）: 箇条書きを直した表（utm_campaign の例、効果度、用途別）が table 要素として出る。用途別は本文 4 行
+  it("guide/utm-setup.html に campaign 例・効果度・用途別の表があり、用途別の表は本文 4 行であること", () => {
+    const full = path.join(BUILD_APP, "guide", "utm-setup.html");
+    if (!fs.existsSync(full)) {
+      throw new Error(full + " がありません。npm run build 後に実行してください。");
+    }
+    const html = fs.readFileSync(full, "utf8");
+    const tables = html.match(/<table[\s\S]*?<\/table>/g) ?? [];
+    expect(tables.length).toBeGreaterThanOrEqual(3);
+    expect(tables.some((t) => t.includes("spring_sale_2026"))).toBe(true);
+    expect(tables.some((t) => t.includes("★★★"))).toBe(true);
+    const usage = tables.find((t) => t.includes("business_card"));
+    expect(usage).toBeDefined();
+    const bodyRows = (usage as string).match(/<tbody[\s\S]*?<\/tbody>/)?.[0].match(/<tr/g) ?? [];
+    expect(bodyRows).toHaveLength(4);
+  });
+
   // 意図（qr_code_create-6cl）: 生の ** と、strong の入れ子が HTML 本文に残っていない（script・コードブロックを除く）。
   // ディレクトリ単位で検査し、空振り防止として .html が 1 件以上あること、
   // requireStrong のディレクトリでは太字（<strong>）が 1 件以上あることも確かめる

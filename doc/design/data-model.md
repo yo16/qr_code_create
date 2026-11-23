@@ -565,7 +565,7 @@ export interface HowToStepInput {
 
 ```yaml
 ---
-title: "UTMパラメータとは？初心者向け完全ガイド"
+title: "UTMパラメータとは？5種類の意味と値の付け方、GA4での確認手順"
 description: "UTMパラメータの基本から設定方法、Google Analyticsでの確認方法まで、初心者にもわかりやすく解説します。"
 publishedAt: "2026-04-15"
 order: 1

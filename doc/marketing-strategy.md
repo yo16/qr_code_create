@@ -185,7 +185,7 @@ Homepage (/)
 
 | トピック | 種別 | バイヤーステージ | 優先度 |
 |----------|------|-----------------|--------|
-| UTMパラメータとは？初心者向け完全ガイド | 検索向け | 認知 | P0 |
+| UTMパラメータとは？5種類の意味と値の付け方、GA4での確認手順 | 検索向け | 認知 | P0 |
 | UTMパラメータの設定例：業種別ベストプラクティス | 検索向け | 検討 | P1 |
 | Google AnalyticsでUTMパラメータを分析する方法 | 検索向け | 検討 | P1 |
 | UTMパラメータの命名規則ガイド | 検索向け | 検討 | P2 |
@@ -220,7 +220,7 @@ Homepage (/)
 
 | # | トピック | 検索/共有 | バイヤーステージ | 優先度 |
 |---|---------|-----------|-----------------|--------|
-| 1 | UTMパラメータとは？初心者向け完全ガイド | 検索 | 認知 | P0 |
+| 1 | UTMパラメータとは？5種類の意味と値の付け方、GA4での確認手順 | 検索 | 認知 | P0 |
 | 2 | QRコードを使った集客方法 | 検索+共有 | 認知 | P0 |
 | 3 | UTMパラメータの設定例：業種別ベストプラクティス | 検索 | 検討 | P1 |
 | 4 | Google AnalyticsでUTMパラメータを分析する方法 | 検索 | 検討 | P1 |
@@ -551,7 +551,7 @@ Google Analyticsで追跡できません。
   "@type": "WebApplication",
   "name": "QR Code Create",
   "description": "UTMパラメータガイダンス付きの無料QRコード生成ツール。装飾フレームでQRコードをカスタマイズできます。登録不要。",
-  "url": "https://qr-code-create.vercel.app/create",
+  "url": "https://qr-create.jp/create",
   "applicationCategory": "UtilityApplication",
   "operatingSystem": "Any",
   "offers": {
@@ -567,7 +567,7 @@ Google Analyticsで追跡できません。
     "色カスタマイズ",
     "PNG/SVG/PDF出力"
   ],
-  "screenshot": "https://qr-code-create.vercel.app/images/screenshot.png",
+  "screenshot": "https://qr-create.jp/images/screenshot.png",
   "inLanguage": "ja"
 }
 ```
@@ -641,25 +641,25 @@ Google Analyticsで追跡できません。
       "@type": "HowToStep",
       "name": "URLを入力する",
       "text": "QRコードにしたいWebページのURLを入力します。",
-      "url": "https://qr-code-create.vercel.app/create#step1"
+      "url": "https://qr-create.jp/create#step1"
     },
     {
       "@type": "HowToStep",
       "name": "UTMパラメータを設定する",
       "text": "utm_source（参照元: flyer, posterなど）、utm_medium（メディア: qr）、utm_campaign（キャンペーン名）を設定します。ガイダンスに従って入力すれば、Google Analyticsでの効果測定が可能になります。",
-      "url": "https://qr-code-create.vercel.app/create#step2"
+      "url": "https://qr-create.jp/create#step2"
     },
     {
       "@type": "HowToStep",
       "name": "装飾をカスタマイズする",
       "text": "装飾フレーム（エレガント・ポップ・ビジネス）の選択、色の変更、ロゴの追加、キャプションの設定など、デザインをカスタマイズします。",
-      "url": "https://qr-code-create.vercel.app/create#step3"
+      "url": "https://qr-create.jp/create#step3"
     },
     {
       "@type": "HowToStep",
       "name": "QRコードを生成・ダウンロードする",
       "text": "プレビューを確認し、PNG・SVG・PDFのいずれかの形式でQRコードをダウンロードします。",
-      "url": "https://qr-code-create.vercel.app/create#step4"
+      "url": "https://qr-create.jp/create#step4"
     }
   ]
 }
@@ -680,19 +680,19 @@ Google Analyticsで追跡できません。
       "@type": "ListItem",
       "position": 1,
       "name": "ホーム",
-      "item": "https://qr-code-create.vercel.app/"
+      "item": "https://qr-create.jp/"
     },
     {
       "@type": "ListItem",
       "position": 2,
       "name": "使い方ガイド",
-      "item": "https://qr-code-create.vercel.app/guide"
+      "item": "https://qr-create.jp/guide"
     },
     {
       "@type": "ListItem",
       "position": 3,
       "name": "UTMパラメータとは",
-      "item": "https://qr-code-create.vercel.app/guide/utm-parameters"
+      "item": "https://qr-create.jp/guide/utm-parameters"
     }
   ]
 }
@@ -705,8 +705,8 @@ Google Analyticsで追跡できません。
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "QR Code Create",
-  "url": "https://qr-code-create.vercel.app",
-  "logo": "https://qr-code-create.vercel.app/images/logo.png",
+  "url": "https://qr-create.jp",
+  "logo": "https://qr-create.jp/images/logo.png",
   "description": "UTMパラメータガイダンス付きの無料QRコード生成ツール",
   "sameAs": [
     "https://twitter.com/qrcodecreate",
@@ -721,7 +721,7 @@ Google Analyticsで追跡できません。
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "UTMパラメータとは？初心者向け完全ガイド",
+  "headline": "UTMパラメータとは？5種類の意味と値の付け方、GA4での確認手順",
   "description": "UTMパラメータの基本から設定方法、Google Analyticsでの確認方法まで、初心者にもわかりやすく解説します。",
   "author": {
     "@type": "Organization",
@@ -732,16 +732,16 @@ Google Analyticsで追跡できません。
     "name": "QR Code Create",
     "logo": {
       "@type": "ImageObject",
-      "url": "https://qr-code-create.vercel.app/images/logo.png"
+      "url": "https://qr-create.jp/images/logo.png"
     }
   },
   "datePublished": "2026-04-15",
   "dateModified": "2026-04-15",
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": "https://qr-code-create.vercel.app/guide/utm-parameters"
+    "@id": "https://qr-create.jp/guide/utm-parameters"
   },
-  "image": "https://qr-code-create.vercel.app/images/blog/utm-guide-cover.png",
+  "image": "https://qr-create.jp/images/blog/utm-guide-cover.png",
   "inLanguage": "ja"
 }
 ```
@@ -987,12 +987,7 @@ UTMパラメータ（Urchin Tracking Module）は、URLに追加するトラッ�
 
 #### 3. 統計情報の引用
 
-```markdown
-- QRコードの利用率は年々増加しており、2024年には日本のスマートフォンユーザーの
-  約80%がQRコード決済を利用している（出典: 総務省 情報通信白書）
-- 中小企業のうち、オフライン広告の効果測定を実施しているのは約25%にとどまる
-  （出典: 中小企業庁 中小企業白書）
-```
+統計を引用するときは、一次資料で数値と発行年を確かめ、出典の名前と URL を添える。確かめられない数値は載せない。
 
 #### 4. llms.txt の作成
 
@@ -1113,7 +1108,7 @@ Sitemap: https://qr-create.jp/sitemap.xml
 UTMパラメータを設定すれば、Google Analyticsで
 「チラシからのアクセス」を正確に把握できます。
 
-設定方法はとてもシンプル👇
+設定方法はとてもシンプルです。
 (スレッドで解説)
 
 ---
@@ -1124,7 +1119,7 @@ UTMパラメータを設定すれば、Google Analyticsで
 ビジネススタイルのフレームで、
 洗練された印象のQRコードを作成できます。
 
-▶ 無料で作成: https://qr-code-create.vercel.app/create
+無料で作成: https://qr-create.jp/create
 (装飾QRコードの画像添付)
 
 ---
@@ -1139,7 +1134,7 @@ utm_source=event
 utm_medium=qr
 utm_campaign=イベント名
 
-▶ 3分で作成: https://qr-code-create.vercel.app/create
+3分で作成: https://qr-create.jp/create
 ```
 
 ### note記事計画

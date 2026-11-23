@@ -82,7 +82,7 @@ describe("utm-setup.mdx", () => {
   it("まとめに OFF の 1 文があり、/guide/utm-parameters の案内も残っていること", () => {
     const s = section(body, "## まとめ");
     expect(s).toContain("OFF");
-    expect(s).toContain("UTMパラメータとは？初心者向け完全ガイド");
+    expect(links(s)).toContain("/guide/utm-parameters");
   });
 
   it("utm_term・utm_content の太字が `**utm_term**（…）` の形で、`**…（…）**` の形が残っていないこと", () => {

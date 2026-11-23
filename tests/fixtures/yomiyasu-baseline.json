@@ -2,7 +2,6 @@
   "yomiyasuVersion": "2.4.0",
   "note": "yomiyasu v2.4.0 の lint を通らない既存の日本語記事を、現状の内容のまま例外として許容するための基準。ここへ記事を追加してはならない。",
   "files": {
-    "src/content/blog/why-i-built-qr-code-create.mdx": "ade5e8694329efec22f876b3311709fa9c7722beb23c11a94613d98970331a65",
     "src/content/guide/analytics-measurement.mdx": "3f4f3f56ebacf7c393810e96147464a93b16748763a518c890ee06c7539f0cdf",
     "src/content/guide/decoration.mdx": "87e0e09c6455a1aea20dff89a2da04c0455c88b3f668afe87b1ae351064d3159",
     "src/content/guide/design-tips.mdx": "b02e028ed6c979ac5f8cf08ecb94ee0d1bf75555888115951c650c6aafdf2702",

@@ -155,7 +155,7 @@ export const metadata: Metadata = {
 
 | slug | タイトル | 優先度 |
 |---|---|---|
-| utm-parameters | UTMパラメータとは？初心者向け完全ガイド | P0 |
+| utm-parameters | UTMパラメータとは？5種類の意味と値の付け方、GA4での確認手順 | P0 |
 | effective-qr-usage | QRコードの効果的な使い方 | P1 |
 | design-tips | QRコードデザインのコツ | P1 |
 | analytics-measurement | Google Analyticsでの効果測定 | P1 |

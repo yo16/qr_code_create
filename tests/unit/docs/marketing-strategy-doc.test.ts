@@ -22,7 +22,9 @@ const DASH_JA_RE = /[—―]/;
 
 // 意図して残す記号（評価の星表示 ★ ☆）。これ以外の絵文字は許さない
 const EMOJI_ALLOW = new Set(["★", "☆"]);
-const EMOJI_RE = /\p{Extended_Pictographic}/gu;
+// キーキャップ（数字・#・* + 任意の U+FE0F + U+20E3）と国旗（地域指示記号 U+1F1E6〜U+1F1FF の 1〜2 個）は
+// Extended_Pictographic に含まれないので、別に拾う
+const EMOJI_RE = /[0-9#*]️?⃣|[\u{1F1E6}-\u{1F1FF}]{1,2}|\p{Extended_Pictographic}/gu;
 
 // ---- 検査の関数 ----
 export function findEmoji(text: string): string[] {
@@ -109,6 +111,27 @@ describe("doc/marketing-strategy.md", () => {
       expect(findEmoji("a 👇 b")).toHaveLength(1);
       expect(findEmoji("▶ x")).toHaveLength(1);
       expect(findEmoji("★☆")).toEqual([]);
+    });
+
+    it("負のテスト: キーキャップと国旗を検出すること", () => {
+      // 1 + U+FE0F + U+20E3、# + U+FE0F + U+20E3、U+FE0F なしのキーキャップ
+      expect(findEmoji("a 1️⃣ b")).toHaveLength(1);
+      expect(findEmoji("a #️⃣ b")).toHaveLength(1);
+      expect(findEmoji("a 1⃣ b")).toHaveLength(1);
+      // 国旗（地域指示記号 2 個で 1 件）: JP、US
+      expect(findEmoji("a \u{1F1EF}\u{1F1F5} b")).toHaveLength(1);
+      expect(findEmoji("\u{1F1FA}\u{1F1F8}\u{1F1EF}\u{1F1F5}")).toHaveLength(2);
+      // ふつうの絵文字
+      expect(findEmoji("a \u{1F447} b")).toHaveLength(1);
+    });
+
+    it("負のテスト: 「#1」「1.」「※」、丸数字でない通常の数字と記号だけの文は検出しないこと", () => {
+      expect(findEmoji("#1")).toEqual([]);
+      expect(findEmoji("1. 手順")).toEqual([]);
+      expect(findEmoji("※ 注記")).toEqual([]);
+      expect(findEmoji("施策 7 と 2026 年、# と * の記号")).toEqual([]);
+      expect(findEmoji("(1) 〜 [2] ! ? % & @")).toEqual([]);
+      expect(findEmoji("")).toEqual([]);
     });
   });
 

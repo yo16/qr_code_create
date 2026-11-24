@@ -127,6 +127,46 @@ describe("doc/marketing-strategy.md", () => {
   });
 });
 
+// qr_code_create-p05: 施策 7 の例文が実績の数値に見えないこと
+export function socialProofProblems(sec: string): string[] {
+  const problems: string[] = [];
+  if (/\d\s*[%％]/.test(sec)) problems.push("数字 + % がある");
+  if (!sec.includes("XX%")) problems.push("プレースホルダー XX% が無い");
+  if (!sec.includes("実績")) problems.push("注記に「実績」の語が無い");
+  return problems;
+}
+
+describe("doc/marketing-strategy.md 施策 7（ソーシャルプルーフ）", () => {
+  const s = section(DOC, "#### 施策7");
+
+  it("節が見つかること", () => {
+    expect(s).not.toBe("");
+  });
+
+  it("「数字 + %」が無いこと", () => {
+    expect(s).not.toMatch(/\d\s*[%％]/);
+  });
+
+  it("プレースホルダー「XX%」があること", () => {
+    expect(s).toContain("XX%");
+  });
+
+  it("注記に「実績」の語があること", () => {
+    expect(s).toContain("実績");
+  });
+
+  it("注記の趣旨「画面に出さない」が書かれていること", () => {
+    expect(s).toContain("画面に出さない");
+  });
+
+  it("負のテスト: 「78%」に戻した文字列と、注記の無い文字列を検出すること", () => {
+    expect(socialProofProblems("「ユーザーの78%がUTMパラメータを設定しています」")).toContain("数字 + % がある");
+    expect(socialProofProblems("「ユーザーのXX%が設定」")).toContain("注記に「実績」の語が無い");
+    expect(socialProofProblems("「ユーザーのXX%が設定」（実績の数値を入れる）")).toEqual([]);
+    expect(socialProofProblems(s)).toEqual([]);
+  });
+});
+
 describe("why-i-built-qr-code-create.mdx のダッシュ", () => {
   const file = path.join(ROOT, "src/content/blog/why-i-built-qr-code-create.mdx");
   const raw = fs.readFileSync(file, "utf-8");

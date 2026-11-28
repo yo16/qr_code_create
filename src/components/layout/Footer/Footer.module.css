@@ -41,6 +41,11 @@
   color: var(--color-muted);
 }
 
+.trademark {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}
+
 .credit span:first-child {
   margin-inline-end: var(--spacing-md);
 }

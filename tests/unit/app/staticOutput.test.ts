@@ -733,3 +733,57 @@ describe("動的レンダリングを招く API を使っていないこと", ()
     }
   );
 });
+
+// 意図（qr_code_create-7mk）: 「QRコード」の登録商標の表記が、実際のページのフッターに出ている。
+// 期待値は辞書から読まず、公式 FAQ の例文を直接書く
+describeBuildOutput("ビルド成果物のフッターの商標表記", () => {
+  const TRADEMARK = {
+    ja: "QRコードは株式会社デンソーウェーブの登録商標です。",
+    en: "QR Code is a registered trademark of DENSO WAVE INCORPORATED in Japan and in other countries.",
+    es: "QR Code es una marca registrada de DENSO WAVE INCORPORATED en Japón y en otros países.",
+    "pt-br": "QR Code é uma marca registrada da DENSO WAVE INCORPORATED no Japão e em outros países.",
+    de: "QR Code ist eine eingetragene Marke von DENSO WAVE INCORPORATED in Japan und in anderen Ländern.",
+  } as const;
+  const read = (file: string): string => {
+    const full = path.join(BUILD_APP, ...file.split("/"));
+    if (!fs.existsSync(full)) throw new Error(`${full} がありません。\`npm run build\` 後に実行してください。`);
+    return fs.readFileSync(full, "utf8");
+  };
+  const count = (html: string, s: string): number => html.split(s).length - 1;
+  // <footer> の中の <p class="...">文</p>（クラス名は Turbopack がハッシュ化するので問わない）
+  const footerP = (s: string) =>
+    new RegExp(`<footer[^>]*>(?:(?!</footer>)[\\s\\S])*<p class="[^"]*">${s.replace(/\./g, "\\.")}</p>`);
+
+  it.each([
+    "index.html",
+    "create.html",
+    "guide/getting-started.html",
+    "privacy.html",
+    "terms.html",
+    "faq.html",
+    "contact.html",
+    "blog/event-survey-qr-poster.html",
+  ])("ja の %s のフッターに日本語の商標表記が 1 回だけあること", (file) => {
+    const html = read(file);
+    // RSC ペイロードにも文が入るので、HTML の <p> の閉じまでを含めて数える
+    expect(count(html, `>${TRADEMARK.ja}</p>`)).toBe(1);
+    expect(html).toMatch(footerP(TRADEMARK.ja));
+    for (const l of NON_JA_LOCALES) expect(html).not.toContain(TRADEMARK[l]);
+  });
+
+  it.each(NON_JA_LOCALES)("%s のトップのフッターにその言語の商標表記が 1 回だけあり、他言語のものは無いこと", (l) => {
+    const html = read(`${l}.html`);
+    expect(count(html, `>${TRADEMARK[l]}</p>`)).toBe(1);
+    expect(html).toMatch(footerP(TRADEMARK[l]));
+    expect(html).not.toContain(TRADEMARK.ja);
+    for (const other of NON_JA_LOCALES.filter((x) => x !== l)) expect(html).not.toContain(TRADEMARK[other]);
+  });
+
+  it.each(NON_JA_LOCALES)("%s の /create と ガイドにも商標表記があること", (l) => {
+    for (const file of [`${l}/create.html`, `${l}/guide/getting-started.html`]) {
+      const html = read(file);
+      expect(count(html, `>${TRADEMARK[l]}</p>`)).toBe(1);
+      expect(html).toMatch(footerP(TRADEMARK[l]));
+    }
+  });
+});

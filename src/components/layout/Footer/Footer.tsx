@@ -50,6 +50,7 @@ export function Footer({ locale = "ja" }: FooterProps = {}) {
               </a>
             </span>
           </p>
+          <p className={styles.trademark}>{footer.trademarkNotice}</p>
         </div>
       </Container>
     </footer>

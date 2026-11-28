@@ -336,7 +336,75 @@ describe("このサイトの提案の内容", () => {
     const s = section("短縮URLを使わず、自分のドメインを直接書き込む");
     expect(s).toContain("静的QRコード");
     expect(s).toContain("URLをそのまま書き込む");
-    expect(s).toContain("UTMパラメータを付けると、URLは長くなります。それでもドメインは変わりません");
+    expect(s).toContain("計測のためにUTMパラメータを付けても、ドメインは変わりません。");
+  });
+
+  describe("短縮URLの節の追記（8bc）", () => {
+    const s = section("短縮URLを使わず、自分のドメインを直接書き込む");
+    const at = (w: string) => s.indexOf(w);
+
+    it("短縮URLにも利点がある（文字が少ないとドットが減り、同じ大きさならドットが大きくなり読み取りやすい）こと", () => {
+      expect(s).toContain("短縮URLにも利点があります");
+      expect(s).toContain("書き込む文字が少ないほど、QRコードのドット（四角）の数が減る");
+      expect(s).toContain("同じ大きさで印刷した場合、一つひとつのドットが大きくなるので、読み取りやすくなります");
+    });
+
+    it("どちらがよいかは場面によること", () => {
+      expect(s).toContain("どちらがよいかは、場面によって変わります");
+    });
+
+    it("接客の場面では短縮しないほうがよく、理由（表示ドメインをそばのドメインや店の名前と見比べられる）があること", () => {
+      expect(s).toContain("店頭など接客の場面では、短縮しないほうがよいと考えます");
+      expect(s).toContain(
+        "お客さまがその場で読み取り、表示されたドメインを、そばに書いたドメインや店の名前と見比べられるからです",
+      );
+    });
+
+    it("長すぎるとドットが細かくなり読み取りにくいこと、印刷する大きさで自分のスマートフォンで確かめる勧めがあること", () => {
+      expect(s).toContain("URLが長くなりすぎると、ドットが細かくなって読み取りにくくなります");
+      expect(s).toContain("印刷する大きさで、自分のスマートフォンで実際に読み取って確かめてください");
+    });
+
+    it("4 点が指示の順（利点、場面、接客、長すぎる場合）で並んでいること", () => {
+      const order = [
+        "短縮URLにも利点があります",
+        "どちらがよいかは、場面によって変わります",
+        "接客の場面では、短縮しないほうがよい",
+        "長くなりすぎると",
+        "自分のスマートフォンで実際に読み取って確かめてください",
+      ].map(at);
+      for (const i of order) expect(i).toBeGreaterThan(-1);
+      expect([...order].sort((a, b) => a - b)).toEqual(order);
+      // 追記は「ドメインは変わりません」の段落より後
+      expect(order[0]).toBeGreaterThan(at("計測のためにUTMパラメータを付けても"));
+    });
+
+    it("数値を伴う目安（文字数、mm、px など）がないこと", () => {
+      expect(s).not.toMatch(/\d+\s*(?:文字|字|mm|ミリ|cm|px|pt|個|倍|%|％)/);
+      expect(s).not.toMatch(/[一二三四五六七八九十百]+\s*文字/);
+    });
+
+    it.each(["bit.ly", "bitly", "tinyurl", "goo.gl", "t.co", "ow.ly"])(
+      "短縮サービスの固有名「%s」が出ないこと",
+      (name) => {
+        expect(s.toLowerCase()).not.toContain(name.toLowerCase());
+      },
+    );
+
+    it.each(["危険", "必ず読め", "確実に読", "読めます", "絶対"])("言い切りの語句「%s」がないこと", (w) => {
+      expect(s).not.toContain(w);
+    });
+
+    it("/guide/tips へのリンクがあり、リンク先に URL が長いとドットが細かくなる記述が実在すること", () => {
+      expect(s).toContain("[よくある質問と便利なTips](/guide/tips)");
+      const tips = fs.readFileSync(path.join(ROOT, "src/content/guide/tips.mdx"), "utf-8");
+      expect(tips).toMatch(/URLが長いとQRコードのドットが細かくなり/);
+    });
+
+    it("節の見出しと、まとめの表の同じ行が変わっていないこと", () => {
+      expect(body).toMatch(/^## 短縮URLを使わず、自分のドメインを直接書き込む$/m);
+      expect(body).toContain("| 短縮URLを使わず、自分のドメインを直接書き込む | このサイトの提案 |");
+    });
   });
 
   it("点検の手順（一覧、触る、読み取る、置きっぱなしのものを優先）があること", () => {

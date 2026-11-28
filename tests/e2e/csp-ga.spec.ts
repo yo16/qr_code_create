@@ -1,15 +1,18 @@
 import { test, expect, type Page, type Request } from "@playwright/test";
 import fs from "fs";
 import path from "path";
+import { isPassThrough } from "./helpers/gaPassThrough";
 import { installCspCollector, describeViolations, type CspCollector } from "./helpers/cspCollector";
 
 /**
  * 本物の GA（gtag.js）を読み込むビルドでの CSP の E2E（qr_code_create-28o）。
  * `npm run test:e2e:ga`（scripts/test-e2e-ga.cjs。GA 入りでビルドし直し、ポート 3101 で流す）で実行する。
  *
- * gtag.js（https://www.googletagmanager.com/gtag/js）だけは本物を読む。
+ * 「メソッドが GET、ホストが www.googletagmanager.com、パスが /gtag/ で始まる」要求（gtag.js や /gtag/destination など）だけは本物を読む。
+ * 素通しにした URL は passedThrough に記録し、テストの出力に出す。
  * それ以外の localhost 以外への要求は、すべて route で 204 を返して止める（GA に実データを送らない）。
  * 止めていない外部への要求が 1 件でもあれば失敗にする（コードで保証する）。
+ * 素通しの判定は isPassThrough 1 つにまとめ、request の記録と route の両方で使う。
  * 違反が出たら CSP を緩めて通さず、失敗のまま事実（blockedURI と effectiveDirective）を報告する。
  *
  * 観測した送信先は tests/fixtures/ga-observed-hosts.json に手で保存する（単体テストが CSP の許可と突き合わせる）。
@@ -27,6 +30,7 @@ type Stopped = { host: string; path: string; method: string; resourceType: strin
 
 let collector: CspCollector;
 let stopped: Stopped[];
+let passedThrough: string[];
 let externalRequests: string[];
 
 test.beforeAll(() => {
@@ -36,20 +40,24 @@ test.beforeAll(() => {
 test.beforeEach(async ({ page }) => {
   collector = await installCspCollector(page);
   stopped = [];
+  passedThrough = [];
   externalRequests = [];
   page.on("request", (r: Request) => {
     const u = new URL(r.url());
-    if (u.hostname === "localhost" || r.url().startsWith(GTAG_PREFIX)) return;
+    if (u.hostname === "localhost" || isPassThrough(r.method(), r.url())) return;
     if (!/^https?:$/.test(u.protocol)) return;
     externalRequests.push(r.url());
   });
-  // localhost と gtag.js 以外の外部への要求は、すべて 204 で止める
+  // localhost と素通しの条件に合う要求以外の外部への要求は、すべて 204 で止める
   await page.route(
     (url) => url.hostname !== "localhost",
     (route) => {
       const req = route.request();
       const u = new URL(req.url());
-      if (req.url().startsWith(GTAG_PREFIX)) return route.continue();
+      if (isPassThrough(req.method(), req.url())) {
+        passedThrough.push(req.url());
+        return route.continue();
+      }
       stopped.push({ host: u.host, path: u.pathname, method: req.method(), resourceType: req.resourceType(), url: req.url() });
       return route.fulfill({ status: 204, body: "" });
     },
@@ -61,6 +69,13 @@ function expectNothingEscaped(): void {
   const stoppedUrls = new Set(stopped.map((s) => s.url));
   const escaped = externalRequests.filter((u) => !stoppedUrls.has(u));
   expect(escaped, `route で止めていない外部への要求\n${escaped.join("\n")}`).toEqual([]);
+}
+
+/** 実際に外へ出た（素通しにした）URL を、あとから読めるよう出力に残す */
+function reportPassedThrough(where: string): void {
+  const urls = [...new Set(passedThrough)];
+  console.log(`[素通しにした URL] ${where}: ${urls.join(", ") || "なし"}`);
+  test.info().annotations.push({ type: `素通しにした URL (${where})`, description: urls.join("\n") || "なし" });
 }
 
 async function failIfViolations(where: string): Promise<void> {
@@ -113,6 +128,7 @@ test.describe("本物の gtag.js を読み込んだときの CSP", () => {
     test(`${url}: GA 入りのビルドで gtag.js が 200 で取れて実行され、CSP 違反が 0 件`, async ({ page }) => {
       await openAndSettle(page, url);
       await expectGaBuild(page);
+      reportPassedThrough(url);
       await failIfViolations(url);
       expectNothingEscaped();
     });
@@ -152,6 +168,7 @@ test.describe("本物の gtag.js を読み込んだときの CSP", () => {
     const hosts = [...new Set(stopped.map((s) => s.host))].sort();
     test.info().annotations.push({ type: "GA 送信先ホスト", description: hosts.join(", ") });
     reportObserved();
+    reportPassedThrough("/create の QR ダウンロード");
 
     await failIfViolations("/create の QR ダウンロード");
     expectNothingEscaped();

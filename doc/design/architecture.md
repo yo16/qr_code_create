@@ -338,7 +338,7 @@ CSP ははじめ Report-Only で入れ、qr_code_create-28o で強制（`Content
 流すテストは次の 2 つ。
 
 1. `npm run build` のあとに `npm run test:e2e:prod` を流す。`tests/e2e/csp-enforced.spec.ts` が、本番ビルドの各ページで違反が 0 件であることと、許可していない読み込みが止まることを確かめる。
-2. `npm run test:e2e:ga` を流す。GA の測定 ID を付けてビルドし直し、本物の gtag.js を読んで違反が 0 件であることを確かめる。送信はテストが止めるので、GA に実データは届かない。このコマンドは `.next` を GA 入りのビルドで上書きするので、終わったら `npm run build` を流し直す。
+2. `npm run test:e2e:ga` を流す。GA の測定 ID を付けてビルドし直し、本物の gtag.js を読んで違反が 0 件であることを確かめる。送信はテストが止めるので、GA に実データは届かない。このコマンドは `.next` を GA 入りのビルドで上書きするが、テストが終わると（失敗したときも）GA なしのビルドを自動で流し直す。流し直しを飛ばしたいときは `SKIP_REBUILD=1` を付ける。飛ばしたあとは `.next` が GA 入りのままなので、`npm run build` を流し直す。
 
 GA の送信先として観測したホストは `tests/fixtures/ga-observed-hosts.json` に控えてある。`npm test` は、控えたホストが CSP の許可に収まることを確かめる。
 

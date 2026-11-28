@@ -11,6 +11,7 @@
     "test:built": "node scripts/test-built.cjs",
     "test:e2e": "playwright test",
     "test:e2e:prod": "playwright test --config playwright.prod.config.ts",
+    "test:e2e:ga": "node scripts/test-e2e-ga.cjs",
     "build:icons": "node scripts/build-icons.cjs",
     "build:og": "node scripts/build-og.cjs"
   },

@@ -22,7 +22,9 @@ const DASH_JA_RE = /[—―]/;
 
 // 意図して残す記号（評価の星表示 ★ ☆）。これ以外の絵文字は許さない
 const EMOJI_ALLOW = new Set(["★", "☆"]);
-const EMOJI_RE = /\p{Extended_Pictographic}/gu;
+// キーキャップ（数字・#・* + 任意の U+FE0F + U+20E3）と国旗（地域指示記号 U+1F1E6〜U+1F1FF の 1〜2 個）は
+// Extended_Pictographic に含まれないので、別に拾う
+const EMOJI_RE = /[0-9#*]️?⃣|[\u{1F1E6}-\u{1F1FF}]{1,2}|\p{Extended_Pictographic}/gu;
 
 // ---- 検査の関数 ----
 export function findEmoji(text: string): string[] {
@@ -110,6 +112,27 @@ describe("doc/marketing-strategy.md", () => {
       expect(findEmoji("▶ x")).toHaveLength(1);
       expect(findEmoji("★☆")).toEqual([]);
     });
+
+    it("負のテスト: キーキャップと国旗を検出すること", () => {
+      // 1 + U+FE0F + U+20E3、# + U+FE0F + U+20E3、U+FE0F なしのキーキャップ
+      expect(findEmoji("a 1️⃣ b")).toHaveLength(1);
+      expect(findEmoji("a #️⃣ b")).toHaveLength(1);
+      expect(findEmoji("a 1⃣ b")).toHaveLength(1);
+      // 国旗（地域指示記号 2 個で 1 件）: JP、US
+      expect(findEmoji("a \u{1F1EF}\u{1F1F5} b")).toHaveLength(1);
+      expect(findEmoji("\u{1F1FA}\u{1F1F8}\u{1F1EF}\u{1F1F5}")).toHaveLength(2);
+      // ふつうの絵文字
+      expect(findEmoji("a \u{1F447} b")).toHaveLength(1);
+    });
+
+    it("負のテスト: 「#1」「1.」「※」、丸数字でない通常の数字と記号だけの文は検出しないこと", () => {
+      expect(findEmoji("#1")).toEqual([]);
+      expect(findEmoji("1. 手順")).toEqual([]);
+      expect(findEmoji("※ 注記")).toEqual([]);
+      expect(findEmoji("施策 7 と 2026 年、# と * の記号")).toEqual([]);
+      expect(findEmoji("(1) 〜 [2] ! ? % & @")).toEqual([]);
+      expect(findEmoji("")).toEqual([]);
+    });
   });
 
   describe("出典のない統計", () => {
@@ -124,6 +147,46 @@ describe("doc/marketing-strategy.md", () => {
       expect(s).toContain("一次資料");
       expect(s).toContain("出典");
     });
+  });
+});
+
+// qr_code_create-p05: 施策 7 の例文が実績の数値に見えないこと
+export function socialProofProblems(sec: string): string[] {
+  const problems: string[] = [];
+  if (/\d\s*[%％]/.test(sec)) problems.push("数字 + % がある");
+  if (!sec.includes("XX%")) problems.push("プレースホルダー XX% が無い");
+  if (!sec.includes("実績")) problems.push("注記に「実績」の語が無い");
+  return problems;
+}
+
+describe("doc/marketing-strategy.md 施策 7（ソーシャルプルーフ）", () => {
+  const s = section(DOC, "#### 施策7");
+
+  it("節が見つかること", () => {
+    expect(s).not.toBe("");
+  });
+
+  it("「数字 + %」が無いこと", () => {
+    expect(s).not.toMatch(/\d\s*[%％]/);
+  });
+
+  it("プレースホルダー「XX%」があること", () => {
+    expect(s).toContain("XX%");
+  });
+
+  it("注記に「実績」の語があること", () => {
+    expect(s).toContain("実績");
+  });
+
+  it("注記の趣旨「画面に出さない」が書かれていること", () => {
+    expect(s).toContain("画面に出さない");
+  });
+
+  it("負のテスト: 「78%」に戻した文字列と、注記の無い文字列を検出すること", () => {
+    expect(socialProofProblems("「ユーザーの78%がUTMパラメータを設定しています」")).toContain("数字 + % がある");
+    expect(socialProofProblems("「ユーザーのXX%が設定」")).toContain("注記に「実績」の語が無い");
+    expect(socialProofProblems("「ユーザーのXX%が設定」（実績の数値を入れる）")).toEqual([]);
+    expect(socialProofProblems(s)).toEqual([]);
   });
 });
 

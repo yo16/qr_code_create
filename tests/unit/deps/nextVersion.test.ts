@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 /**
- * Next.js 16.4.5 以上への更新を担保するテスト（qr_code_create-4j0、qr_code_create-g33）。
+ * Next.js 16.4.5 以上への更新を担保するテスト。
  *
  * 下限の履歴: 4j0 で 16.4.2、g33 で 16.4.5 に引き上げた。
  * npm audit が next 16.0.0〜16.4.4 に moderate の勧告 7 件を出し、修正版は 16.4.5 以上のため。
@@ -39,36 +39,67 @@ function stripRangePrefix(version: string): string {
 /**
  * 2 つのバージョン文字列を "." で分割し、各要素を数値として比較する。
  * 返り値: a < b なら負、a === b なら 0、a > b なら正。
- * プレリリース識別子（例: "16.4.2-canary.1"）はハイフン以降を無視して比較する。
+ * プレリリース識別子（例: "16.4.2-canary.1"）は、同じ数字部分の正式版より小さいものとして扱う。
+ * 数字部分が同じでプレリリース同士の場合は、識別子の文字列で比べる。
  */
 function compareVersions(a: string, b: string): number {
-  const toParts = (v: string): number[] =>
-    stripRangePrefix(v)
-      .split("-")[0]
-      .split(".")
-      .map((part) => {
+  const split = (v: string): { parts: number[]; pre: string | null } => {
+    const stripped = stripRangePrefix(v);
+    const hyphen = stripped.indexOf("-");
+    const core = hyphen === -1 ? stripped : stripped.slice(0, hyphen);
+    return {
+      parts: core.split(".").map((part) => {
         const n = parseInt(part, 10);
         return Number.isNaN(n) ? 0 : n;
-      });
+      }),
+      pre: hyphen === -1 ? null : stripped.slice(hyphen + 1),
+    };
+  };
 
-  const partsA = toParts(a);
-  const partsB = toParts(b);
-  const length = Math.max(partsA.length, partsB.length);
+  const va = split(a);
+  const vb = split(b);
+  const length = Math.max(va.parts.length, vb.parts.length);
 
   for (let i = 0; i < length; i += 1) {
-    const diff = (partsA[i] ?? 0) - (partsB[i] ?? 0);
+    const diff = (va.parts[i] ?? 0) - (vb.parts[i] ?? 0);
     if (diff !== 0) {
       return diff;
     }
   }
-  return 0;
+  if (va.pre === null && vb.pre === null) return 0;
+  if (va.pre === null) return 1;
+  if (vb.pre === null) return -1;
+  return va.pre < vb.pre ? -1 : va.pre > vb.pre ? 1 : 0;
+}
+
+/** プレリリース版（ハイフン付き）か */
+function isPrerelease(version: string): boolean {
+  return stripRangePrefix(version).includes("-");
+}
+
+/** 正式版で、かつ下限以上のときだけ true。プレリリース版は数字部分が上でも満たさない扱い。 */
+function meetsMinimum(version: string, minimum: string): boolean {
+  return !isPrerelease(version) && compareVersions(version, minimum) >= 0;
+}
+
+/**
+ * 版のパッチを 1 減らした版を返す（下限の 1 つ前の版を作る）。
+ * パッチが 0 の版には 1 つ前の版を決められないので、例外を投げる。
+ */
+function previousPatch(version: string): string {
+  const [major, minor, patch] = stripRangePrefix(version).split("-")[0].split(".");
+  const n = parseInt(patch, 10);
+  if (Number.isNaN(n) || n <= 0) {
+    throw new Error(`パッチを 1 減らせない版: ${version}`);
+  }
+  return `${major}.${minor}.${n - 1}`;
 }
 
 function readJson<T>(filePath: string): T {
   return JSON.parse(fs.readFileSync(filePath, "utf-8")) as T;
 }
 
-describe("Next.js 依存バージョン（qr_code_create-4j0）", () => {
+describe("Next.js 依存バージョン", () => {
   const packageJson = readJson<PackageJson>(PACKAGE_JSON_PATH);
   const packageLock = readJson<PackageLock>(PACKAGE_LOCK_PATH);
 
@@ -89,22 +120,48 @@ describe("Next.js 依存バージョン（qr_code_create-4j0）", () => {
       expect(compareVersions("17.0.0", "16.4.2")).toBeGreaterThan(0);
     });
 
-    it("下限 16.4.5 の境界で、16.4.4 は下回り 16.4.5 以上は通ること", () => {
-      expect(compareVersions("16.4.4", REQUIRED_NEXT_VERSION)).toBeLessThan(0);
-      expect(compareVersions("^16.4.2", REQUIRED_NEXT_VERSION)).toBeLessThan(0);
-      expect(compareVersions("16.4.5", REQUIRED_NEXT_VERSION)).toBe(0);
+    it(`下限 ${REQUIRED_NEXT_VERSION} の境界で、1 つ前の版は下回り下限以上は通ること`, () => {
+      const justBelow = previousPatch(REQUIRED_NEXT_VERSION);
+      const [major, minor, patch] = REQUIRED_NEXT_VERSION.split(".").map(Number);
+      expect(compareVersions(justBelow, REQUIRED_NEXT_VERSION)).toBeLessThan(0);
+      expect(compareVersions(`^${justBelow}`, REQUIRED_NEXT_VERSION)).toBeLessThan(0);
+      expect(compareVersions(REQUIRED_NEXT_VERSION, REQUIRED_NEXT_VERSION)).toBe(0);
       expect(
-        compareVersions("16.4.6", REQUIRED_NEXT_VERSION),
+        compareVersions(`${major}.${minor}.${patch + 1}`, REQUIRED_NEXT_VERSION),
       ).toBeGreaterThan(0);
       expect(
-        compareVersions("^16.4.6", REQUIRED_NEXT_VERSION),
+        compareVersions(`^${major}.${minor}.${patch + 1}`, REQUIRED_NEXT_VERSION),
       ).toBeGreaterThan(0);
       expect(
-        compareVersions("16.5.0", REQUIRED_NEXT_VERSION),
+        compareVersions(`${major}.${minor + 1}.0`, REQUIRED_NEXT_VERSION),
       ).toBeGreaterThan(0);
       expect(
-        compareVersions("17.0.0", REQUIRED_NEXT_VERSION),
+        compareVersions(`${major + 1}.0.0`, REQUIRED_NEXT_VERSION),
       ).toBeGreaterThan(0);
+    });
+
+    it("previousPatch はパッチを 1 減らし、パッチが 0 の版では例外を投げること", () => {
+      expect(previousPatch("16.4.5")).toBe("16.4.4");
+      expect(previousPatch("^16.4.10")).toBe("16.4.9");
+      expect(previousPatch("16.4.1")).toBe("16.4.0");
+      expect(() => previousPatch("16.4.0")).toThrow();
+    });
+
+    it("プレリリース版は同じ数字部分の正式版より小さいと比較されること", () => {
+      expect(compareVersions("16.4.6-canary.1", "16.4.6")).toBeLessThan(0);
+      expect(compareVersions("16.4.6", "16.4.6-canary.1")).toBeGreaterThan(0);
+      expect(compareVersions("16.4.6-canary.1", "16.4.6-canary.1")).toBe(0);
+    });
+
+    it("【負のテスト】プレリリース版は下限を満たさず、正式版は満たすこと", () => {
+      const min = "16.4.6";
+      expect(meetsMinimum("16.4.6-canary.1", min)).toBe(false);
+      expect(meetsMinimum("16.4.7-canary.0", min)).toBe(false);
+      expect(meetsMinimum("^16.4.7-canary.0", min)).toBe(false);
+      expect(meetsMinimum("16.4.6", min)).toBe(true);
+      expect(meetsMinimum("16.4.7", min)).toBe(true);
+      expect(meetsMinimum("17.0.0", min)).toBe(true);
+      expect(meetsMinimum("16.4.5", min)).toBe(false);
     });
 
     it("桁数が違う版を文字列比較でなく数値で比べること", () => {
@@ -118,9 +175,7 @@ describe("Next.js 依存バージョン（qr_code_create-4j0）", () => {
       // 意図: 本タスクの主目的である Next.js 更新が package.json に反映されていることを確認する
       const nextVersion = packageJson.dependencies?.next;
       expect(nextVersion).toBeDefined();
-      expect(
-        compareVersions(nextVersion as string, REQUIRED_NEXT_VERSION),
-      ).toBeGreaterThanOrEqual(0);
+      expect(meetsMinimum(nextVersion as string, REQUIRED_NEXT_VERSION)).toBe(true);
     });
 
     it("devDependencies.eslint-config-next が next と同じバージョンであること", () => {
@@ -153,9 +208,7 @@ describe("Next.js 依存バージョン（qr_code_create-4j0）", () => {
       const lockedNextVersion =
         packageLock.packages?.["node_modules/next"]?.version;
       expect(lockedNextVersion).toBeDefined();
-      expect(
-        compareVersions(lockedNextVersion as string, REQUIRED_NEXT_VERSION),
-      ).toBeGreaterThanOrEqual(0);
+      expect(meetsMinimum(lockedNextVersion as string, REQUIRED_NEXT_VERSION)).toBe(true);
     });
 
     it("eslint-config-next の解決版が next の解決版と同じであること", () => {
@@ -172,9 +225,7 @@ describe("Next.js 依存バージョン（qr_code_create-4j0）", () => {
       const installed = readJson<{ version: string }>(
         path.join(ROOT_DIR, "node_modules", "next", "package.json"),
       );
-      expect(
-        compareVersions(installed.version, REQUIRED_NEXT_VERSION),
-      ).toBeGreaterThanOrEqual(0);
+      expect(meetsMinimum(installed.version, REQUIRED_NEXT_VERSION)).toBe(true);
     });
   });
 });

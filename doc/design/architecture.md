@@ -53,14 +53,14 @@ QR Code Create は Next.js App Router ベースの**フロントエンド完結�
 
 | カテゴリ | 技術 | バージョン（推奨） | 用途 |
 |---|---|---|---|
-| フレームワーク | Next.js (App Router) | 15.x | SSG/SSR、ルーティング、メタデータ |
+| フレームワーク | Next.js (App Router) | 16.x | SSG/SSR、ルーティング、メタデータ |
 | 言語 | TypeScript | 5.x | 型安全なコード |
 | スタイリング | CSS Modules + CSS Custom Properties | - | コンポーネントスコープのスタイル |
 | QRコード生成 | qrcode (npm) | 1.5.x | QRコード画像生成 |
-| PDF出力 | jsPDF | 2.5.x | PDF形式でのダウンロード |
+| PDF出力 | jsPDF | 4.x | PDF形式でのダウンロード |
 | HTML→画像変換（ポスター用） | html2canvas | 1.4.x | `/poster` のA4 2x2 PDF生成（HTML要素を画像化してjsPDFへ渡す） |
 | MDX解析 | gray-matter | 4.0.x | フロントマター解析 |
-| MDXレンダリング | next-mdx-remote | 5.x | MDXコンテンツのレンダリング |
+| MDXレンダリング | next-mdx-remote | 6.x | MDXコンテンツのレンダリング |
 | GFM拡張 | remark-gfm | 4.x | テーブル・打ち消し線等のGFM構文対応 |
 | フォント | next/font (Noto Sans JP) | - | Webフォント最適化 |
 | 外部サービス | - | - | 一覧は [8.4](#84-外部のインフラサービス) |
@@ -70,37 +70,9 @@ QR Code Create は Next.js App Router ベースの**フロントエンド完結�
 
 ### 1.3 依存ライブラリ詳細
 
-```json
-{
-  "dependencies": {
-    "next": "16.4.2",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "qrcode": "^1.5.4",
-    "jspdf": "^2.5.2",
-    "html2canvas": "^1.4.1",
-    "react-markdown": "^9.0.0",
-    "remark-gfm": "^4.0.0",
-    "gray-matter": "^4.0.3",
-    "next-mdx-remote": "^5.0.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.7.0",
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@types/qrcode": "^1.5.0",
-    "eslint": "^9.0.0",
-    "eslint-config-next": "^15.0.0",
-    "prettier": "^3.4.0",
-    "@testing-library/react": "^16.0.0",
-    "@testing-library/jest-dom": "^6.0.0",
-    "jest": "^29.0.0",
-    "jest-environment-jsdom": "^29.0.0",
-    "@playwright/test": "^1.49.0"
-  }
-}
-```
+依存ライブラリの版は `package.json` を正とする。版が食い違わないよう、ここには書かない。
+
+主な依存は next、react、react-dom、qrcode、jspdf、html2canvas、react-markdown、remark-gfm、gray-matter、next-mdx-remote。用途は [1.2 技術スタック](#12-技術スタック) の表を参照。
 
 ---
 

@@ -244,6 +244,23 @@ describe("utm-setup.mdx の内容が失われていないこと", () => {
     expect(utmLinkTexts(section(text, "## まとめ")).length).toBeGreaterThanOrEqual(1);
   });
 
+  it("【負のテスト】rowWith は、値と意味がずれた本文・片方だけの本文で false、正しい行で true を返す", () => {
+    const good = ["| 値 | 意味 |", "|---|---|", "| spring_sale_2026 | 春のセール |", "| store_open_2026 | 新店舗オープン |"].join(NL);
+    // 正しい行
+    expect(rowWith(good, "spring_sale_2026", "春のセール")).toBe(true);
+    expect(rowWith(good, "store_open_2026", "新店舗オープン")).toBe(true);
+    // 値と意味をずらした本文（別の行の意味と組み合わせている）
+    expect(rowWith(good, "spring_sale_2026", "新店舗オープン")).toBe(false);
+    expect(rowWith(good, "store_open_2026", "春のセール")).toBe(false);
+    // 片方だけがある本文
+    expect(rowWith(["| spring_sale_2026 | 別の説明 |"].join(NL), "spring_sale_2026", "春のセール")).toBe(false);
+    expect(rowWith(["| 別の値 | 春のセール |"].join(NL), "spring_sale_2026", "春のセール")).toBe(false);
+    // 表の行でない（先頭が | でない）文
+    expect(rowWith("spring_sale_2026 は 春のセール です", "spring_sale_2026", "春のセール")).toBe(false);
+    // 空の本文
+    expect(rowWith("", "spring_sale_2026", "春のセール")).toBe(false);
+  });
+
   it("【負のテスト】壊した表は検出される", () => {
     const table = section(text, "## 用途別の設定例");
     // 値の入れ替え（flyer 行の medium を変える）

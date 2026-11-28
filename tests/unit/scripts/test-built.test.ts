@@ -17,8 +17,25 @@ const { main, nextBin, jestBin } = require("../../../scripts/test-built.cjs") as
   jestBin: string;
 };
 
-const ROOT = process.cwd();
+const ROOT = path.resolve(__dirname, "../../..");
 const ok = { status: 0 };
+
+// Windows ではドライブ文字や大文字小文字が違っても同じ場所なので、小文字にそろえて比べる
+const normalizePath = (p: string): string => {
+  const resolved = path.resolve(p);
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+};
+const samePath = (a: string, b: string): boolean => normalizePath(a) === normalizePath(b);
+
+// staticOutput.test.ts が読む環境変数の名前と期待値を、ソースから正規表現で抜き出す。
+// 抜き出せなければ例外を投げる（黙って通さない）。
+function parseExpectedBuildEnv(src: string): { name: string; value: string } {
+  const m = src.match(/process\.env\.(REQUIRE_BUILD_OUTPUT)\s*===\s*"([^"]*)"/);
+  if (!m) {
+    throw new Error("staticOutput.test.ts から REQUIRE_BUILD_OUTPUT の読み取りを抜き出せない");
+  }
+  return { name: m[1], value: m[2] };
+}
 
 describe("scripts/test-built.cjs のふるまい", () => {
   let errorSpy: jest.SpyInstance;
@@ -139,7 +156,7 @@ describe("scripts/test-built.cjs のふるまい", () => {
     for (const call of spawnSync.mock.calls) {
       expect(call[0]).toBe(process.execPath);
       expect(call[2].shell).toBeFalsy();
-      expect(call[2].cwd).toBe(ROOT);
+      expect(samePath(call[2].cwd, ROOT)).toBe(true);
     }
     expect(fs.existsSync(nextBin)).toBe(true);
     expect(fs.existsSync(jestBin)).toBe(true);
@@ -165,10 +182,31 @@ describe("test:built に関する設定", () => {
     expect(rule).toContain("REQUIRE_BUILD_OUTPUT");
   });
 
-  it("staticOutput.test.ts がスクリプトの渡す値（REQUIRE_BUILD_OUTPUT === \"1\"）を読んでいる", () => {
+  it("staticOutput.test.ts が読む環境変数の名前と期待値を、スクリプトが jest に渡している", () => {
     const src = fs.readFileSync(path.join(ROOT, "tests/unit/app/staticOutput.test.ts"), "utf-8");
-    expect(src).toContain('process.env.REQUIRE_BUILD_OUTPUT === "1"');
-    const script = fs.readFileSync(path.join(ROOT, "scripts/test-built.cjs"), "utf-8");
-    expect(script).toContain('REQUIRE_BUILD_OUTPUT: "1"');
+    const { name, value } = parseExpectedBuildEnv(src);
+    expect(name).toBe("REQUIRE_BUILD_OUTPUT");
+    expect(value).not.toBe("");
+    spawnSync.mockReset();
+    spawnSync.mockReturnValue(ok);
+    main([]);
+    expect(spawnSync.mock.calls[1][2].env[name]).toBe(value);
+  });
+
+  it("【負のテスト】抜き出しに失敗する入力では例外になる（黙って通らない）", () => {
+    expect(() => parseExpectedBuildEnv('const x = process.env.OTHER === "1";')).toThrow();
+    expect(() => parseExpectedBuildEnv("")).toThrow();
+    expect(parseExpectedBuildEnv('process.env.REQUIRE_BUILD_OUTPUT === "1"')).toEqual({
+      name: "REQUIRE_BUILD_OUTPUT",
+      value: "1",
+    });
+  });
+
+  it("samePath はドライブ文字・大文字小文字の違いを Windows で吸収し、別の場所は別と判定する", () => {
+    expect(samePath(ROOT, ROOT)).toBe(true);
+    expect(samePath(path.join(ROOT, "other"), ROOT)).toBe(false);
+    if (process.platform === "win32") {
+      expect(samePath(ROOT.toUpperCase(), ROOT.toLowerCase())).toBe(true);
+    }
   });
 });

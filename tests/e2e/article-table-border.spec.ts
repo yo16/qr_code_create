@@ -10,6 +10,7 @@ const PAGES = [
   "/guide/utm-setup",
   "/use-cases/poster",
   "/blog/nenga-qr-utm-tracking",
+  "/blog/qr-code-tampering-prevention",
 ];
 const NAV_TIMEOUT = 90_000;
 const BORDER_COLOR = "rgb(127, 139, 150)";

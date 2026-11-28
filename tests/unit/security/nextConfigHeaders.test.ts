@@ -1,7 +1,9 @@
 /**
- * next.config.ts のセキュリティヘッダー（qr_code_create-j0q）。
+ * next.config.ts のセキュリティヘッダー（qr_code_create-j0q、CSP の強制は qr_code_create-28o）。
  * NODE_ENV で isDev が決まるため、jest.isolateModules で読み直して切り替える。
  */
+import { buildCsp } from "../../../src/lib/security/csp";
+
 type HeaderEntry = { source: string; headers: { key: string; value: string }[] };
 type LoadedConfig = {
   poweredByHeader?: boolean;
@@ -32,6 +34,10 @@ async function headersOf(nodeEnv: string): Promise<Map<string, string>> {
   return new Map(rootEntries[0].headers.map((h) => [h.key, h.value]));
 }
 
+function lowerKeys(h: Map<string, string>): string[] {
+  return [...h.keys()].map((k) => k.toLowerCase());
+}
+
 afterEach(() => {
   env.NODE_ENV = originalNodeEnv;
 });
@@ -54,7 +60,7 @@ describe("next.config", () => {
       expect(h.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
       expect(h.get("Cross-Origin-Opener-Policy")).toBe("same-origin");
       expect(h.has("Permissions-Policy")).toBe(true);
-      expect(h.has("Content-Security-Policy-Report-Only")).toBe(true);
+      expect(h.has("Content-Security-Policy")).toBe(true);
     });
 
     it("Permissions-Policy でカメラ・マイク・位置情報を無効にしている", async () => {
@@ -64,14 +70,20 @@ describe("next.config", () => {
       expect(value).toContain("geolocation=()");
     });
 
-    it("強制の Content-Security-Policy と Strict-Transport-Security は出さない", async () => {
-      const keys = [...(await headersOf("production")).keys()].map((k) => k.toLowerCase());
-      expect(keys).not.toContain("content-security-policy");
-      expect(keys).not.toContain("strict-transport-security");
+    it("Content-Security-Policy-Report-Only は出さない（強制だけ）", async () => {
+      expect(lowerKeys(await headersOf("production"))).not.toContain("content-security-policy-report-only");
+    });
+
+    it("Strict-Transport-Security は出さない（Vercel が付ける）", async () => {
+      expect(lowerKeys(await headersOf("production"))).not.toContain("strict-transport-security");
+    });
+
+    it("Content-Security-Policy の値が buildCsp(false) と一致する", async () => {
+      expect((await headersOf("production")).get("Content-Security-Policy")).toBe(buildCsp(false));
     });
 
     it("CSP に 'unsafe-eval' が無く、* 単独のソースも無い", async () => {
-      const csp = (await headersOf("production")).get("Content-Security-Policy-Report-Only") ?? "";
+      const csp = (await headersOf("production")).get("Content-Security-Policy") ?? "";
       expect(csp).not.toContain("'unsafe-eval'");
       const sources = csp.split("; ").flatMap((d) => d.split(" ").slice(1));
       expect(sources).not.toContain("*");
@@ -86,14 +98,28 @@ describe("next.config", () => {
   });
 
   describe("開発時のヘッダー", () => {
+    it("強制の CSP があり、値が buildCsp(true) と一致する", async () => {
+      expect((await headersOf("development")).get("Content-Security-Policy")).toBe(buildCsp(true));
+    });
+
     it("CSP には 'unsafe-eval' がある（本番との差）", async () => {
-      const csp = (await headersOf("development")).get("Content-Security-Policy-Report-Only") ?? "";
+      const csp = (await headersOf("development")).get("Content-Security-Policy") ?? "";
       expect(csp).toContain("'unsafe-eval'");
     });
 
-    it("開発時も強制の CSP は出さない", async () => {
-      const keys = [...(await headersOf("development")).keys()].map((k) => k.toLowerCase());
-      expect(keys).not.toContain("content-security-policy");
+    it("開発時も Content-Security-Policy-Report-Only は出さない", async () => {
+      expect(lowerKeys(await headersOf("development"))).not.toContain("content-security-policy-report-only");
+    });
+
+    it("開発時も Strict-Transport-Security は出さない", async () => {
+      expect(lowerKeys(await headersOf("development"))).not.toContain("strict-transport-security");
+    });
+
+    it("開発時のヘッダーの値に改行が無く、* 単独のソースも無い", async () => {
+      const h = await headersOf("development");
+      for (const value of h.values()) expect(value).not.toMatch(/[\r\n]/);
+      const sources = (h.get("Content-Security-Policy") ?? "").split("; ").flatMap((d) => d.split(" ").slice(1));
+      expect(sources).not.toContain("*");
     });
   });
 });

@@ -306,34 +306,41 @@ export function generatePageMetadata(params: {
 - UTMパラメータ値は `encodeURIComponent` でエスケープ
 - アップロード画像は `FileReader` でクライアントサイド処理のみ（サーバーへの送信なし）
 
-### 6.2 CSP (Content Security Policy)
+### 6.2 セキュリティヘッダーと CSP
 
-`next.config.ts` で以下のヘッダーを設定する。
+`next.config.ts` の `headers()` で、すべてのパス（`/(.*)`）に次のヘッダーを付ける。
 
-```typescript
-// next.config.ts
-const nextConfig = {
-  headers: async () => [
-    {
-      source: '/(.*)',
-      headers: [
-        {
-          key: 'X-Content-Type-Options',
-          value: 'nosniff',
-        },
-        {
-          key: 'X-Frame-Options',
-          value: 'DENY',
-        },
-        {
-          key: 'Referrer-Policy',
-          value: 'strict-origin-when-cross-origin',
-        },
-      ],
-    },
-  ],
-};
-```
+| ヘッダー | 値 |
+|---|---|
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `DENY` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | カメラ、マイク、位置情報、支払い、USB、browsing-topics を無効にする |
+| `Cross-Origin-Opener-Policy` | `same-origin` |
+| `Content-Security-Policy` | `src/lib/security/csp.ts` の `buildCsp()` が組み立てる |
+
+`X-Powered-By` は出さない（`poweredByHeader: false`）。`Strict-Transport-Security` は Vercel が付けるので、`next.config.ts` では出さない。
+
+CSP ははじめ Report-Only で入れ、qr_code_create-28o で強制（`Content-Security-Policy`）に切り替えた。方針は次のとおり。
+
+- 静的生成のため nonce を使わず、`script-src` と `style-src` に `'unsafe-inline'` を許す。
+- 外部で許すのは、GA（`www.googletagmanager.com` のスクリプトと、`*.google-analytics.com` などへの送信）と、問い合わせフォームの送信先（`ssl.form-mailer.jp`）だけにする。
+- `'unsafe-eval'` は開発サーバーのときだけ許す。
+- `object-src 'none'`、`frame-ancestors 'none'`、`upgrade-insecure-requests` を付ける。
+
+強制の CSP では、許可していない読み込みと送信をブラウザが止める。次のどれかを変えたときは、下の 2 つのテストを流す。
+
+- `src/lib/security/csp.ts`
+- `next.config.ts` のヘッダー
+- `RootShell.tsx` の GA の読み込み
+- `/contact` のフォームの送信先
+
+流すテストは次の 2 つ。
+
+1. `npm run build` のあとに `npm run test:e2e:prod` を流す。`tests/e2e/csp-enforced.spec.ts` が、本番ビルドの各ページで違反が 0 件であることと、許可していない読み込みが止まることを確かめる。
+2. `npm run test:e2e:ga` を流す。GA の測定 ID を付けてビルドし直し、本物の gtag.js を読んで違反が 0 件であることを確かめる。送信はテストが止めるので、GA に実データは届かない。このコマンドは `.next` を GA 入りのビルドで上書きするので、終わったら `npm run build` を流し直す。
+
+GA の送信先として観測したホストは `tests/fixtures/ga-observed-hosts.json` に控えてある。`npm test` は、控えたホストが CSP の許可に収まることを確かめる。
 
 ---
 

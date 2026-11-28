@@ -20,8 +20,8 @@ const nextConfig: NextConfig = {
           value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
         },
         { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-        // まず Report-Only で入れる。強制の Content-Security-Policy ではない
-        { key: "Content-Security-Policy-Report-Only", value: buildCsp(isDev) },
+        // CSP は強制で配信する（2026-11-28、qr_code_create-28o で Report-Only から切り替え）。方針の組み立ては src/lib/security/csp.ts
+        { key: "Content-Security-Policy", value: buildCsp(isDev) },
       ],
     },
   ],

@@ -1,0 +1,7 @@
+{
+  "observedAt": "2026-11-28",
+  "note": "tests/e2e/csp-ga.spec.ts（npm run test:e2e:ga）で観測した GA の送信先。手で更新する（テストは書き換えない）。tests/unit/security/gaObservedHosts.test.ts が CSP の connect-src / img-src の許可と突き合わせる",
+  "entries": [
+    { "host": "www.google-analytics.com", "path": "/g/collect", "method": "POST", "resourceType": "fetch", "directive": "connect-src", "observedAt": "2026-11-28" }
+  ]
+}

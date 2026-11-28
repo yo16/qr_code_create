@@ -73,7 +73,7 @@
 | E3 | 2026-05-04（登録済みだった） | Bing Webmaster Tools に登録し、サイトマップを送る | 実験にならず終了（2026-11-28 に確認。5 月から登録済みで、正規 URL のサイトマップが読まれていた） | なし |
 | E4 | 2026-11-10 | 順位のわりに CTR が低いページの title と description を直す（/use-cases/poster） | 本番反映済み（main c9089dc）・結果待ち | 2026-12-08 |
 | E5 | 2026-11-10 | 引用されやすい形に記事を直す（getting-started に定義文・FAQ・更新日、utm-parameters の書き直し） | 本番反映済み（main c9089dc）・結果待ち | 2026-12-08 |
-| E6 | 準備中（2026-11-28 に場所と名前が決まった） | サイト外での告知（AlternativeTo、X、Hacker News / Reddit。名乗る名前は Small Piece） | 文面を作成中。1 件ずつユーザーの承認を得てから投稿する | 投稿の 1 週間後と 4 週間後 |
+| E6 | 準備中（2026-11-28 に場所と名前が決まった） | サイト外での告知（AlternativeTo、X、Hacker News / Reddit。名乗る名前は Small Piece） | AlternativeTo は 2026-11-28 に申請（無料の列で審査待ち）。X と Hacker News / Reddit は文面の承認待ち | 投稿の 1 週間後と 4 週間後 |
 | E7 | 2026-11-15 | 時事ネタのブログ（年賀状に QR を載せて効果を測る） | 本番反映済み（main 07ffb95）・結果待ち | 2026-11-29 と 2027-01-15 |
 | E8 | 2026-11-23 | 表示は多いが意図に合う節がないクエリに、節を足す（/use-cases/signage にデジタルサイネージの節。GitHub Issue #1） | 本番反映済み（main 721e522）・結果待ち | 2026-12-30 |
 
@@ -149,6 +149,24 @@
 - 測る項目: 2 ページの表示回数とクリック、GA4 の AI Assistant と Unassigned のセッション数と着地ページ、AI への定点質問（4 節）で名前が挙がるか
 - 本番反映: 2026-11-10（main c9089dc）。本番で 2 ページの定義文・よくある質問・GA4 の手順の節と、更新日 2026-11-10 を確認した
 - 結果: （2026-12-08 に記入）
+
+### E6: サイト外での告知
+- 仮説: 一覧サイトや SNS、開発者の集まる場所で紹介すると、検索以外の流入と被リンクが得られる。
+- 決めたこと（2026-11-28、ユーザーの回答）: 使う場所は AlternativeTo、X、Hacker News / Reddit。名乗る名前は Small Piece。文面は 1 件ずつユーザーの承認を得てから出す。
+- 測る項目: GA4 の参照元（alternativeto.net など）からのセッション、GSC のリンクの件数。投稿の 1 週間後と 4 週間後に見る。
+
+#### E6-1: AlternativeTo（2026-11-28 に申請、審査待ち）
+- やったこと: ユーザーが AlternativeTo にログインし（メールアドレスの確認が済むまで、申請のメニューは押せなかった）、PM がブラウザで申請フォームに入力して送信した。文面と送信はユーザーが承認した。
+  - 名前 QR Code Create、Website `https://qr-create.jp/en`（UTM なし。AlternativeTo は公式サイトの欄に UTM を付けることを認めていない）、作者 Small Piece（国は Japan）、Free / Proprietary、Platform は Online、公開日 2026-04-10
+  - タグ: qr-code-generator、utm-builder、marketing、utm-tracking。Features: No registration required、No Coding Required、Live Preview
+  - 対応言語: English、Japanese、Spanish、Portuguese、German。アイコンはサイトのもの、スクリーンショットは英語版の作成ページ 2 枚
+  - 比較先: QRTIGER - QR Code Generator の 1 件（QRCode Monkey と QR Code Generator は検索で見つからなかった）
+- 審査: 無料の通常の列に入れた（ユーザーの判断）。画面には「通常の列は数千件あり、ほとんどは非常に長いあいだ審査されない」とあった。有料の審査は 19 ドル（1〜2 営業日で審査）と 29 ドル（担当者が内容も整える）で、どちらも掲載の保証ではない。
+- 状態: 「Your submission is waiting to be reviewed」。ページ `https://alternativeto.net/software/qr-code-create/` は、審査が済むまで申請者にしか見えない。画面に「まだリンクを共有しないで」とある。
+- 学び（申請の時点）
+  - AlternativeTo は、無料では事実上いつ載るか分からない。一覧サイトへの登録を施策に入れるときは、有料の審査（19 ドル）を前提に費用を見込むか、載らない前提で数に入れない。
+  - 申請には、アイコン（必須）、スクリーンショット（無いと却下されうる）、英語の説明文が要る。先に用意しておくと 30 分ほどで終わる。
+  - 比較先のアプリを 1 件も付けないと、載っても検索にほぼ出ないと画面に明記されている。申請の直後に付ける。
 
 ### E7: 時事ネタのブログ（年賀状）
 - 仮説: 季節と時事の話題（年賀はがきの発行枚数が 16 年続けて減った）を入口にすると、「年賀状 QRコード」のように季節に検索が増える語で表示され、ふだんの記事より短い期間で流入が取れる。サイトの軸（UTM で印刷物の効果を測る）につなげれば、ツールの利用にも結びつく。

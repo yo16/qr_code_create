@@ -28,6 +28,9 @@ export const en = {
     poster: "Poster maker (Japanese)",
     japaneseOnlyNote:
       "Our privacy policy and terms of service are available in Japanese only.",
+    // デンソーウェーブの公式の例文。言い換えない。QR Code は訳語（QR code）に合わせない
+    trademarkNotice:
+      "QR Code is a registered trademark of DENSO WAVE INCORPORATED in Japan and in other countries.",
   },
   home: {
     hero: {

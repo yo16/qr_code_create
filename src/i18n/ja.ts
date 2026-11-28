@@ -26,6 +26,8 @@ export const ja = {
     poster: "印刷用ポスター",
     // 英語版のフッターだけが表示する注記。ja では使わない（Dict のキーを揃えるため）
     japaneseOnlyNote: "プライバシーポリシーと利用規約は日本語のみです。",
+    // デンソーウェーブの公式 FAQ の例文。言い換えない
+    trademarkNotice: "QRコードは株式会社デンソーウェーブの登録商標です。",
   },
   home: {
     hero: {

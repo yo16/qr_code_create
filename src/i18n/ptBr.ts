@@ -28,6 +28,9 @@ export const ptBr: Dict = {
     poster: "Criador de pôsteres (em japonês)",
     japaneseOnlyNote:
       "A política de privacidade e os termos de uso estão disponíveis apenas em japonês.",
+    // デンソーウェーブの公式の例文。言い換えない。QR Code は訳語に合わせず、そのまま書く
+    trademarkNotice:
+      "QR Code é uma marca registrada da DENSO WAVE INCORPORATED no Japão e em outros países.",
   },
   home: {
     hero: {

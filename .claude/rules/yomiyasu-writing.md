@@ -38,7 +38,8 @@ yomiyasu の本体は https://github.com/nanaism/yomiyasu で、このリポジ�
 | SNS の投稿文、告知文、紹介文 | `promo` |
 | メール、チャット、Issue のコメント | `mail` |
 | 設計書、規則、手順書 | `manual` |
-| 提案、検討の記録（`doc/growth-knowhow.md` など） | `proposal` |
+| 提案、検討をまとめた文書 | `proposal` |
+| 項目を箇条書きで並べる記録（`doc/growth-knowhow.md` の実験の記録など） | `incident` |
 
 ## 見せるとき
 
